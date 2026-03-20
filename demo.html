@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexia Game - Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        canvas {
+            border: 1px solid black;
+            cursor: crosshair;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Lexia Game - MVP Demo</h1>
+    <div id="scene">
+        <p>O Guardião precisa de ajuda para ler o mapa. Desenhe a letra "A" para iluminar o caminho!</p>
+        <canvas id="drawingCanvas" width="400" height="300"></canvas>
+        <br>
+        <button id="validateBtn" disabled>Validar Desenho</button>
+        <button id="clearBtn">Limpar</button>
+    </div>
+    <div id="success" style="display: none;">
+        <p>Parabéns! Você iluminou o caminho. O Guardião pode continuar!</p>
+        <p>🎉 Selo conquistado!</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const validateBtn = document.getElementById('validateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const scene = document.getElementById('scene');
+        const success = document.getElementById('success');
+
+        let isDrawing = false;
+
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'black';
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        validateBtn.addEventListener('click', validateDrawing);
+        clearBtn.addEventListener('click', clearCanvas);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            checkIfDrawn();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function checkIfDrawn() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            let hasDrawing = false;
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i + 3] > 0) {
+                    hasDrawing = true;
+                    break;
+                }
+            }
+            validateBtn.disabled = !hasDrawing;
+        }
+
+        function validateDrawing() {
+            // Play TTS for 'A'
+            const utterance = new SpeechSynthesisUtterance('A');
+            utterance.lang = 'pt-BR';
+            speechSynthesis.speak(utterance);
+
+            // Show success
+            scene.style.display = 'none';
+            success.style.display = 'block';
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            validateBtn.disabled = true;
+        }
+    </script>
+</body>
+
+</html>

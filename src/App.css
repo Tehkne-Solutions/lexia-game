@@ -1,0 +1,14 @@
+.app {
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.scene,
+.success {
+    margin: 20px;
+}
+
+canvas {
+    border: 1px solid black;
+    cursor: crosshair;
+}
