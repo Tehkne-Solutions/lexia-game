@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Card, createEmptyCard, getNextReview, needsReview, Grade } from '../lib/fsrs';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Card, createEmptyCard, fsrs, needsReview, Grade } from '../lib/fsrs';
+import { CURRICULUM, CurriculumItem } from '../data/curriculum';
 
 // Interface para o progresso de uma letra
 interface LetterProgress {
@@ -13,37 +14,42 @@ interface LetterProgress {
 
 // Chave do LocalStorage
 const STORAGE_KEY = 'lexia-game-progress';
-
-// Todas as letras do alfabeto
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const LEVEL_KEY = 'lexia-game-level';
 
 /**
- * Hook customizado para gerenciar o progresso das letras usando FSRS
+ * Hook customizado para gerenciar o progresso das letras usando FSRS e currículo pedagógico
  */
 export function useAlphabet() {
     const [lettersProgress, setLettersProgress] = useState<LetterProgress[]>([]);
+    const [currentLevel, setCurrentLevel] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Carrega o progresso do LocalStorage
+    // Carrega o progresso e nível do LocalStorage
     useEffect(() => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored);
+            const storedProgress = localStorage.getItem(STORAGE_KEY);
+            const storedLevel = localStorage.getItem(LEVEL_KEY);
+
+            if (storedLevel) {
+                setCurrentLevel(parseInt(storedLevel, 10));
+            }
+
+            if (storedProgress) {
+                const parsed = JSON.parse(storedProgress);
                 // Converte as datas de string para Date
                 const progress: LetterProgress[] = parsed.map((item: any) => ({
                     ...item,
                     card: {
                         ...item.card,
                         due: new Date(item.card.due),
-                        last_review: new Date(item.card.last_review),
+                        last_review: item.card.last_review ? new Date(item.card.last_review) : undefined,
                     },
                 }));
                 setLettersProgress(progress);
             } else {
-                // Inicializa com cards vazios para todas as letras
-                const initialProgress: LetterProgress[] = ALPHABET.map(letter => ({
-                    letter,
+                // Inicializa com cards vazios para todas as letras do currículo
+                const initialProgress: LetterProgress[] = CURRICULUM.map(item => ({
+                    letter: item.letter,
                     card: createEmptyCard(),
                     totalAttempts: 0,
                     correctAttempts: 0,
@@ -55,8 +61,8 @@ export function useAlphabet() {
         } catch (error) {
             console.error('Erro ao carregar progresso:', error);
             // Fallback para estado inicial
-            const initialProgress: LetterProgress[] = ALPHABET.map(letter => ({
-                letter,
+            const initialProgress: LetterProgress[] = CURRICULUM.map(item => ({
+                letter: item.letter,
                 card: createEmptyCard(),
                 totalAttempts: 0,
                 correctAttempts: 0,
@@ -77,13 +83,57 @@ export function useAlphabet() {
         }
     }, []);
 
+    // Salva nível no LocalStorage
+    const saveLevelToStorage = useCallback((level: number) => {
+        try {
+            localStorage.setItem(LEVEL_KEY, level.toString());
+        } catch (error) {
+            console.error('Erro ao salvar nível:', error);
+        }
+    }, []);
+
+    // Filtra letras disponíveis baseadas no nível atual
+    const availableLetters = useMemo(() => {
+        return CURRICULUM.filter(item => item.level <= currentLevel);
+    }, [currentLevel]);
+
+    // Obtém a próxima letra baseada na prioridade FSRS
+    const getNextLetter = useCallback((): CurriculumItem | null => {
+        if (availableLetters.length === 0) return null;
+
+        // Prioriza letras que precisam de revisão (estabilidade baixa)
+        const lettersNeedingReview = availableLetters.filter(item => {
+            const progress = lettersProgress.find(p => p.letter === item.letter);
+            return progress && needsReview(progress.card);
+        });
+
+        if (lettersNeedingReview.length > 0) {
+            // Retorna a que tem menor estabilidade
+            return lettersNeedingReview.reduce((prev, current) => {
+                const prevProgress = lettersProgress.find(p => p.letter === prev.letter);
+                const currentProgress = lettersProgress.find(p => p.letter === current.letter);
+                const prevStability = prevProgress?.card.stability || 0;
+                const currentStability = currentProgress?.card.stability || 0;
+                return currentStability < prevStability ? current : prev;
+            });
+        }
+
+        // Se nenhuma precisa de revisão, retorna a primeira não aprendida
+        const unlearnedLetters = availableLetters.filter(item => {
+            const progress = lettersProgress.find(p => p.letter === item.letter);
+            return !progress || progress.streak < 3;
+        });
+
+        return unlearnedLetters[0] || availableLetters[0];
+    }, [availableLetters, lettersProgress]);
+
     // Salva uma tentativa para uma letra específica
     const saveAttempt = useCallback((letter: string, grade: Grade) => {
         setLettersProgress(prevProgress => {
             const newProgress = prevProgress.map(progress => {
                 if (progress.letter === letter) {
                     // Calcula o novo card usando FSRS
-                    const newCard = getNextReview(progress.card, grade);
+                    const newCard = fsrs(grade, progress.card);
 
                     // Atualiza estatísticas
                     const isCorrect = grade >= 3; // Good ou Easy são considerados corretos
@@ -101,12 +151,67 @@ export function useAlphabet() {
                 return progress;
             });
 
+            // Verifica se deve avançar de nível
+            const levelComplete = availableLetters.every(item => {
+                const progress = newProgress.find(p => p.letter === item.letter);
+                return progress && progress.streak >= 3;
+            });
+
+            if (levelComplete && currentLevel < 4) {
+                const newLevel = currentLevel + 1;
+                setCurrentLevel(newLevel);
+                saveLevelToStorage(newLevel);
+            }
+
             // Salva no LocalStorage
             saveToStorage(newProgress);
 
             return newProgress;
         });
-    }, [saveToStorage]);
+    }, [saveToStorage, availableLetters, currentLevel, saveLevelToStorage]);
+
+    // Salva uma tentativa para uma letra específica
+    const saveAttempt = useCallback((letter: string, grade: Grade) => {
+        setLettersProgress(prevProgress => {
+            const newProgress = prevProgress.map(progress => {
+                if (progress.letter === letter) {
+                    // Calcula o novo card usando FSRS
+                    const newCard = fsrs(grade, progress.card);
+
+                    // Atualiza estatísticas
+                    const isCorrect = grade >= 3; // Good ou Easy são considerados corretos
+                    const newStreak = isCorrect ? progress.streak + 1 : 0;
+
+                    return {
+                        ...progress,
+                        card: newCard,
+                        lastGrade: grade,
+                        totalAttempts: progress.totalAttempts + 1,
+                        correctAttempts: progress.correctAttempts + (isCorrect ? 1 : 0),
+                        streak: newStreak,
+                    };
+                }
+                return progress;
+            });
+
+            // Verifica se deve avançar de nível
+            const levelComplete = availableLetters.every(item => {
+                const progress = newProgress.find(p => p.letter === item.letter);
+                return progress && progress.streak >= 3;
+            });
+
+            if (levelComplete && currentLevel < 4) {
+                const newLevel = currentLevel + 1;
+                setCurrentLevel(newLevel);
+                saveLevelToStorage(newLevel);
+            }
+
+            // Salva no LocalStorage
+            saveToStorage(newProgress);
+
+            return newProgress;
+        });
+    }, [saveToStorage, availableLetters, currentLevel, saveLevelToStorage]);
 
     // Obtém o progresso de uma letra específica
     const getLetterProgress = useCallback((letter: string): LetterProgress | undefined => {
@@ -116,11 +221,6 @@ export function useAlphabet() {
     // Obtém letras que precisam ser revisadas hoje
     const getLettersToReview = useCallback((): LetterProgress[] => {
         return lettersProgress.filter(progress => needsReview(progress.card));
-    }, [lettersProgress]);
-
-    // Obtém letras que não precisam ser revisadas hoje
-    const getLettersNotToReview = useCallback((): LetterProgress[] => {
-        return lettersProgress.filter(progress => !needsReview(progress.card));
     }, [lettersProgress]);
 
     // Obtém estatísticas gerais
@@ -136,9 +236,10 @@ export function useAlphabet() {
             accuracy: totalAttempts > 0 ? (totalCorrect / totalAttempts) * 100 : 0,
             toReview,
             mastered,
-            totalLetters: ALPHABET.length,
+            totalLetters: CURRICULUM.length,
+            currentLevel,
         };
-    }, [lettersProgress, getLettersToReview]);
+    }, [lettersProgress, getLettersToReview, currentLevel]);
 
     // Reseta o progresso de uma letra específica
     const resetLetter = useCallback((letter: string) => {
@@ -164,8 +265,8 @@ export function useAlphabet() {
 
     // Reseta todo o progresso
     const resetAll = useCallback(() => {
-        const initialProgress: LetterProgress[] = ALPHABET.map(letter => ({
-            letter,
+        const initialProgress: LetterProgress[] = CURRICULUM.map(item => ({
+            letter: item.letter,
             card: createEmptyCard(),
             totalAttempts: 0,
             correctAttempts: 0,
@@ -173,16 +274,20 @@ export function useAlphabet() {
         }));
 
         setLettersProgress(initialProgress);
+        setCurrentLevel(1);
         saveToStorage(initialProgress);
-    }, [saveToStorage]);
+        saveLevelToStorage(1);
+    }, [saveToStorage, saveLevelToStorage]);
 
     return {
         lettersProgress,
         isLoading,
+        currentLevel,
+        availableLetters,
+        getNextLetter,
         saveAttempt,
         getLetterProgress,
         getLettersToReview,
-        getLettersNotToReview,
         getStats,
         resetLetter,
         resetAll,
