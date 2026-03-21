@@ -3,19 +3,24 @@ import {
     Box,
     Card,
     Typography,
-    Button,
     Stack,
     LinearProgress,
     Chip,
     IconButton,
     Tooltip,
+    Button,
+    ButtonGroup,
 } from '@mui/material';
 import {
     RestartAlt,
     VolumeUp,
     Check,
+    Clear,
+    ThumbDown,
+    ThumbUp,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useAlphabet } from '../hooks';
 
 interface DrawingCanvasProps {
     targetLetter: string;
@@ -32,6 +37,10 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const [isDrawing, setIsDrawing] = useState(false);
     const [confidence, setConfidence] = useState(0);
     const [detectedLetter, setDetectedLetter] = useState('');
+    const [showGradeButtons, setShowGradeButtons] = useState(false);
+    const { saveAttempt, getLetterProgress } = useAlphabet();
+
+    const letterProgress = getLetterProgress(targetLetter);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -97,11 +106,30 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
     const handleMouseUp = () => {
         setIsDrawing(false);
+    };
+
+    const handleValidateDrawing = () => {
         // Simular detecção de letra (você vai integrar com o FSRS depois)
         const detectedChar = targetLetter;
         setDetectedLetter(detectedChar);
         setConfidence(Math.random() * 100);
+        setShowGradeButtons(true);
         onLetterDetected(detectedChar);
+    };
+
+    const handleGrade = (grade: number) => {
+        // Salvar a tentativa usando FSRS
+        saveAttempt(targetLetter, grade as any);
+
+        // Resetar estado
+        setShowGradeButtons(false);
+        setDetectedLetter('');
+        setConfidence(0);
+
+        // Se foi bom ou fácil, considerar sucesso
+        if (grade >= 3) {
+            onSuccess();
+        }
     };
 
     const handleClear = () => {
@@ -112,9 +140,8 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         setDetectedLetter('');
         setConfidence(0);
+        setShowGradeButtons(false);
     };
-
-    const isCorrect = detectedLetter.toUpperCase() === targetLetter.toUpperCase();
 
     return (
         <motion.div
@@ -147,6 +174,22 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                 {targetLetter.toUpperCase()}
                             </Typography>
                         </motion.div>
+
+                        {/* Estatísticas da letra */}
+                        {letterProgress && (
+                            <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 1 }}>
+                                <Chip
+                                    size="small"
+                                    label={`Tentativas: ${letterProgress.totalAttempts}`}
+                                    sx={{ bgcolor: 'rgba(99, 102, 241, 0.2)', color: '#6366f1' }}
+                                />
+                                <Chip
+                                    size="small"
+                                    label={`Sequência: ${letterProgress.streak}`}
+                                    sx={{ bgcolor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}
+                                />
+                            </Stack>
+                        )}
                     </Box>
 
                     {/* Canvas */}
@@ -156,8 +199,10 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                             borderRadius: 3,
                             overflow: 'hidden',
                             border: '2px solid',
-                            borderColor: isCorrect ? '#10b981' : '#6366f1',
-                            boxShadow: isCorrect ? '0 0 40px rgba(16, 185, 129, 0.3)' : '0 0 30px rgba(99, 102, 241, 0.3)',
+                            borderColor: showGradeButtons ? '#fbbf24' : '#6366f1',
+                            boxShadow: showGradeButtons
+                                ? '0 0 40px rgba(251, 191, 36, 0.3)'
+                                : '0 0 30px rgba(99, 102, 241, 0.3)',
                             transition: 'all 0.3s ease',
                         }}
                     >
@@ -199,9 +244,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                             backgroundColor: 'rgba(99, 102, 241, 0.1)',
                                             '& .MuiLinearProgress-bar': {
                                                 borderRadius: 4,
-                                                background: isCorrect
-                                                    ? 'linear-gradient(90deg, #10b981 0%, #6ee7b7 100%)'
-                                                    : 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
+                                                background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
                                             },
                                         }}
                                     />
@@ -212,22 +255,88 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                             </motion.div>
                         )}
 
-                        {/* Badges/Status */}
-                        {isCorrect && (
+                        {/* Botões de Avaliação Temporários */}
+                        {showGradeButtons && (
                             <motion.div
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ type: 'spring', stiffness: 100 }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
                             >
-                                <Chip
-                                    icon={<Check />}
-                                    label="Parabéns! Letra correta!"
-                                    color="success"
-                                    variant="filled"
-                                    sx={{ width: '100%', py: 3, fontSize: '1rem', fontWeight: 600 }}
-                                    onClick={onSuccess}
-                                />
+                                <Box sx={{ textAlign: 'center' }}>
+                                    <Typography variant="body2" sx={{ color: '#cbd5e1', mb: 2 }}>
+                                        Como foi o desenho desta letra?
+                                    </Typography>
+                                    <ButtonGroup variant="contained" size="large" sx={{ mb: 2 }}>
+                                        <Button
+                                            startIcon={<Clear />}
+                                            onClick={() => handleGrade(1)}
+                                            sx={{
+                                                bgcolor: '#ef4444',
+                                                '&:hover': { bgcolor: '#dc2626' },
+                                                color: 'white',
+                                            }}
+                                        >
+                                            Errado
+                                        </Button>
+                                        <Button
+                                            startIcon={<ThumbDown />}
+                                            onClick={() => handleGrade(2)}
+                                            sx={{
+                                                bgcolor: '#f59e0b',
+                                                '&:hover': { bgcolor: '#d97706' },
+                                                color: 'white',
+                                            }}
+                                        >
+                                            Difícil
+                                        </Button>
+                                        <Button
+                                            startIcon={<ThumbUp />}
+                                            onClick={() => handleGrade(3)}
+                                            sx={{
+                                                bgcolor: '#10b981',
+                                                '&:hover': { bgcolor: '#059669' },
+                                                color: 'white',
+                                            }}
+                                        >
+                                            Bom
+                                        </Button>
+                                        <Button
+                                            startIcon={<Check />}
+                                            onClick={() => handleGrade(4)}
+                                            sx={{
+                                                bgcolor: '#6366f1',
+                                                '&:hover': { bgcolor: '#4f46e5' },
+                                                color: 'white',
+                                            }}
+                                        >
+                                            Fácil
+                                        </Button>
+                                    </ButtonGroup>
+                                    <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                                        Estes botões são temporários. Em breve, a IA avaliará automaticamente!
+                                    </Typography>
+                                </Box>
                             </motion.div>
+                        )}
+
+                        {/* Botão de Validação */}
+                        {!showGradeButtons && (
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Button
+                                    variant="contained"
+                                    size="large"
+                                    onClick={handleValidateDrawing}
+                                    disabled={!detectedLetter}
+                                    sx={{
+                                        px: 4,
+                                        py: 1.5,
+                                        fontSize: '1.1rem',
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    🪄 Mágica - Avaliar Desenho
+                                </Button>
+                            </Box>
                         )}
                     </Stack>
 
