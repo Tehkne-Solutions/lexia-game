@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2024-03-21
+
+### Added
+
+- Voice feedback system using Web Speech API for Portuguese (Brazil) audio guidance
+- useVoice hook for speech synthesis with configurable rate and pitch for child-friendly voice
+- Automatic welcome messages when new letters are introduced
+- Success and encouragement audio feedback for correct/incorrect drawings
+- Voice integration with FSRS evaluation system
+
+### Changed
+
+- Level unlocking now based on average FSRS stability > 0.85 instead of streak count
+- Curriculum ordering optimized for motor complexity and phonetic difficulty
+- DrawingCanvas now uses evaluation result callback instead of direct success handling
+- App.tsx integrates voice feedback with curriculum progression
+
+### Technical Details
+
+- Added `src/hooks/useVoice.ts` for Web Speech API integration
+- Modified `useAlphabet.ts` to use stability-based level progression
+- Updated `curriculum.ts` with reordered letters for optimal learning sequence
+- Refactored evaluation flow to centralize feedback in App component
+
 ## [0.3.0] - 2024-03-21
 
 ### Added
