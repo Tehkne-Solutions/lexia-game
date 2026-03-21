@@ -21,6 +21,8 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAlphabet } from '../hooks';
+import { useEvaluation } from '../hooks/useEvaluation';
+import { StrokePoint } from '../lib/recognition';
 
 interface DrawingCanvasProps {
     targetLetter: string;
@@ -38,7 +40,11 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const [confidence, setConfidence] = useState(0);
     const [detectedLetter, setDetectedLetter] = useState('');
     const [showGradeButtons, setShowGradeButtons] = useState(false);
+    const [strokes, setStrokes] = useState<StrokePoint[][]>([]);
+    const [currentStroke, setCurrentStroke] = useState<StrokePoint[]>([]);
+    const [isAutomatic, setIsAutomatic] = useState(false);
     const { saveAttempt, getLetterProgress } = useAlphabet();
+    const { evaluateDrawing } = useEvaluation();
 
     const letterProgress = getLetterProgress(targetLetter);
 
@@ -82,8 +88,15 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const t = Date.now();
+
         ctx.beginPath();
-        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.moveTo(x, y);
+
+        // Start new stroke
+        setCurrentStroke([{ x, y, t }]);
     };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -96,25 +109,59 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const t = Date.now();
+
+        ctx.lineTo(x, y);
         ctx.strokeStyle = '#6366f1';
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.stroke();
+
+        // Add point to current stroke
+        setCurrentStroke(prev => [...prev, { x, y, t }]);
     };
 
     const handleMouseUp = () => {
         setIsDrawing(false);
+        if (currentStroke.length > 0) {
+            setStrokes(prev => [...prev, currentStroke]);
+            setCurrentStroke([]);
+        }
     };
 
-    const handleValidateDrawing = () => {
-        // Simular detecção de letra (você vai integrar com o FSRS depois)
-        const detectedChar = targetLetter;
-        setDetectedLetter(detectedChar);
-        setConfidence(Math.random() * 100);
-        setShowGradeButtons(true);
-        onLetterDetected(detectedChar);
+    const handleValidateDrawing = async () => {
+        if (strokes.length === 0) return;
+
+        // Use automatic evaluation
+        const result = await evaluateDrawing(targetLetter, strokes);
+
+        setIsAutomatic(result.isAutomatic);
+
+        if (result.isAutomatic) {
+            // Automatic evaluation successful
+            setDetectedLetter(result.recognizedLetter || '');
+            setConfidence(result.confidence * 100);
+
+            // Save attempt with automatic grade
+            saveAttempt(targetLetter, result.grade);
+
+            // Reset for next attempt
+            setStrokes([]);
+            setCurrentStroke([]);
+
+            if (result.grade >= 3) {
+                onSuccess();
+            }
+        } else {
+            // Fallback to manual evaluation
+            setDetectedLetter(targetLetter); // Simulate detection for manual
+            setConfidence(50);
+            setShowGradeButtons(true);
+            onLetterDetected(targetLetter);
+        }
     };
 
     const handleGrade = (grade: number) => {
@@ -141,6 +188,9 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         setDetectedLetter('');
         setConfidence(0);
         setShowGradeButtons(false);
+        setStrokes([]);
+        setCurrentStroke([]);
+        setIsAutomatic(false);
     };
 
     return (
@@ -249,7 +299,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                         }}
                                     />
                                     <Typography variant="caption" sx={{ color: '#94a3b8', mt: 1 }}>
-                                        Confiança: {confidence.toFixed(1)}%
+                                        Confiança: {confidence.toFixed(1)}% {isAutomatic ? '(Automático)' : '(Manual)'}
                                     </Typography>
                                 </Box>
                             </motion.div>
