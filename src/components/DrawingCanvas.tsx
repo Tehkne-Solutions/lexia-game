@@ -5,7 +5,6 @@ import {
     Typography,
     Stack,
     LinearProgress,
-    Chip,
     IconButton,
     Tooltip,
     Button,
@@ -20,20 +19,19 @@ import {
     ThumbUp,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { useAlphabet } from '../hooks';
 import { useEvaluation } from '../hooks/useEvaluation';
 import { StrokePoint } from '../lib/recognition';
 
 interface DrawingCanvasProps {
     targetLetter: string;
     onLetterDetected: (letter: string) => void;
-    onSuccess: () => void;
+    onEvaluationResult: (grade: number) => void;
 }
 
 export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     targetLetter,
     onLetterDetected,
-    onSuccess,
+    onEvaluationResult,
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -43,10 +41,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const [strokes, setStrokes] = useState<StrokePoint[][]>([]);
     const [currentStroke, setCurrentStroke] = useState<StrokePoint[]>([]);
     const [isAutomatic, setIsAutomatic] = useState(false);
-    const { saveAttempt, getLetterProgress } = useAlphabet();
     const { evaluateDrawing } = useEvaluation();
-
-    const letterProgress = getLetterProgress(targetLetter);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -145,16 +140,12 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             setDetectedLetter(result.recognizedLetter || '');
             setConfidence(result.confidence * 100);
 
-            // Save attempt with automatic grade
-            saveAttempt(targetLetter, result.grade);
+            // Call evaluation result
+            onEvaluationResult(result.grade);
 
             // Reset for next attempt
             setStrokes([]);
             setCurrentStroke([]);
-
-            if (result.grade >= 3) {
-                onSuccess();
-            }
         } else {
             // Fallback to manual evaluation
             setDetectedLetter(targetLetter); // Simulate detection for manual
@@ -165,18 +156,13 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     };
 
     const handleGrade = (grade: number) => {
-        // Salvar a tentativa usando FSRS
-        saveAttempt(targetLetter, grade as any);
+        // Call evaluation result
+        onEvaluationResult(grade);
 
         // Resetar estado
         setShowGradeButtons(false);
         setDetectedLetter('');
         setConfidence(0);
-
-        // Se foi bom ou fácil, considerar sucesso
-        if (grade >= 3) {
-            onSuccess();
-        }
     };
 
     const handleClear = () => {
@@ -224,22 +210,6 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                 {targetLetter.toUpperCase()}
                             </Typography>
                         </motion.div>
-
-                        {/* Estatísticas da letra */}
-                        {letterProgress && (
-                            <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 1 }}>
-                                <Chip
-                                    size="small"
-                                    label={`Tentativas: ${letterProgress.totalAttempts}`}
-                                    sx={{ bgcolor: 'rgba(99, 102, 241, 0.2)', color: '#6366f1' }}
-                                />
-                                <Chip
-                                    size="small"
-                                    label={`Sequência: ${letterProgress.streak}`}
-                                    sx={{ bgcolor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}
-                                />
-                            </Stack>
-                        )}
                     </Box>
 
                     {/* Canvas */}

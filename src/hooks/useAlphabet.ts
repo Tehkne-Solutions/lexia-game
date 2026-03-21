@@ -151,59 +151,16 @@ export function useAlphabet() {
                 return progress;
             });
 
-            // Verifica se deve avançar de nível
-            const levelComplete = availableLetters.every(item => {
-                const progress = newProgress.find(p => p.letter === item.letter);
-                return progress && progress.streak >= 3;
-            });
+            // Verifica se deve avançar de nível baseado na estabilidade média
+            const currentLevelCards = CURRICULUM.filter(i => i.level === currentLevel);
+            const avgStability = currentLevelCards.reduce((acc, curr) =>
+                acc + (newProgress.find(p => p.letter === curr.letter)?.card.stability || 0), 0) / currentLevelCards.length;
 
-            if (levelComplete && currentLevel < 4) {
+            if (avgStability > 0.85 && currentLevel < 4) {
                 const newLevel = currentLevel + 1;
                 setCurrentLevel(newLevel);
                 saveLevelToStorage(newLevel);
-            }
-
-            // Salva no LocalStorage
-            saveToStorage(newProgress);
-
-            return newProgress;
-        });
-    }, [saveToStorage, availableLetters, currentLevel, saveLevelToStorage]);
-
-    // Salva uma tentativa para uma letra específica
-    const saveAttempt = useCallback((letter: string, grade: Grade) => {
-        setLettersProgress(prevProgress => {
-            const newProgress = prevProgress.map(progress => {
-                if (progress.letter === letter) {
-                    // Calcula o novo card usando FSRS
-                    const newCard = fsrs(grade, progress.card);
-
-                    // Atualiza estatísticas
-                    const isCorrect = grade >= 3; // Good ou Easy são considerados corretos
-                    const newStreak = isCorrect ? progress.streak + 1 : 0;
-
-                    return {
-                        ...progress,
-                        card: newCard,
-                        lastGrade: grade,
-                        totalAttempts: progress.totalAttempts + 1,
-                        correctAttempts: progress.correctAttempts + (isCorrect ? 1 : 0),
-                        streak: newStreak,
-                    };
-                }
-                return progress;
-            });
-
-            // Verifica se deve avançar de nível
-            const levelComplete = availableLetters.every(item => {
-                const progress = newProgress.find(p => p.letter === item.letter);
-                return progress && progress.streak >= 3;
-            });
-
-            if (levelComplete && currentLevel < 4) {
-                const newLevel = currentLevel + 1;
-                setCurrentLevel(newLevel);
-                saveLevelToStorage(newLevel);
+                // Trigger de celebração de Novo Nível!
             }
 
             // Salva no LocalStorage

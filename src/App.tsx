@@ -1,20 +1,40 @@
-﻿import React from 'react';
+﻿import React, { useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, Paper } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useAlphabet } from './hooks';
+import { useVoice } from './hooks/useVoice';
 import { AnchorDisplay } from './components/AnchorDisplay';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { theme } from './theme';
 
 function App() {
     const { getNextLetter, saveAttempt, currentLevel, isLoading } = useAlphabet();
+    const { speak } = useVoice();
     const currentLetterItem = getNextLetter();
 
-    const handleLetterSuccess = () => {
-        // A próxima letra será automaticamente selecionada pelo hook
-        console.log('Letra completada com sucesso!');
+    const handleEvaluationResult = (grade: number) => {
+        const isCorrect = grade >= 3;
+        if (isCorrect) {
+            // Feedback de Sucesso + Âncora Semântica
+            speak(`Incrível! Você desenhou a letra ${currentLetterItem?.letter}, de ${currentLetterItem?.anchorWord}!`);
+
+            // Confetes e próxima letra (Grade 3 ou 4 no FSRS)
+            saveAttempt(currentLetterItem!.letter, grade);
+        } else {
+            // Feedback de Incentivo (Sem punição - Malkuth)
+            speak(`Quase lá! Vamos tentar a letra ${currentLetterItem?.letter} de novo?`);
+
+            // Repetição imediata (Grade 1 no FSRS)
+            saveAttempt(currentLetterItem!.letter, grade);
+        }
     };
+
+    useEffect(() => {
+        if (currentLetterItem) {
+            speak(`Agora, vamos desenhar a letra ${currentLetterItem.letter} de ${currentLetterItem.anchorWord}`);
+        }
+    }, [currentLetterItem, speak]);
 
     if (isLoading) {
         return (
@@ -69,7 +89,7 @@ function App() {
                             <DrawingCanvas
                                 targetLetter={currentLetterItem.letter}
                                 onLetterDetected={(letter) => console.log('Letra detectada:', letter)}
-                                onSuccess={handleLetterSuccess}
+                                onEvaluationResult={handleEvaluationResult}
                             />
                         </Box>
                     </Box>
