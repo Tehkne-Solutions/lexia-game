@@ -21,6 +21,39 @@ import {
 import { motion } from 'framer-motion';
 import { useEvaluation } from '../hooks/useEvaluation';
 import { StrokePoint } from '../lib/recognition';
+import confetti from 'canvas-confetti';
+
+const celebrateSuccess = () => {
+    const duration = 3 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+    const interval: any = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) return clearInterval(interval);
+
+        const particleCount = 50 * (timeLeft / duration);
+        // Dispara de dois lados para efeito de palco
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
+
+    // Som de Vitória (Web Audio API para evitar delay de carregamento de MP3 externo)
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // Lá
+    oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5); // Lá oitavado
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.5);
+};
 
 interface DrawingCanvasProps {
     targetLetter: string;
@@ -143,6 +176,11 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             // Call evaluation result
             onEvaluationResult(result.grade);
 
+            // Celebrate if good grade
+            if (result.grade >= 3) {
+                celebrateSuccess();
+            }
+
             // Reset for next attempt
             setStrokes([]);
             setCurrentStroke([]);
@@ -158,6 +196,11 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const handleGrade = (grade: number) => {
         // Call evaluation result
         onEvaluationResult(grade);
+
+        // Celebrate if good grade
+        if (grade >= 3) {
+            celebrateSuccess();
+        }
 
         // Resetar estado
         setShowGradeButtons(false);

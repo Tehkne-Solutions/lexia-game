@@ -6,12 +6,15 @@ import { useAlphabet } from './hooks';
 import { useVoice } from './hooks/useVoice';
 import { AnchorDisplay } from './components/AnchorDisplay';
 import { DrawingCanvas } from './components/DrawingCanvas';
+import { ParentDashboard } from './components/ParentDashboard';
 import { theme } from './theme';
 
 function App() {
-    const { getNextLetter, saveAttempt, currentLevel, isLoading } = useAlphabet();
+    const { getNextLetter, saveAttempt, currentLevel, isLoading, lettersProgress } = useAlphabet();
     const { speak } = useVoice();
     const currentLetterItem = getNextLetter();
+
+    const cardsState = lettersProgress.reduce((acc, p) => ({ ...acc, [p.letter]: p.card }), {});
 
     const handleEvaluationResult = (grade: number) => {
         const isCorrect = grade >= 3;
@@ -76,6 +79,11 @@ function App() {
                                 Nível Atual: {currentLevel}
                             </Typography>
                         </Paper>
+                    </Box>
+
+                    {/* Dashboard do Responsável */}
+                    <Box sx={{ mb: 4 }}>
+                        <ParentDashboard cardsState={cardsState} />
                     </Box>
 
                     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, alignItems: 'flex-start' }}>
