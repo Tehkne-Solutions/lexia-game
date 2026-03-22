@@ -7,30 +7,38 @@ import { useVoice } from './hooks/useVoice';
 import { AnchorDisplay } from './components/AnchorDisplay';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { ParentDashboard } from './components/ParentDashboard';
+import { LexiMascot } from './components/LexiMascot';
+import { AdventureMap } from './components/AdventureMap';
 import { theme } from './theme';
 
 function App() {
     const { getNextLetter, saveAttempt, currentLevel, isLoading, lettersProgress } = useAlphabet();
     const { speak } = useVoice();
     const currentLetterItem = getNextLetter();
+    const [mascotState, setMascotState] = React.useState<'idle' | 'success' | 'thinking'>('idle');
 
     const cardsState = lettersProgress.reduce((acc, p) => ({ ...acc, [p.letter]: p.card }), {});
 
     const handleEvaluationResult = (grade: number) => {
         const isCorrect = grade >= 3;
         if (isCorrect) {
+            setMascotState('success');
             // Feedback de Sucesso + Âncora Semântica
             speak(`Incrível! Você desenhou a letra ${currentLetterItem?.letter}, de ${currentLetterItem?.anchorWord}!`);
 
             // Confetes e próxima letra (Grade 3 ou 4 no FSRS)
             saveAttempt(currentLetterItem!.letter, grade);
         } else {
+            setMascotState('thinking');
             // Feedback de Incentivo (Sem punição - Malkuth)
             speak(`Quase lá! Vamos tentar a letra ${currentLetterItem?.letter} de novo?`);
 
             // Repetição imediata (Grade 1 no FSRS)
             saveAttempt(currentLetterItem!.letter, grade);
         }
+
+        // Reset to idle after 3 seconds
+        setTimeout(() => setMascotState('idle'), 3000);
     };
 
     useEffect(() => {
@@ -74,11 +82,15 @@ function App() {
                         <Typography variant="h5" color="text.secondary">
                             Alfabetização Gamificada com IA
                         </Typography>
-                        <Paper sx={{ mt: 2, p: 2, display: 'inline-block' }}>
-                            <Typography variant="h6">
-                                Nível Atual: {currentLevel}
-                            </Typography>
-                        </Paper>
+                    </Box>
+
+                    {/* Mapa de Aventura */}
+                    <Box sx={{ mb: 4 }}>
+                        <AdventureMap
+                            currentLevel={currentLevel}
+                            unlockedLevels={[1, 2, 3, 4]} // TODO: Calculate based on FSRS stability
+                            onLevelSelect={(level) => console.log('Selecionar nível:', level)}
+                        />
                     </Box>
 
                     {/* Dashboard do Responsável */}
@@ -94,6 +106,7 @@ function App() {
 
                         {/* Canvas de Desenho */}
                         <Box sx={{ flex: 2 }}>
+                            <LexiMascot state={mascotState} />
                             <DrawingCanvas
                                 targetLetter={currentLetterItem.letter}
                                 onLetterDetected={(letter) => console.log('Letra detectada:', letter)}

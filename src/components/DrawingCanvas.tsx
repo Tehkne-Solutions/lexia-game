@@ -10,18 +10,20 @@ import {
     Button,
     ButtonGroup,
 } from '@mui/material';
-import {
-    RestartAlt,
-    VolumeUp,
-    Check,
-    Clear,
-    ThumbDown,
-    ThumbUp,
-} from '@mui/icons-material';
+
 import { motion } from 'framer-motion';
 import { useEvaluation } from '../hooks/useEvaluation';
 import { StrokePoint } from '../lib/recognition';
 import confetti from 'canvas-confetti';
+
+interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    life: number;
+    maxLife: number;
+}
 
 const celebrateSuccess = () => {
     const duration = 3 * 1000;
@@ -74,7 +76,25 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const [strokes, setStrokes] = useState<StrokePoint[][]>([]);
     const [currentStroke, setCurrentStroke] = useState<StrokePoint[]>([]);
     const [isAutomatic, setIsAutomatic] = useState(false);
+    const [particles, setParticles] = useState<Particle[]>([]);
     const { evaluateDrawing } = useEvaluation();
+
+    // Animate particles
+    useEffect(() => {
+        if (particles.length === 0) return;
+
+        const animate = () => {
+            setParticles(prev => prev.map(p => ({
+                ...p,
+                x: p.x + p.vx,
+                y: p.y + p.vy,
+                life: p.life - 16, // assuming 60fps
+            })).filter(p => p.life > 0));
+        };
+
+        const interval = setInterval(animate, 16);
+        return () => clearInterval(interval);
+    }, [particles]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -105,7 +125,65 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
             ctx.lineTo(canvas.width, i);
             ctx.stroke();
         }
-    }, []);
+
+        // Draw ghost letter
+        drawGhostLetter(ctx, canvas, targetLetter);
+    }, [targetLetter]);
+
+    // Draw particles
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Clear and redraw background and ghost letter
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.1)');
+        gradient.addColorStop(1, 'rgba(236, 72, 153, 0.1)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= canvas.width; i += 20) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, canvas.height);
+            ctx.stroke();
+        }
+        for (let i = 0; i <= canvas.height; i += 20) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(canvas.width, i);
+            ctx.stroke();
+        }
+
+        drawGhostLetter(ctx, canvas, targetLetter);
+
+        // Draw particles
+        particles.forEach(p => {
+            ctx.save();
+            ctx.globalAlpha = p.life / p.maxLife;
+            ctx.fillStyle = '#00f2fe';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+    }, [particles, targetLetter]);
+
+    const drawGhostLetter = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, letter: string) => {
+        ctx.save();
+        ctx.font = '200px "Fredoka One"';
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.15)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter, canvas.width / 2, canvas.height / 2);
+        ctx.restore();
+    };
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         setIsDrawing(true);
@@ -142,11 +220,24 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
         const t = Date.now();
 
         ctx.lineTo(x, y);
-        ctx.strokeStyle = '#6366f1';
+        ctx.strokeStyle = '#00f2fe';
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#4facfe';
         ctx.stroke();
+
+        // Add particles
+        const newParticle: Particle = {
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            life: 500,
+            maxLife: 500,
+        };
+        setParticles(prev => [...prev, newParticle]);
 
         // Add point to current stroke
         setCurrentStroke(prev => [...prev, { x, y, t }]);
@@ -331,7 +422,6 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                     </Typography>
                                     <ButtonGroup variant="contained" size="large" sx={{ mb: 2 }}>
                                         <Button
-                                            startIcon={<Clear />}
                                             onClick={() => handleGrade(1)}
                                             sx={{
                                                 bgcolor: '#ef4444',
@@ -339,10 +429,9 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                                 color: 'white',
                                             }}
                                         >
-                                            Errado
+                                            ❌ Errado
                                         </Button>
                                         <Button
-                                            startIcon={<ThumbDown />}
                                             onClick={() => handleGrade(2)}
                                             sx={{
                                                 bgcolor: '#f59e0b',
@@ -350,10 +439,9 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                                 color: 'white',
                                             }}
                                         >
-                                            Difícil
+                                            😟 Difícil
                                         </Button>
                                         <Button
-                                            startIcon={<ThumbUp />}
                                             onClick={() => handleGrade(3)}
                                             sx={{
                                                 bgcolor: '#10b981',
@@ -361,10 +449,9 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                                 color: 'white',
                                             }}
                                         >
-                                            Bom
+                                            👍 Bom
                                         </Button>
                                         <Button
-                                            startIcon={<Check />}
                                             onClick={() => handleGrade(4)}
                                             sx={{
                                                 bgcolor: '#6366f1',
@@ -372,7 +459,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                                 color: 'white',
                                             }}
                                         >
-                                            Fácil
+                                            ✅ Fácil
                                         </Button>
                                     </ButtonGroup>
                                     <Typography variant="caption" sx={{ color: '#94a3b8' }}>
@@ -414,7 +501,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                     '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.2)' },
                                 }}
                             >
-                                <RestartAlt />
+                                ✨
                             </IconButton>
                         </Tooltip>
                         <Tooltip title="Ouvir pronúncia">
@@ -425,7 +512,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
                                     '&:hover': { bgcolor: 'rgba(236, 72, 153, 0.2)' },
                                 }}
                             >
-                                <VolumeUp />
+                                🔊
                             </IconButton>
                         </Tooltip>
                     </Stack>

@@ -1,7 +1,6 @@
 // Hook for automatic evaluation of drawn letters
 import { useCallback } from 'react';
-import { recognizeDrawing, StrokePoint, HandwritingResult } from '../lib/recognition';
-import { celebrate } from '../lib/voice';
+import { recognizeDrawing, StrokePoint } from '../lib/recognition';
 
 export type Grade = 1 | 2 | 3 | 4;
 
@@ -33,10 +32,10 @@ export function useEvaluation() {
                 grade = 1; // No match - Again
             }
 
-            // Celebrate on good grades
-            if (grade >= 3) {
-                celebrate();
-            }
+            // Optionally celebrate on good grades (handled by UI if needed)
+            // if (grade >= 3) {
+            //     celebrate();
+            // }
 
             return {
                 grade,
