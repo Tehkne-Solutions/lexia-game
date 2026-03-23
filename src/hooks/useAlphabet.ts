@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, createEmptyCard, fsrs, needsReview, Grade } from '../lib/fsrs';
 import { CURRICULUM, CurriculumItem } from '../data/curriculum';
+import { supabase } from '../lib/supabase';
 
 // Interface para o progresso de uma letra
 interface LetterProgress {
@@ -24,30 +25,81 @@ export function useAlphabet() {
     const [currentLevel, setCurrentLevel] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Carrega o progresso e nível do LocalStorage
+    // Carrega o progresso do Supabase, senão do LocalStorage
     useEffect(() => {
-        try {
-            const storedProgress = localStorage.getItem(STORAGE_KEY);
-            const storedLevel = localStorage.getItem(LEVEL_KEY);
+        const loadProgress = async () => {
+            try {
+                // 1) Tenta carregar do Supabase
+                const { data, error } = await supabase
+                    .from('lexia_progress')
+                    .select('*')
+                    .order('letter', { ascending: true });
 
-            if (storedLevel) {
-                setCurrentLevel(parseInt(storedLevel, 10));
-            }
+                if (error) {
+                    console.warn('Não foi possível carregar progresso do Supabase:', error.message);
+                }
 
-            if (storedProgress) {
-                const parsed = JSON.parse(storedProgress);
-                // Converte as datas de string para Date
-                const progress: LetterProgress[] = parsed.map((item: any) => ({
-                    ...item,
-                    card: {
-                        ...item.card,
-                        due: new Date(item.card.due),
-                        last_review: item.card.last_review ? new Date(item.card.last_review) : undefined,
-                    },
-                }));
-                setLettersProgress(progress);
-            } else {
-                // Inicializa com cards vazios para todas as letras do currículo
+                if (data && data.length > 0) {
+                    const progress: LetterProgress[] = data.map((item: any) => ({
+                        letter: item.letter,
+                        card: {
+                            ...item.card,
+                            due: new Date(item.card.due),
+                            last_review: item.card.last_review ? new Date(item.card.last_review) : undefined,
+                        },
+                        totalAttempts: item.total_attempts,
+                        correctAttempts: item.correct_attempts,
+                        streak: item.streak,
+                        lastGrade: item.last_grade,
+                    }));
+
+                    setLettersProgress(progress);
+                    setCurrentLevel(data[0]?.current_level || 1);
+                    setIsLoading(false);
+                    return;
+                }
+
+                // 2) Se não tem no Supabase, carrega do LocalStorage
+                const storedProgress = localStorage.getItem(STORAGE_KEY);
+                const storedLevel = localStorage.getItem(LEVEL_KEY);
+
+                if (storedLevel) {
+                    setCurrentLevel(parseInt(storedLevel, 10));
+                }
+
+                if (storedProgress) {
+                    const parsed = JSON.parse(storedProgress);
+                    const progress: LetterProgress[] = parsed.map((item: any) => ({
+                        ...item,
+                        card: {
+                            ...item.card,
+                            due: new Date(item.card.due),
+                            last_review: item.card.last_review ? new Date(item.card.last_review) : undefined,
+                        },
+                    }));
+                    setLettersProgress(progress);
+                } else {
+                    const initialProgress: LetterProgress[] = CURRICULUM.map(item => ({
+                        letter: item.letter,
+                        card: createEmptyCard(),
+                        totalAttempts: 0,
+                        correctAttempts: 0,
+                        streak: 0,
+                    }));
+                    setLettersProgress(initialProgress);
+                    saveToStorage(initialProgress);
+                    // Envio inicial ao Supabase
+                    await supabase.from('lexia_progress').upsert(initialProgress.map(p => ({
+                        letter: p.letter,
+                        card: p.card,
+                        total_attempts: p.totalAttempts,
+                        correct_attempts: p.correctAttempts,
+                        streak: p.streak,
+                        current_level: currentLevel,
+                    })));
+                }
+            } catch (error) {
+                console.error('Erro ao carregar progresso:', error);
                 const initialProgress: LetterProgress[] = CURRICULUM.map(item => ({
                     letter: item.letter,
                     card: createEmptyCard(),
@@ -56,32 +108,45 @@ export function useAlphabet() {
                     streak: 0,
                 }));
                 setLettersProgress(initialProgress);
-                saveToStorage(initialProgress);
+            } finally {
+                setIsLoading(false);
             }
-        } catch (error) {
-            console.error('Erro ao carregar progresso:', error);
-            // Fallback para estado inicial
-            const initialProgress: LetterProgress[] = CURRICULUM.map(item => ({
-                letter: item.letter,
-                card: createEmptyCard(),
-                totalAttempts: 0,
-                correctAttempts: 0,
-                streak: 0,
-            }));
-            setLettersProgress(initialProgress);
-        } finally {
-            setIsLoading(false);
-        }
+        };
+
+        loadProgress();
     }, []);
 
-    // Salva no LocalStorage
-    const saveToStorage = useCallback((progress: LetterProgress[]) => {
+    // Salva no LocalStorage e no Supabase (se disponível)
+    const saveToStorage = useCallback(async (progress: LetterProgress[]) => {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
         } catch (error) {
-            console.error('Erro ao salvar progresso:', error);
+            console.error('Erro ao salvar progresso localmente:', error);
         }
-    }, []);
+
+        try {
+            const upsertPayload = progress.map(p => ({
+                letter: p.letter,
+                card: p.card,
+                total_attempts: p.totalAttempts,
+                correct_attempts: p.correctAttempts,
+                streak: p.streak,
+                last_grade: p.lastGrade ?? null,
+                current_level: currentLevel,
+            }));
+
+            const { error } = await supabase.from('lexia_progress').upsert(upsertPayload, {
+                onConflict: 'letter',
+                returning: 'minimal',
+            });
+
+            if (error) {
+                console.warn('Erro ao gravar progresso no Supabase:', error.message);
+            }
+        } catch (error) {
+            console.warn('Supabase não disponível ou falha de conexão:', error);
+        }
+    }, [currentLevel]);
 
     // Salva nível no LocalStorage
     const saveLevelToStorage = useCallback((level: number) => {
@@ -163,8 +228,8 @@ export function useAlphabet() {
                 // Trigger de celebração de Novo Nível!
             }
 
-            // Salva no LocalStorage
-            saveToStorage(newProgress);
+            // Salva no LocalStorage e Supabase
+            void saveToStorage(newProgress);
 
             return newProgress;
         });
@@ -215,7 +280,7 @@ export function useAlphabet() {
                 return progress;
             });
 
-            saveToStorage(newProgress);
+            void saveToStorage(newProgress);
             return newProgress;
         });
     }, [saveToStorage]);
@@ -232,7 +297,7 @@ export function useAlphabet() {
 
         setLettersProgress(initialProgress);
         setCurrentLevel(1);
-        saveToStorage(initialProgress);
+        void saveToStorage(initialProgress);
         saveLevelToStorage(1);
     }, [saveToStorage, saveLevelToStorage]);
 
