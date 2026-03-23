@@ -1,9 +1,10 @@
 ﻿import React, { useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { Container, Box, Typography, Paper } from '@mui/material';
+import { Container, Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useAlphabet } from './hooks';
 import { useVoice } from './hooks/useVoice';
+import { Grade } from './lib/fsrs';
 import { AnchorDisplay } from './components/AnchorDisplay';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { ParentDashboard } from './components/ParentDashboard';
@@ -27,14 +28,14 @@ function App() {
             speak(`Incrível! Você desenhou a letra ${currentLetterItem?.letter}, de ${currentLetterItem?.anchorWord}!`);
 
             // Confetes e próxima letra (Grade 3 ou 4 no FSRS)
-            saveAttempt(currentLetterItem!.letter, grade);
+            saveAttempt(currentLetterItem!.letter, grade as Grade);
         } else {
             setMascotState('thinking');
             // Feedback de Incentivo (Sem punição - Malkuth)
             speak(`Quase lá! Vamos tentar a letra ${currentLetterItem?.letter} de novo?`);
 
             // Repetição imediata (Grade 1 no FSRS)
-            saveAttempt(currentLetterItem!.letter, grade);
+            saveAttempt(currentLetterItem!.letter, grade as Grade);
         }
 
         // Reset to idle after 3 seconds

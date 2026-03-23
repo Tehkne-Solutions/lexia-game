@@ -137,7 +137,6 @@ export function useAlphabet() {
 
             const { error } = await supabase.from('lexia_progress').upsert(upsertPayload, {
                 onConflict: 'letter',
-                returning: 'minimal',
             });
 
             if (error) {

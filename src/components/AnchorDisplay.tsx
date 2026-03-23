@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Card } from '@mui/material';
+import { Typography, Card } from '@mui/material';
 import { motion } from 'framer-motion';
 import { CurriculumItem } from '../data/curriculum';
 

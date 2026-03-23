@@ -1,4 +1,3 @@
-import React from 'react';
 import { CURRICULUM } from '../data/curriculum';
 
 export const ParentDashboard = ({ cardsState }: { cardsState: any }) => {
