@@ -1,150 +1,174 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Box, Button, Paper } from '@mui/material';
+import React, { useRef, useEffect, useState, useLayoutEffect, useCallback } from 'react';
+import { Box, Button, CircularProgress } from '@mui/material';
+import { Eraser, Sparkle } from '@phosphor-icons/react';
 
-export const DrawingCanvas = ({ onValidate, targetLetter, isProcessing }: any) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [hasContent, setHasContent] = useState(false);
-    const [pointCount, setPointCount] = useState(0);
-    const [ink, setInk] = useState<number[][][]>([]);
+interface DrawingCanvasProps {
+  onValidate: (ink: number[][][]) => void;
+  isProcessing: boolean;
+}
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ onValidate, isProcessing }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [hasContent, setHasContent] = useState(false);
+  const [ink, setInk] = useState<number[][][]>([]);
 
-        // Ajuste de DPI para não ficar embaçado e corrigir o offset
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * window.devicePixelRatio;
-        canvas.height = rect.height * window.devicePixelRatio;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = '#00f2fe';
+  const getCanvasContext = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    return canvas.getContext('2d');
+  }, []);
 
-            // Desenha a "Letra Fantasma" ao carregar
-            ctx.font = 'bold 160px Fredoka, Poppins, Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = 'rgba(79, 172, 254, 0.08)';
-            ctx.fillText(targetLetter.toUpperCase(), rect.width / 2 / window.devicePixelRatio, rect.height / 2 / window.devicePixelRatio);
-        }
-    }, [targetLetter]);
+  const clearCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = getCanvasContext();
+    if (!canvas || !ctx) return;
 
-    const getPos = (e: any) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return { x: 0, y: 0 };
-        const rect = canvas.getBoundingClientRect();
-        // CORREÇÃO DO OFFSET MOBILE/DESKTOP
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return {
-            x: clientX - rect.left,
-            y: clientY - rect.top
-        };
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setInk([]);
+    setHasContent(false);
+  }, [getCanvasContext]);
+
+  // Efeito para ajustar o tamanho do canvas ao contêiner
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current!;
+    const container = containerRef.current!;
+    
+    const observer = new ResizeObserver(entries => {
+      const entry = entries[0];
+      const { width, height } = entry.contentRect;
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      
+      const ctx = canvas.getContext('2d')!;
+      ctx.scale(dpr, dpr);
+      
+      // Reconfigura o contexto após redimensionar
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 8; // Linha um pouco mais grossa para crianças
+      ctx.strokeStyle = '#052c41'; // Cor escura para bom contraste
+      
+      // Redesenha o traço atual se houver
+      if(ink.length > 0) {
+          ctx.beginPath();
+          ink.forEach(stroke => {
+              ctx.moveTo(stroke[0][0], stroke[1][0]);
+              for (let i = 1; i < stroke[0].length; i++) {
+                  ctx.lineTo(stroke[0][i], stroke[1][i]);
+              }
+          });
+          ctx.stroke();
+      }
+    });
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
     };
+  }, [ink]);
 
-    const start = (e: any) => {
-        setIsDrawing(true);
-        const { x, y } = getPos(e);
-        setInk(prev => [...prev, [[x], [y], [Date.now()]]]);
-        const ctx = canvasRef.current?.getContext('2d');
-        ctx?.beginPath();
-        ctx?.moveTo(x, y);
+  useEffect(() => {
+    // Limpa o canvas quando o componente é re-montado (pela prop 'key' em App.tsx)
+    clearCanvas();
+  }, [clearCanvas]);
+  
+  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
     };
+  };
 
-    const draw = (e: any) => {
-        if (!isDrawing) return;
-        const { x, y } = getPos(e);
-        const ctx = canvasRef.current?.getContext('2d');
-        ctx?.lineTo(x, y);
-        ctx?.stroke();
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    const { x, y } = getPos(e);
+    const ctx = getCanvasContext();
+    if (!ctx) return;
 
-        setPointCount(prev => {
-            const next = prev + 1;
-            if (next > 10) {
-                setHasContent(true);
-            }
-            return next;
-        });
+    setIsDrawing(true);
+    setInk(prev => [...prev, [[x], [y], [Date.now()]]]);
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
 
-        setInk(prev => {
-            const current = [...prev];
-            const last = current[current.length - 1];
-            last[0].push(x);
-            last[1].push(y);
-            last[2].push(Date.now());
-            return current;
-        });
-    };
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing) return;
+    const { x, y } = getPos(e);
+    const ctx = getCanvasContext();
+    if (!ctx) return;
 
-    const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    setHasContent(true);
 
-        ctx.clearRect(0, 0, rect.width, rect.height);
-        ctx.font = 'bold 160px Fredoka, Poppins, Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(79, 172, 254, 0.08)';
-        ctx.fillText(targetLetter.toUpperCase(), rect.width / 2 / window.devicePixelRatio, rect.height / 2 / window.devicePixelRatio);
+    setInk(prev => {
+      const current = [...prev];
+      const lastStroke = current[current.length - 1];
+      lastStroke[0].push(x);
+      lastStroke[1].push(y);
+      lastStroke[2].push(Date.now());
+      return current;
+    });
+  };
 
-        setHasContent(false);
-        setPointCount(0);
-        setInk([]);
-    };
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
 
-    return (
-        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <Paper elevation={4} sx={{ width: '100%', maxWidth: '320px', aspectRatio: '1/1', touchAction: 'none', border: '3px solid #4facfe', borderRadius: '20px', overflow: 'hidden' }}>
-                <canvas
-                    ref={canvasRef}
-                    onMouseDown={start}
-                    onMouseMove={draw}
-                    onMouseUp={() => setIsDrawing(false)}
-                    onMouseLeave={() => setIsDrawing(false)}
-                    onTouchStart={(e) => { e.preventDefault(); start(e); }}
-                    onTouchMove={(e) => { e.preventDefault(); draw(e); }}
-                    onTouchEnd={(e) => { e.preventDefault(); setIsDrawing(false); }}
-                    className="drawing-canvas"
-                />
-            </Paper>
+  const handleValidateClick = () => {
+      if (hasContent) {
+          onValidate(ink);
+      }
+  };
 
-            <Box sx={{ display: 'flex', gap: 2, width: '100%', maxWidth: '320px' }}>
-                <Button
-                    variant="outlined"
-                    fullWidth
-                    disabled={!hasContent}
-                    onClick={clearCanvas}
-                    sx={{ borderRadius: '50px', py: 1.5, fontWeight: '600' }}
-                >
-                    Limpar
-                </Button>
+  return (
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+      <Box ref={containerRef} sx={{ width: '100%', height: '100%', touchAction: 'none', background: '#fff', borderRadius: '4px', overflow: 'hidden' }}>
+        <canvas
+          ref={canvasRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+          style={{ display: 'block', width: '100%', height: '100%' }}
+        />
+      </Box>
 
-                <Button
-                    variant="contained"
-                    fullWidth
-                    disabled={!hasContent || isProcessing}
-                    onClick={() => onValidate(ink)}
-                    sx={{
-                        borderRadius: '50px',
-                        py: 1.5,
-                        fontWeight: '600',
-                        background: 'linear-gradient(45deg, #4facfe, #00f2fe)',
-                        boxShadow: '0 4px 15px rgba(79, 172, 254, 0.4)',
-                        '&:hover': {
-                            boxShadow: '0 6px 20px rgba(79, 172, 254, 0.6)'
-                        }
-                    }}
-                >
-                    {isProcessing ? '⏳ Verificando...' : '🪄 MÁGICA!'}
-                </Button>
-            </Box>
-        </Box>
-    );
+      <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+        <Button
+          variant="outlined"
+          fullWidth
+          disabled={!hasContent || isProcessing}
+          onClick={clearCanvas}
+          startIcon={<Eraser />}
+          sx={{ borderRadius: 2, py: 1 }}
+        >
+          Limpar
+        </Button>
+
+        <Button
+          variant="contained"
+          fullWidth
+          disabled={!hasContent || isProcessing}
+          onClick={handleValidateClick}
+          startIcon={isProcessing ? <CircularProgress size={20} color="inherit" /> : <Sparkle />}
+          sx={{ borderRadius: 2, py: 1, background: 'linear-gradient(45deg, #4facfe, #00f2fe)', '&:disabled': { background: 'grey.300'} }}
+        >
+          {isProcessing ? 'Verificando...' : 'Verificar'}
+        </Button>
+      </Box>
+    </Box>
+  );
 };

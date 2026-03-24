@@ -1,0 +1,1091 @@
+Essa estrutura que o Base44 gerou é um boilerplate de nível profissional (baseado no padrão Shadcn/UI). Ele separou tudo em "átomos": cada botão, cada badge e cada lógica tem seu próprio arquivo.
+
+Para você migrar isso para o seu VS Code sem ter que baixar um por um, vamos focar nos arquivos vitais. Se você copiar a lógica desses arquivos abaixo, você reconstrói o app idêntico:
+
+📂 1. A Inteligência (Pasta lib/)
+Estes são os arquivos que fazem o jogo "pensar":
+
+fsrs.js: Contém o cálculo de repetição (o que já vínhamos fazendo).
+
+sounds.js: Aqui é onde a mágica da narração acontece. Provavelmente ele usa a Web Speech API ou links de áudio.
+
+alphabetData.js: A lista de letras e palavras (A de Abelha, B de Bola).
+
+📂 2. O Visual do Jogo (Pasta components/game/)
+Aqui é onde o design que você gostou está escondido:
+
+MascotAvatar.jsx: O código da corujinha/personagem.
+
+DrawingCanvas.jsx: A versão do canvas deles (que agora você já sabe como corrigir a precisão).
+
+CelebrationOverlay.jsx: Aquele efeito de confete ou brilho quando a criança acerta.
+
+📂 3. As Páginas (Pasta pages/)
+PlayGame.jsx: É o "cérebro" visual. Ele junta o Canvas, o Mascote e o Alfabeto em uma tela só.
+
+🛠️ Como reconstruir no seu VS Code (Passo a Passo)
+Como você já tem o ambiente Vite + Material UI (ou Tailwind), você não precisa de todos os 50 componentes da pasta ui/. Vamos simplificar para você ter o resultado rápido:
+
+Passo 1: O Sistema de Voz (lib/sounds.js)
+Crie esse arquivo e coloque a lógica de narração para garantir que o app "fale":
+
+JavaScript
+export const playInstruction = (letter, word) => {
+  const msg = new SpeechSynthesisUtterance(`Desenhe a letra ${letter}, de ${word}`);
+  msg.lang = 'pt-BR';
+  window.speechSynthesis.speak(msg);
+};
+
+export const playFeedback = (success) => {
+  const msg = new SpeechSynthesisUtterance(success ? "Muito bem! Você conseguiu!" : "Quase lá, tente outra vez!");
+  msg.lang = 'pt-BR';
+  window.speechSynthesis.speak(msg);
+};
+Passo 2: O Layout Principal (pages/PlayGame.jsx)
+No seu App.tsx (ou criando o arquivo de página), use a estrutura que o Base44 sugeriu:
+
+Topo: Barra de Progresso (ProgressBar.jsx).
+
+Centro: O Letreiro (LetterDisplay.jsx) e o Personagem (MascotAvatar.jsx).
+
+Base: O seu Quadro de Desenho atualizado.
+
+Passo 3: Tailwind CSS
+O Base44 usa Tailwind. Se o seu projeto atual não tem, você pode instalar rápido (npm install -D tailwindcss postcss autoprefixer && npx tailwindcss init -p) ou traduzir as classes para o Material UI (SX props).
+
+
+
+------
+fsrs.js: Contém o cálculo de repetição (o que já vínhamos fazendo).
+
+
+// FSRS v4.5 - Free Spaced Repetition Scheduler
+// Simplified implementation for alphabet learning
+
+const DEFAULT_PARAMS = {
+  w: [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61],
+  requestRetention: 0.9,
+};
+
+export function createNewCard() {
+  return {
+    stability: 0,
+    difficulty: 0,
+    interval: 0,
+    repetitions: 0,
+    nextReview: new Date().toISOString(),
+    lastGrade: 0,
+  };
+}
+
+// Grade: 1=Again, 2=Hard, 3=Good, 4=Easy
+export function reviewCard(card, grade) {
+  const now = new Date();
+  const w = DEFAULT_PARAMS.w;
+  
+  let newStability, newDifficulty, newInterval;
+  
+  if (card.repetitions === 0) {
+    // First review - initial stability
+    newStability = w[grade - 1];
+    newDifficulty = w[4] - (grade - 3) * w[5];
+    newDifficulty = Math.max(1, Math.min(10, newDifficulty));
+    
+    if (grade === 1) newInterval = 0; // repeat immediately
+    else if (grade === 2) newInterval = 1;
+    else if (grade === 3) newInterval = 3;
+    else newInterval = 5;
+  } else {
+    // Subsequent reviews
+    const elapsedDays = Math.max(0, (now - new Date(card.nextReview)) / (1000 * 60 * 60 * 24));
+    const retrievability = Math.pow(1 + elapsedDays / (9 * card.stability), -1);
+    
+    newDifficulty = card.difficulty - w[6] * (grade - 3);
+    newDifficulty = Math.max(1, Math.min(10, newDifficulty));
+    
+    if (grade === 1) {
+      // Failed - reduce stability significantly
+      newStability = w[11] * Math.pow(card.stability, -w[12]) * (Math.pow(card.difficulty + 1, w[13]) - 1) * Math.exp(w[14] * (1 - retrievability));
+      newStability = Math.max(0.1, newStability);
+      newInterval = 0;
+    } else {
+      // Success - increase stability
+      const multiplier = grade === 2 ? w[15] : grade === 3 ? 1 : w[16];
+      newStability = card.stability * (1 + Math.exp(w[8]) * (11 - newDifficulty) * Math.pow(card.stability, -w[9]) * (Math.exp((1 - retrievability) * w[10]) - 1) * multiplier);
+      newStability = Math.max(0.1, newStability);
+      
+      // Calculate interval from stability and desired retention
+      newInterval = Math.round(9 * newStability * (1 / DEFAULT_PARAMS.requestRetention - 1));
+      newInterval = Math.max(1, Math.min(365, newInterval));
+    }
+  }
+  
+  const nextReview = new Date(now.getTime() + newInterval * 24 * 60 * 60 * 1000);
+  
+  return {
+    stability: newStability,
+    difficulty: newDifficulty,
+    interval: newInterval,
+    repetitions: card.repetitions + 1,
+    nextReview: nextReview.toISOString(),
+    lastGrade: grade,
+  };
+}
+
+export function getLettersDueForReview(progressList) {
+  const now = new Date();
+  return progressList
+    .filter(p => new Date(p.next_review || 0) <= now)
+    .sort((a, b) => new Date(a.next_review || 0) - new Date(b.next_review || 0));
+}
+
+export function calculateMastery(progress) {
+  if (!progress || progress.total_attempts === 0) return 0;
+  const accuracyScore = (progress.correct_attempts / progress.total_attempts) * 40;
+  const stabilityScore = Math.min(progress.stability / 10, 1) * 30;
+  const streakScore = Math.min(progress.streak / 5, 1) * 30;
+  return Math.round(accuracyScore + stabilityScore + streakScore);
+}
+
+-----
+sounds.js: Aqui é onde a mágica da narração acontece. Provavelmente ele usa a Web Speech API ou links de áudio.
+
+// Sound effects using Web Audio API - no external files needed
+const audioCtx = typeof window !== 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : null;
+
+function ensureContext() {
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playTone(frequency, duration, type = 'sine', volume = 0.3) {
+  if (!audioCtx) return;
+  ensureContext();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+export function playCorrectSound() {
+  if (!audioCtx) return;
+  ensureContext();
+  // Happy ascending arpeggio
+  const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+  notes.forEach((freq, i) => {
+    setTimeout(() => playTone(freq, 0.3, 'sine', 0.25), i * 100);
+  });
+}
+
+export function playWrongSound() {
+  if (!audioCtx) return;
+  ensureContext();
+  // Gentle descending tone
+  playTone(300, 0.4, 'triangle', 0.15);
+  setTimeout(() => playTone(250, 0.4, 'triangle', 0.12), 150);
+}
+
+export function playCelebrationSound() {
+  if (!audioCtx) return;
+  ensureContext();
+  // Magical fanfare
+  const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+  notes.forEach((freq, i) => {
+    setTimeout(() => playTone(freq, 0.4, 'sine', 0.2), i * 120);
+  });
+  // Add sparkle
+  setTimeout(() => {
+    [2093, 2637, 3135].forEach((freq, i) => {
+      setTimeout(() => playTone(freq, 0.2, 'sine', 0.1), i * 80);
+    });
+  }, 600);
+}
+
+export function playClickSound() {
+  if (!audioCtx) return;
+  ensureContext();
+  playTone(800, 0.08, 'sine', 0.15);
+}
+
+export function playDrawSound() {
+  if (!audioCtx) return;
+  ensureContext();
+  playTone(440 + Math.random() * 200, 0.05, 'sine', 0.05);
+}
+
+export function playStarSound() {
+  if (!audioCtx) return;
+  ensureContext();
+  playTone(1200, 0.15, 'sine', 0.2);
+  setTimeout(() => playTone(1600, 0.2, 'sine', 0.15), 100);
+}
+
+export function playLevelUpSound() {
+  if (!audioCtx) return;
+  ensureContext();
+  const notes = [392, 440, 523.25, 659.25, 783.99, 1046.50, 1318.51];
+  notes.forEach((freq, i) => {
+    setTimeout(() => playTone(freq, 0.5, 'sine', 0.2), i * 150);
+  });
+}
+
+// Text-to-Speech
+export function speak(text, lang = 'pt-BR') {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.85;
+  utterance.pitch = 1.3; // Higher pitch for kid-friendly voice
+  utterance.volume = 1;
+  
+  // Try to find a Portuguese voice
+  const voices = window.speechSynthesis.getVoices();
+  const ptVoice = voices.find(v => v.lang.startsWith('pt'));
+  if (ptVoice) utterance.voice = ptVoice;
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+-------
+alphabetData.js: A lista de letras e palavras (A de Abelha, B de Bola).
+
+// Alphabet curriculum with anchor images and words
+export const ALPHABET = [
+  { letter: 'A', word: 'Abelha', emoji: '🐝', color: '#FF6B6B' },
+  { letter: 'B', word: 'Bola', emoji: '⚽', color: '#4ECDC4' },
+  { letter: 'C', word: 'Casa', emoji: '🏠', color: '#45B7D1' },
+  { letter: 'D', word: 'Dado', emoji: '🎲', color: '#96CEB4' },
+  { letter: 'E', word: 'Estrela', emoji: '⭐', color: '#FFEAA7' },
+  { letter: 'F', word: 'Flor', emoji: '🌸', color: '#DDA0DD' },
+  { letter: 'G', word: 'Gato', emoji: '🐱', color: '#98D8C8' },
+  { letter: 'H', word: 'Helicóptero', emoji: '🚁', color: '#F7DC6F' },
+  { letter: 'I', word: 'Iglu', emoji: '🏔️', color: '#85C1E9' },
+  { letter: 'J', word: 'Jacaré', emoji: '🐊', color: '#82E0AA' },
+  { letter: 'K', word: 'Kiwi', emoji: '🥝', color: '#A3E4D7' },
+  { letter: 'L', word: 'Lua', emoji: '🌙', color: '#F9E79F' },
+  { letter: 'M', word: 'Macaco', emoji: '🐒', color: '#E59866' },
+  { letter: 'N', word: 'Nuvem', emoji: '☁️', color: '#AED6F1' },
+  { letter: 'O', word: 'Ovo', emoji: '🥚', color: '#FAD7A0' },
+  { letter: 'P', word: 'Pássaro', emoji: '🐦', color: '#A9CCE3' },
+  { letter: 'Q', word: 'Queijo', emoji: '🧀', color: '#F9E79F' },
+  { letter: 'R', word: 'Rato', emoji: '🐭', color: '#D5D8DC' },
+  { letter: 'S', word: 'Sol', emoji: '☀️', color: '#F7DC6F' },
+  { letter: 'T', word: 'Tartaruga', emoji: '🐢', color: '#82E0AA' },
+  { letter: 'U', word: 'Uva', emoji: '🍇', color: '#BB8FCE' },
+  { letter: 'V', word: 'Vaca', emoji: '🐄', color: '#F5B7B1' },
+  { letter: 'W', word: 'Waffle', emoji: '🧇', color: '#E59866' },
+  { letter: 'X', word: 'Xícara', emoji: '☕', color: '#A9DFBF' },
+  { letter: 'Y', word: 'Yoga', emoji: '🧘', color: '#AED6F1' },
+  { letter: 'Z', word: 'Zebra', emoji: '🦓', color: '#D5D8DC' },
+];
+
+export function getLetterData(letter) {
+  return ALPHABET.find(a => a.letter === letter.toUpperCase());
+}
+
+export function getNextLetter(currentLetter) {
+  const idx = ALPHABET.findIndex(a => a.letter === currentLetter);
+  if (idx === -1 || idx === ALPHABET.length - 1) return ALPHABET[0];
+  return ALPHABET[idx + 1];
+}
+
+------
+App.jsx
+
+import { Toaster } from "@/components/ui/toaster"
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClientInstance } from '@/lib/query-client'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import PageNotFound from './lib/PageNotFound';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+
+import Welcome from './pages/Welcome';
+import PlayGame from './pages/PlayGame';
+import ParentDashboard from './pages/ParentDashboard';
+
+const AuthenticatedApp = () => {
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+
+  if (isLoadingPublicSettings || isLoadingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          <p className="font-display text-xl text-primary animate-pulse">Lexia Game</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authError) {
+    if (authError.type === 'user_not_registered') {
+      return <UserNotRegisteredError />;
+    } else if (authError.type === 'auth_required') {
+      navigateToLogin();
+      return null;
+    }
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Welcome />} />
+      <Route path="/play" element={<PlayGame />} />
+      <Route path="/parent" element={<ParentDashboard />} />
+      <Route path="*" element={<PageNotFound />} />
+    </Routes>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClientInstance}>
+        <Router>
+          <AuthenticatedApp />
+        </Router>
+        <Toaster />
+      </QueryClientProvider>
+    </AuthProvider>
+  )
+}
+
+export default App
+
+----
+index.css
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 60% 97%;
+    --foreground: 250 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 250 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 250 30% 15%;
+    --primary: 258 65% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 172 60% 48%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 30% 92%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 43 95% 58%;
+    --accent-foreground: 30 60% 15%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 258 65% 58%;
+    --chart-1: 258 65% 58%;
+    --chart-2: 172 60% 48%;
+    --chart-3: 43 95% 58%;
+    --chart-4: 340 75% 55%;
+    --chart-5: 200 80% 55%;
+    --radius: 1rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 258 65% 58%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 258 65% 58%;
+
+    --font-display: 'Fredoka One', cursive;
+    --font-body: 'Nunito', sans-serif;
+  }
+
+  .dark {
+    --background: 250 30% 8%;
+    --foreground: 220 60% 97%;
+    --card: 250 25% 12%;
+    --card-foreground: 220 60% 97%;
+    --popover: 250 25% 12%;
+    --popover-foreground: 220 60% 97%;
+    --primary: 258 65% 62%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 172 55% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 250 20% 18%;
+    --muted-foreground: 220 15% 60%;
+    --accent: 43 90% 55%;
+    --accent-foreground: 30 60% 10%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 15% 20%;
+    --input: 250 15% 20%;
+    --ring: 258 65% 62%;
+    --chart-1: 258 65% 62%;
+    --chart-2: 172 55% 42%;
+    --chart-3: 43 90% 55%;
+    --chart-4: 340 70% 50%;
+    --chart-5: 200 75% 50%;
+    --sidebar-background: 250 30% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 258 65% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 250 20% 15%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 250 15% 20%;
+    --sidebar-ring: 258 65% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+}
+
+/* Custom scrollbar for kid-friendly feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.4);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.6);
+}
+
+------
+main.jsx
+
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from '@/App.jsx'
+import '@/index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <App />
+
+-------
+
+Welcome.jsx
+
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Play, BarChart3 } from 'lucide-react';
+import MascotAvatar from '@/components/game/MascotAvatar';
+import { speak, playClickSound } from '@/lib/sounds';
+
+export default function Welcome() {
+  const [showMessage, setShowMessage] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowMessage(true);
+      speak('Olá! Eu sou a Corujinha! Vamos aprender as letras juntos?');
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Floating background decorations */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {['🌟', '⭐', '✨', '🌈', '🦋', '🌸', '📚', '✏️'].map((emoji, i) => (
+          <motion.span
+            key={i}
+            className="absolute text-2xl md:text-3xl opacity-20"
+            style={{
+              left: `${10 + (i * 12) % 80}%`,
+              top: `${5 + (i * 15) % 85}%`,
+            }}
+            animate={{
+              y: [0, -20, 0],
+              rotate: [0, 10, -10, 0],
+              opacity: [0.15, 0.3, 0.15],
+            }}
+            transition={{
+              duration: 4 + i * 0.5,
+              repeat: Infinity,
+              delay: i * 0.4,
+            }}
+          >
+            {emoji}
+          </motion.span>
+        ))}
+      </div>
+
+      <motion.div
+        className="flex flex-col items-center gap-6 z-10"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Logo / Title */}
+        <motion.h1
+          className="font-display text-5xl md:text-7xl text-center"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 150, damping: 12, delay: 0.2 }}
+        >
+          <span className="text-primary">Lexia</span>{' '}
+          <span className="text-secondary">Game</span>
+        </motion.h1>
+
+        <motion.p
+          className="font-body font-semibold text-muted-foreground text-center text-lg"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          Aprenda o Alfabeto com Magia! ✨
+        </motion.p>
+
+        {/* Mascot */}
+        <MascotAvatar
+          expression={showMessage ? 'excited' : 'happy'}
+          size="xl"
+          message={showMessage ? 'Olá! Vamos aprender juntos?' : undefined}
+        />
+
+        {/* Buttons */}
+        <motion.div
+          className="flex flex-col gap-3 w-full max-w-xs mt-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <Link to="/play" className="w-full">
+            <Button
+              size="lg"
+              onClick={() => playClickSound()}
+              className="w-full rounded-2xl font-display text-xl py-7 gap-3
+                bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70
+                shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40"
+            >
+              <Play className="w-6 h-6" />
+              Jogar!
+            </Button>
+          </Link>
+
+          <Link to="/parent" className="w-full">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => playClickSound()}
+              className="w-full rounded-2xl font-body font-bold text-base py-6 gap-2 
+                border-2 hover:bg-muted/50"
+            >
+              <BarChart3 className="w-5 h-5" />
+              Área dos Pais
+            </Button>
+          </Link>
+        </motion.div>
+
+        {/* Footer note */}
+        <motion.p
+          className="text-xs text-muted-foreground/60 font-body text-center mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+        >
+          Alfabetização gamificada com repetição espaçada 🧠
+        </motion.p>
+      </motion.div>
+    </div>
+  );
+}
+
+------
+PlayGame.tsx
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Home, Grid3X3, ChevronRight, Volume2 } from 'lucide-react';
+
+import DrawingCanvas from '@/components/game/DrawingCanvas';
+import LetterDisplay from '@/components/game/LetterDisplay';
+import MascotAvatar from '@/components/game/MascotAvatar';
+import ProgressBar from '@/components/game/ProgressBar';
+import CelebrationOverlay from '@/components/game/CelebrationOverlay';
+import LetterSelector from '@/components/game/LetterSelector';
+import AiResultBadge from '@/components/game/AiResultBadge';
+
+import { ALPHABET, getLetterData } from '@/lib/alphabetData';
+import { createNewCard, reviewCard, calculateMastery } from '@/lib/fsrs';
+import { speak, playCorrectSound, playWrongSound, playStarSound, playClickSound } from '@/lib/sounds';
+
+export default function PlayGame() {
+  const [currentLetter, setCurrentLetter] = useState('A');
+  const [phase, setPhase] = useState('draw'); // draw | evaluating | result | next
+  const [aiResult, setAiResult] = useState(null); // { grade, score, feedback }
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState({ stars: 0, message: '' });
+  const [showSelector, setShowSelector] = useState(false);
+  const [mascotExpression, setMascotExpression] = useState('encouraging');
+  const [mascotMessage, setMascotMessage] = useState('');
+
+  const queryClient = useQueryClient();
+
+  const { data: allProgress = [] } = useQuery({
+    queryKey: ['childProgress'],
+    queryFn: () => base44.entities.ChildProgress.list(),
+    initialData: [],
+  });
+
+  const progressMap = {};
+  allProgress.forEach(p => { progressMap[p.letter] = p; });
+
+  const currentProgress = progressMap[currentLetter];
+  const totalStars = allProgress.reduce((sum, p) => sum + (p.stars_earned || 0), 0);
+  const totalStreak = currentProgress?.streak || 0;
+  const masteredCount = allProgress.filter(p => calculateMastery(p) >= 80).length;
+
+  // Save progress after AI evaluation
+  const saveMutation = useMutation({
+    mutationFn: async ({ letter, gradeValue }) => {
+      const existing = progressMap[letter];
+      const isCorrect = gradeValue >= 3;
+
+      const card = existing ? {
+        stability: existing.stability || 0,
+        difficulty: existing.difficulty || 0,
+        interval: existing.interval || 0,
+        repetitions: existing.repetitions || 0,
+        nextReview: existing.next_review || new Date().toISOString(),
+        lastGrade: existing.last_grade || 0,
+      } : createNewCard();
+
+      const reviewed = reviewCard(card, gradeValue);
+      const newStreak = isCorrect ? (existing?.streak || 0) + 1 : 0;
+      const newStars = (existing?.stars_earned || 0) + (isCorrect ? 1 : 0);
+
+      const data = {
+        child_name: 'Jogador',
+        letter,
+        stability: reviewed.stability,
+        difficulty: reviewed.difficulty,
+        interval: reviewed.interval,
+        repetitions: reviewed.repetitions,
+        next_review: reviewed.nextReview,
+        total_attempts: (existing?.total_attempts || 0) + 1,
+        correct_attempts: (existing?.correct_attempts || 0) + (isCorrect ? 1 : 0),
+        streak: newStreak,
+        last_grade: gradeValue,
+        stars_earned: newStars,
+        level: Math.floor(newStars / 5) + 1,
+      };
+
+      if (existing) {
+        await base44.entities.ChildProgress.update(existing.id, data);
+      } else {
+        await base44.entities.ChildProgress.create(data);
+      }
+      return { isCorrect, newStreak, newStars };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['childProgress'] });
+
+      if (result.isCorrect) {
+        playCorrectSound();
+        if (result.newStreak >= 3 && result.newStreak % 3 === 0) {
+          setCelebrationData({ stars: 3, message: `Combo ${result.newStreak}x! 🔥` });
+          setShowCelebration(true);
+          speak(`Uau! Combo de ${result.newStreak}!`);
+        } else {
+          playStarSound();
+          setMascotExpression('excited');
+          setMascotMessage('Muito bem! ⭐');
+          speak(getRandomPraise());
+        }
+      } else {
+        playWrongSound();
+        setMascotExpression('encouraging');
+        setMascotMessage('Vamos tentar de novo!');
+        speak('Não desista! Tente mais uma vez!');
+      }
+      setPhase('next');
+    },
+  });
+
+  // Called by DrawingCanvas after the user stops drawing
+  const handleAutoEvaluate = useCallback(async (imageDataUrl) => {
+    setPhase('evaluating');
+    setMascotExpression('thinking');
+    setMascotMessage('Deixa eu ver...');
+
+    try {
+      // Upload the canvas image
+      const blob = await (await fetch(imageDataUrl)).blob();
+      const file = new File([blob], 'drawing.png', { type: 'image/png' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+      // Ask the LLM to evaluate
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are evaluating a child's handwriting exercise. The child was asked to draw the letter "${currentLetter}" (uppercase).
+Look at the image and evaluate:
+1. Does the drawing resemble the letter "${currentLetter}"?
+2. How well formed is it?
+
+Return a JSON with:
+- "score": a number from 0 to 100 (how correct the letter is)
+- "grade": 1 (very wrong, try again), 2 (hard/partial), 3 (good), or 4 (perfect/easy)
+- "feedback": a short encouraging phrase in Brazilian Portuguese (max 10 words, for a child)
+- "recognized_as": what letter or shape the drawing most resembles`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            score: { type: 'number' },
+            grade: { type: 'number' },
+            feedback: { type: 'string' },
+            recognized_as: { type: 'string' },
+          },
+        },
+      });
+
+      const grade = Math.max(1, Math.min(4, Math.round(result.grade)));
+      setAiResult({ ...result, grade });
+
+      // Auto-save with the AI grade
+      saveMutation.mutate({ letter: currentLetter, gradeValue: grade });
+      setPhase('result');
+    } catch (err) {
+      console.error('AI evaluation failed:', err);
+      // Fallback: treat as grade 3 (good) so the game keeps moving
+      setAiResult({ grade: 3, score: 70, feedback: 'Continue praticando!', recognized_as: currentLetter });
+      saveMutation.mutate({ letter: currentLetter, gradeValue: 3 });
+      setPhase('result');
+    }
+  }, [currentLetter, saveMutation]);
+
+  // Intro speech on letter change
+  useEffect(() => {
+    const data = getLetterData(currentLetter);
+    if (data) {
+      setMascotExpression('happy');
+      setMascotMessage(`Desenhe a letra ${currentLetter}!`);
+      setTimeout(() => {
+        speak(`Vamos desenhar a letra ${currentLetter}! ${currentLetter} de ${data.word}!`);
+      }, 300);
+    }
+    setPhase('draw');
+    setAiResult(null);
+  }, [currentLetter]);
+
+  const handleNext = useCallback(() => {
+    playClickSound();
+    const idx = ALPHABET.findIndex(a => a.letter === currentLetter);
+    const nextIdx = (idx + 1) % ALPHABET.length;
+    setCurrentLetter(ALPHABET[nextIdx].letter);
+    setShowCelebration(false);
+  }, [currentLetter]);
+
+  const handleLetterSelect = useCallback((letter) => {
+    setCurrentLetter(letter);
+    setShowSelector(false);
+  }, []);
+
+  const isWorking = phase === 'evaluating' || saveMutation.isPending;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Top bar */}
+      <div className="flex items-center justify-between p-3 border-b border-border bg-card/50 backdrop-blur-sm">
+        <Link to="/">
+          <Button variant="ghost" size="icon" className="rounded-xl" onClick={playClickSound}>
+            <Home className="w-5 h-5" />
+          </Button>
+        </Link>
+
+        <ProgressBar
+          current={masteredCount}
+          total={26}
+          streak={totalStreak}
+          stars={totalStars}
+        />
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-xl"
+          onClick={() => { playClickSound(); setShowSelector(true); }}
+        >
+          <Grid3X3 className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* Main game area */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4 pb-8 max-w-lg mx-auto w-full">
+        {/* Mascot */}
+        <MascotAvatar
+          expression={mascotExpression}
+          size="sm"
+          message={mascotMessage}
+        />
+
+        {/* Letter display */}
+        <LetterDisplay letter={currentLetter} />
+
+        {/* Speak button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full gap-2 text-muted-foreground"
+          onClick={() => {
+            const d = getLetterData(currentLetter);
+            speak(`${currentLetter}! ${currentLetter} de ${d?.word}!`);
+          }}
+        >
+          <Volume2 className="w-4 h-4" />
+          Ouvir
+        </Button>
+
+        {/* Canvas + result + next button */}
+        <AnimatePresence mode="wait">
+          {(phase === 'draw' || phase === 'evaluating') && (
+            <motion.div
+              key="canvas"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="w-full flex flex-col items-center"
+            >
+              <DrawingCanvas
+                targetLetter={currentLetter}
+                onAutoEvaluate={handleAutoEvaluate}
+                disabled={isWorking}
+              />
+            </motion.div>
+          )}
+
+          {(phase === 'result' || phase === 'next') && aiResult && (
+            <motion.div
+              key="result"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full flex flex-col items-center gap-4"
+            >
+              <AiResultBadge
+                grade={aiResult.grade}
+                score={aiResult.score}
+                feedback={aiResult.feedback}
+                recognizedAs={aiResult.recognized_as}
+                targetLetter={currentLetter}
+              />
+
+              <Button
+                size="lg"
+                onClick={handleNext}
+                disabled={saveMutation.isPending}
+                className="rounded-2xl font-display text-lg py-6 px-8 gap-2
+                  bg-gradient-to-r from-secondary to-secondary/80
+                  shadow-lg shadow-secondary/25"
+              >
+                {aiResult.grade >= 3 ? 'Próxima Letra' : 'Tentar de Novo'}
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Celebration overlay */}
+      <CelebrationOverlay
+        show={showCelebration}
+        stars={celebrationData.stars}
+        message={celebrationData.message}
+        onDone={handleNext}
+      />
+
+      {/* Letter selector */}
+      <LetterSelector
+        open={showSelector}
+        onSelect={handleLetterSelect}
+        onClose={() => setShowSelector(false)}
+        progressMap={progressMap}
+      />
+    </div>
+  );
+}
+
+function getRandomPraise() {
+  const praises = [
+    'Muito bem!', 'Excelente!', 'Parabéns!', 'Fantástico!',
+    'Incrível!', 'Maravilhoso!', 'Você é demais!', 'Que bonito!',
+    'Continue assim!', 'Perfeito!',
+  ];
+  return praises[Math.floor(Math.random() * praises.length)];
+}
+
+------
+ParentDashboard.tsx
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Star, Target, Flame, BookOpen, Trophy, TrendingUp } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { ALPHABET } from '@/lib/alphabetData';
+import { calculateMastery } from '@/lib/fsrs';
+import StatsCard from '@/components/parent/StatsCard';
+import LetterProgressGrid from '@/components/parent/LetterProgressGrid';
+
+export default function ParentDashboard() {
+  const { data: allProgress = [], isLoading } = useQuery({
+    queryKey: ['childProgress'],
+    queryFn: () => base44.entities.ChildProgress.list(),
+    initialData: [],
+  });
+
+  const progressMap = {};
+  allProgress.forEach(p => { progressMap[p.letter] = p; });
+
+  const totalStars = allProgress.reduce((s, p) => s + (p.stars_earned || 0), 0);
+  const totalAttempts = allProgress.reduce((s, p) => s + (p.total_attempts || 0), 0);
+  const totalCorrect = allProgress.reduce((s, p) => s + (p.correct_attempts || 0), 0);
+  const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+  const lettersStarted = allProgress.filter(p => p.total_attempts > 0).length;
+  const lettersMastered = allProgress.filter(p => calculateMastery(p) >= 80).length;
+  const maxStreak = allProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
+
+  // Chart data
+  const chartData = ALPHABET.map(item => {
+    const p = progressMap[item.letter];
+    return {
+      letter: item.letter,
+      mastery: p ? calculateMastery(p) : 0,
+      color: item.color,
+    };
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="bg-card border-b border-border p-4">
+        <div className="max-w-4xl mx-auto flex items-center gap-3">
+          <Link to="/">
+            <Button variant="ghost" size="icon" className="rounded-xl">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="font-display text-2xl text-foreground">Área dos Pais</h1>
+            <p className="font-body text-sm text-muted-foreground">Acompanhe o progresso da aprendizagem</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
+        {/* Stats cards */}
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-3 gap-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <StatsCard icon={Star} label="Estrelas" value={totalStars} color="bg-yellow-500" />
+          <StatsCard icon={Target} label="Precisão" value={`${accuracy}%`} color="bg-green-500" />
+          <StatsCard icon={BookOpen} label="Letras Iniciadas" value={`${lettersStarted}/26`} color="bg-blue-500" />
+          <StatsCard icon={Trophy} label="Dominadas" value={lettersMastered} color="bg-purple-500" />
+          <StatsCard icon={Flame} label="Maior Sequência" value={maxStreak} color="bg-red-500" />
+          <StatsCard icon={TrendingUp} label="Tentativas" value={totalAttempts} color="bg-teal-500" />
+        </motion.div>
+
+        {/* Letter progress grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-lg">Progresso por Letra</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LetterProgressGrid progressMap={progressMap} />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Mastery chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-lg">Domínio de Cada Letra</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                    <XAxis dataKey="letter" tick={{ fontSize: 10, fontFamily: 'var(--font-body)' }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+                    <Tooltip
+                      formatter={(value) => [`${value}%`, 'Domínio']}
+                      contentStyle={{ borderRadius: '12px', fontFamily: 'var(--font-body)' }}
+                    />
+                    <Bar dataKey="mastery" radius={[4, 4, 0, 0]}>
+                      {chartData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} opacity={entry.mastery > 0 ? 0.8 : 0.2} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Tip for parents */}
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="p-4">
+            <p className="font-body text-sm text-foreground">
+              💡 <strong>Dica:</strong> O algoritmo de repetição espaçada (FSRS) adapta automaticamente 
+              o ritmo de aprendizagem. Letras mais difíceis aparecem com mais frequência, e as já dominadas 
+              são revisadas em intervalos maiores para fixar na memória de longo prazo.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
