@@ -1,6 +1,6 @@
 ﻿import React, { useEffect } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { Container, Box, Typography } from '@mui/material';
+import { Container, Box, Typography, Paper } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useAlphabet } from './hooks';
 import { useVoice } from './hooks/useVoice';
@@ -11,14 +11,61 @@ import { ParentDashboard } from './components/ParentDashboard';
 import { LexiMascot } from './components/LexiMascot';
 import { AdventureMap } from './components/AdventureMap';
 import { theme } from './theme';
+import './App.css';
 
 function App() {
     const { getNextLetter, saveAttempt, currentLevel, isLoading, lettersProgress } = useAlphabet();
     const { speak } = useVoice();
     const currentLetterItem = getNextLetter();
     const [mascotState, setMascotState] = React.useState<'idle' | 'success' | 'thinking'>('idle');
+    const [isProcessing, setIsProcessing] = React.useState(false);
 
     const cardsState = lettersProgress.reduce((acc, p) => ({ ...acc, [p.letter]: p.card }), {});
+
+    const handleValidate = async (drawnPoints: number[][][]) => {
+        setIsProcessing(true); // Ativa o loading do botão
+
+        try {
+            // 1. Prepara a requisição para a Google HWR API
+            const response = await fetch(
+                `https://www.google.com.tw/inputtools/request?ime=handwriting&app=autodraw&dbg=1&cs=1&oe=UTF-8`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input_type: 0,
+                        requests: [{
+                            writing_guide: { width: 400, height: 400 },
+                            ink: drawnPoints, // Os pontos que o novo Canvas captura
+                            language: 'pt'
+                        }]
+                    })
+                }
+            );
+
+            const data = await response.json();
+            const candidates = data[1][0][1]; // Lista de letras reconhecidas pela IA
+
+            // 2. Verifica se a letra alvo está entre as 3 primeiras sugestões
+            const isCorrect = candidates.slice(0, 3).some(
+                (c: string) => c.toLowerCase() === currentLetterItem?.letter.toLowerCase()
+            );
+
+            if (isCorrect) {
+                // ✅ ACERTOU: Dispara Confete e FSRS
+                handleEvaluationResult(3); // Grade 'Easy' no FSRS
+            } else {
+                // ❌ ERROU: Feedback suave
+                alert(`Quase! A IA viu: ${candidates[0]}. Tenta de novo!`);
+                handleEvaluationResult(1); // Grade 'Again' no FSRS
+            }
+        } catch (error) {
+            console.error("Erro na validação:", error);
+            alert("Ops! Erro na validação. Tenta desenhar de novo!");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     const handleEvaluationResult = (grade: number) => {
         const isCorrect = grade >= 3;
@@ -70,7 +117,7 @@ function App() {
 
     return (
         <ThemeProvider theme={theme}>
-            <Container maxWidth="lg" sx={{ py: 4 }}>
+            <Container maxWidth="sm" sx={{ py: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -85,8 +132,8 @@ function App() {
                         </Typography>
                     </Box>
 
-                    {/* Mapa de Aventura */}
-                    <Box sx={{ mb: 4 }}>
+                    {/* Mapa de Aventura (Com scroll horizontal se necessário) */}
+                    <Box sx={{ width: '100%', overflowX: 'auto', borderRadius: 4 }}>
                         <AdventureMap
                             currentLevel={currentLevel}
                             unlockedLevels={[1, 2, 3, 4]} // TODO: Calculate based on FSRS stability
@@ -99,22 +146,16 @@ function App() {
                         <ParentDashboard cardsState={cardsState} />
                     </Box>
 
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, alignItems: 'flex-start' }}>
-                        {/* Âncora Visual */}
-                        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                            <AnchorDisplay item={currentLetterItem} />
-                        </Box>
-
-                        {/* Canvas de Desenho */}
-                        <Box sx={{ flex: 2 }}>
-                            <LexiMascot state={mascotState} />
-                            <DrawingCanvas
-                                targetLetter={currentLetterItem.letter}
-                                onLetterDetected={(letter) => console.log('Letra detectada:', letter)}
-                                onEvaluationResult={handleEvaluationResult}
-                            />
-                        </Box>
-                    </Box>
+                    {/* Área de Jogo */}
+                    <Paper elevation={3} sx={{ p: 2, borderRadius: 8, textAlign: 'center' }}>
+                        <AnchorDisplay item={currentLetterItem} />
+                        <LexiMascot state={mascotState} />
+                        <DrawingCanvas
+                            targetLetter={currentLetterItem.letter}
+                            onValidate={handleValidate}
+                            isProcessing={isProcessing}
+                        />
+                    </Paper>
                 </motion.div>
             </Container>
         </ThemeProvider>

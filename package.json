@@ -11,10 +11,13 @@
     "dependencies": {
         "@emotion/react": "^11.11.0",
         "@emotion/styled": "^11.11.0",
+        "@mui/base": "^5.0.0-beta.70",
         "@mui/material": "^5.14.10",
+        "@phosphor-icons/react": "^2.1.10",
+        "@popperjs/core": "^2.11.8",
         "@supabase/supabase-js": "^2.99.3",
         "canvas-confetti": "^1.9.4",
-        "framer-motion": "^11.0.0",
+        "framer-motion": "^10.16.16",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },
