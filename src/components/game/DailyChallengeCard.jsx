@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Zap, CheckCircle2, Lock } from 'lucide-react';
+import { Zap, CheckCircle2 } from 'lucide-react';
 import { playClickSound } from '@/lib/sounds';
 
 export default function DailyChallengeCard({ challenge, onStart, onClose }) {
