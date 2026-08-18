@@ -33,6 +33,12 @@ async function clearAllProgress() {
   await Promise.all(records.map((record) => client.entities.ChildProgress.delete(record.id)));
 }
 
+function hostedAuthOnly() {
+  const error = new Error('Base44 uses its hosted authentication flow');
+  error.code = 'HOSTED_AUTH_ONLY';
+  throw error;
+}
+
 export const base44Adapter = {
   provider: 'base44',
 
@@ -50,6 +56,9 @@ export const base44Adapter = {
     redirectToLogin: (returnTo) => client.auth.redirectToLogin(returnTo),
     getPublicSettings,
     hasAccessToken: () => Boolean(token),
+    signInWithPassword: hostedAuthOnly,
+    signUp: hostedAuthOnly,
+    requestPasswordReset: hostedAuthOnly,
   },
 
   storage: {

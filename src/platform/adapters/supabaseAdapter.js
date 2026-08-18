@@ -33,13 +33,24 @@ export function createSupabaseAdapter(config) {
     else localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
 
+  function normalizeAndStoreSession(payload) {
+    const session = payload?.session || payload;
+    if (!session?.access_token) return payload;
+    const normalized = {
+      ...session,
+      expires_at: session.expires_at || (session.expires_in ? Math.floor(Date.now() / 1000) + Number(session.expires_in) : undefined),
+    };
+    writeSession(normalized);
+    return payload;
+  }
+
   function getAccessToken() {
     return readSession()?.access_token || null;
   }
 
   async function request(path, options = {}) {
     assertReady();
-    const accessToken = getAccessToken();
+    const accessToken = options.accessToken === undefined ? getAccessToken() : options.accessToken;
     const headers = new Headers(options.headers || {});
     headers.set('apikey', config.publishableKey);
     if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
@@ -62,13 +73,42 @@ export function createSupabaseAdapter(config) {
     return payload;
   }
 
+  async function refreshSession() {
+    const current = readSession();
+    if (!current?.refresh_token) return null;
+    try {
+      const payload = await request('/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        accessToken: null,
+        json: { refresh_token: current.refresh_token },
+      });
+      normalizeAndStoreSession(payload);
+      return readSession();
+    } catch {
+      writeSession(null);
+      return null;
+    }
+  }
+
+  async function ensureFreshSession() {
+    const session = readSession();
+    if (!session?.access_token) return null;
+    const now = Math.floor(Date.now() / 1000);
+    if (session.expires_at && Number(session.expires_at) - now <= 60) {
+      return refreshSession();
+    }
+    return session;
+  }
+
   async function progressList() {
+    await ensureFreshSession();
     return request('/rest/v1/lexia_progress?select=*&order=letter.asc', {
       headers: { Accept: 'application/json' },
     }) || [];
   }
 
   async function progressCreate(data) {
+    await ensureFreshSession();
     const rows = await request('/rest/v1/lexia_progress', {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -78,6 +118,7 @@ export function createSupabaseAdapter(config) {
   }
 
   async function progressUpdate(id, data) {
+    await ensureFreshSession();
     const rows = await request(`/rest/v1/lexia_progress?id=eq.${encodeFilterValue(id)}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
@@ -87,6 +128,7 @@ export function createSupabaseAdapter(config) {
   }
 
   async function progressRemove(id) {
+    await ensureFreshSession();
     return request(`/rest/v1/lexia_progress?id=eq.${encodeFilterValue(id)}`, {
       method: 'DELETE',
       headers: { Prefer: 'return=representation' },
@@ -103,7 +145,45 @@ export function createSupabaseAdapter(config) {
   }
 
   async function authMe() {
-    return request('/auth/v1/user');
+    await ensureFreshSession();
+    try {
+      return await request('/auth/v1/user');
+    } catch (error) {
+      if (error.status !== 401) throw error;
+      const refreshed = await refreshSession();
+      if (!refreshed) throw error;
+      return request('/auth/v1/user');
+    }
+  }
+
+  async function signInWithPassword({ email, password }) {
+    const payload = await request('/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      accessToken: null,
+      json: { email, password },
+    });
+    normalizeAndStoreSession(payload);
+    return payload;
+  }
+
+  async function signUp({ email, password, data, redirectTo }) {
+    const suffix = redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : '';
+    const payload = await request(`/auth/v1/signup${suffix}`, {
+      method: 'POST',
+      accessToken: null,
+      json: { email, password, data: data || {} },
+    });
+    normalizeAndStoreSession(payload);
+    return payload;
+  }
+
+  async function requestPasswordReset({ email, redirectTo }) {
+    const suffix = redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : '';
+    return request(`/auth/v1/recover${suffix}`, {
+      method: 'POST',
+      accessToken: null,
+      json: { email },
+    });
   }
 
   async function authLogout(redirectTo) {
@@ -127,6 +207,7 @@ export function createSupabaseAdapter(config) {
   }
 
   async function invokeEdgeFunction(functionName, body, { formData = false } = {}) {
+    await ensureFreshSession();
     assertReady();
     const accessToken = getAccessToken();
     const headers = new Headers({ apikey: config.publishableKey });
@@ -161,6 +242,7 @@ export function createSupabaseAdapter(config) {
     session: {
       read: readSession,
       write: writeSession,
+      refresh: refreshSession,
     },
     progress: {
       list: progressList,
@@ -175,6 +257,9 @@ export function createSupabaseAdapter(config) {
       redirectToLogin,
       getPublicSettings: async () => ({ provider: 'supabase', public_settings: {} }),
       hasAccessToken: () => Boolean(getAccessToken()),
+      signInWithPassword,
+      signUp,
+      requestPasswordReset,
     },
     storage: {
       uploadFile,

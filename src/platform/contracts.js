@@ -1,4 +1,4 @@
-export const LEXIA_PLATFORM_CONTRACT_VERSION = '1.0.0';
+export const LEXIA_PLATFORM_CONTRACT_VERSION = '1.1.0';
 
 const REQUIRED_METHODS = [
   'progress.list',
@@ -11,6 +11,9 @@ const REQUIRED_METHODS = [
   'auth.redirectToLogin',
   'auth.getPublicSettings',
   'auth.hasAccessToken',
+  'auth.signInWithPassword',
+  'auth.signUp',
+  'auth.requestPasswordReset',
   'storage.uploadFile',
   'ai.invoke',
   'email.send',

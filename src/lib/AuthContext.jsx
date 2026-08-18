@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { lexiaPlatform } from '@/platform';
+import { activePlatformProvider, lexiaPlatform } from '@/platform';
 
 const AuthContext = createContext();
 
@@ -29,6 +29,9 @@ export const AuthProvider = ({ children }) => {
         } else {
           setIsLoadingAuth(false);
           setIsAuthenticated(false);
+          if (activePlatformProvider === 'supabase') {
+            setAuthError({ type: 'auth_required', message: 'Authentication required' });
+          }
         }
         setIsLoadingPublicSettings(false);
       } catch (appError) {
@@ -69,6 +72,7 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await lexiaPlatform.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
+      setAuthError(null);
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);
