@@ -1,6 +1,7 @@
 import { base44Adapter } from '@/platform/adapters/base44Adapter';
 import { createSupabaseAdapter } from '@/platform/adapters/supabaseAdapter';
 import { assertPlatformContract, platformContract } from '@/platform/contracts';
+import { decorateProgressWithDailyChallenge } from '@/platform/decorators/dailyChallengeProgressDecorator';
 import { getSupabaseProviderConfig, resolvePlatformProvider } from '@/platform/providerConfig';
 
 const supabaseAdapter = createSupabaseAdapter(getSupabaseProviderConfig(import.meta.env));
@@ -16,7 +17,12 @@ if (requestedProvider === 'supabase' && !supabaseAdapter.readiness.ready) {
   throw new Error(`Supabase provider requested but not release-ready: ${supabaseAdapter.readiness.missing.join(', ')}`);
 }
 
-export const lexiaPlatform = assertPlatformContract(selectedProvider);
+const decoratedProvider = {
+  ...selectedProvider,
+  progress: decorateProgressWithDailyChallenge(selectedProvider.progress),
+};
+
+export const lexiaPlatform = assertPlatformContract(decoratedProvider);
 export const activePlatformProvider = lexiaPlatform.provider;
 export const platformReadiness = selectedProvider.readiness || { ready: true, missing: [] };
 export { platformContract };

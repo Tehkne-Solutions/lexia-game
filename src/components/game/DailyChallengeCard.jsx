@@ -8,6 +8,12 @@ import {
 } from '@/lib/dailyChallenge';
 import { playClickSound } from '@/lib/sounds';
 
+function withDailyTarget(playPath, targetKey) {
+  if (!playPath || !targetKey) return playPath;
+  const separator = playPath.includes('?') ? '&' : '?';
+  return `${playPath}${separator}dailyTarget=${encodeURIComponent(targetKey)}`;
+}
+
 export default function DailyChallengeCard({ challenge, onStart, onClose }) {
   if (!challenge) return null;
 
@@ -98,7 +104,14 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
               Depois
             </Button>
             <Button
-              onClick={() => { playClickSound(); onStart(nextTarget, challenge); }}
+              onClick={() => {
+                playClickSound();
+                const launchChallenge = {
+                  ...challenge,
+                  playPath: withDailyTarget(challenge.playPath, nextTarget?.key),
+                };
+                onStart(nextTarget?.display || nextTarget?.key || null, launchChallenge, nextTarget);
+              }}
               className="flex-1 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-display gap-2 shadow-md"
             >
               <Zap className="w-4 h-4" />

@@ -7,10 +7,12 @@
   },
   "include": [
     "src/platform/adapters/supabaseAdapter.js",
+    "src/platform/decorators/**/*.js",
     "src/platform/providerConfig.js",
     "src/platform/contracts.js",
     "src/learning/**/*.js",
     "src/game/**/*.js",
+    "src/lib/dailyChallenge.js",
     "src/lib/syllablesData.js",
     "src/lib/sentencesData.js",
     "src/lib/worldMap.js",
