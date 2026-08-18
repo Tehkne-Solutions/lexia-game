@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { lexiaPlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Home, Grid3X3, ChevronRight, Volume2, ThumbsDown, ThumbsUp, Zap, Sparkles } from 'lucide-react';
+import { Home, Grid3X3, ChevronRight, Volume2, ThumbsDown, ThumbsUp, Zap, Sparkles, Compass, Map as MapIcon } from 'lucide-react';
 
 import DrawingCanvas from '@/components/game/DrawingCanvas';
 import LetterDisplay from '@/components/game/LetterDisplay';
@@ -19,6 +19,7 @@ import DailyChallengeCard from '@/components/game/DailyChallengeCard';
 import { ALPHABET, getLetterData } from '@/lib/alphabetData';
 import { createNewCard, reviewCard, calculateMastery, pickNextLetter } from '@/lib/fsrs';
 import { getInitialLearningLetter } from '@/learning/engine';
+import { getJourneyState, JOURNEY_STAGES } from '@/game/journeyEngine';
 import { buildStats, getEarnedAchievements } from '@/lib/achievements';
 import { getDailyChallenge, updateChallengeProgress } from '@/lib/dailyChallenge';
 import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
@@ -42,10 +43,11 @@ export default function PlayGame() {
   const [dailyChallenge, setDailyChallenge] = useState(null);
   const [starMultiplier, setStarMultiplier] = useState(1);
   const prevStatsRef = useRef(null);
+  const journeySyncRef = useRef(false);
 
   const queryClient = useQueryClient();
 
-  const { data: allProgress = [] } = useQuery({
+  const { data: allProgress = [], isFetched: hasLoadedProgress } = useQuery({
     queryKey: ['childProgress'],
     queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
@@ -57,6 +59,17 @@ export default function PlayGame() {
   const totalStars = allProgress.reduce((sum, p) => sum + (p.stars_earned || 0), 0);
   const totalStreak = allProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
   const masteredCount = allProgress.filter(p => calculateMastery(p) >= 80).length;
+  const journey = getJourneyState(allProgress);
+  const isGuidedMission = !isPracticeMode && journey.stage === JOURNEY_STAGES.LETTERS;
+  const isCurrentMissionTarget = isGuidedMission && journey.target === currentLetter;
+
+  useEffect(() => {
+    if (isPracticeMode || journeySyncRef.current || !hasLoadedProgress) return;
+    if (journey.stage === JOURNEY_STAGES.LETTERS && journey.target) {
+      setCurrentLetter(journey.target);
+    }
+    journeySyncRef.current = true;
+  }, [hasLoadedProgress, journey.stage, journey.target]);
 
   useEffect(() => {
     if (allProgress.length >= 0) {
@@ -212,7 +225,7 @@ Look carefully at the image. Return JSON:
       const fallback = { grade: 2, score: 50, feedback: 'Boa tentativa! Continue!', recognized_as: currentLetter };
       setAiResult(fallback);
       setPhase('result');
-      saveMutation.mutate({ letter: currentLetter, gradeValue: 2 });
+      if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: 2 });
     }
   }, [currentLetter, saveMutation]);
 
@@ -315,6 +328,17 @@ Look carefully at the image. Return JSON:
         </div>
       </div>
 
+      {!isPracticeMode && (
+        <div className="px-3 py-1.5 border-b border-border/60 bg-card/70 flex items-center justify-center gap-2 text-xs font-body">
+          <Compass className="w-3.5 h-3.5 text-primary" />
+          <span className="font-bold text-primary">
+            {isCurrentMissionTarget ? 'Missão atual' : 'Missão recomendada'}
+          </span>
+          <span className="text-muted-foreground">{journey.title}</span>
+          <Link to="/world" className="ml-1 text-primary font-bold hover:underline">Mapa</Link>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4 py-2 max-w-lg mx-auto w-full">
         <MascotAvatar expression={mascotExpression} size="sm" message={mascotMessage} />
 
@@ -398,9 +422,17 @@ Look carefully at the image. Return JSON:
                 </Button>
                 <Button size="sm" onClick={goToNextLetter} disabled={isWorking}
                   className="flex-1 rounded-xl font-display text-sm gap-1 bg-gradient-to-r from-secondary to-secondary/80 shadow-md">
-                  Próxima <ChevronRight className="w-3.5 h-3.5" />
+                  {isPracticeMode ? 'Próxima' : 'Continuar'} <ChevronRight className="w-3.5 h-3.5" />
                 </Button>
               </div>
+
+              {!isPracticeMode && (
+                <Link to="/world" className="w-full max-w-[260px]">
+                  <Button variant="ghost" size="sm" className="w-full rounded-xl gap-1.5 text-xs text-muted-foreground">
+                    <MapIcon className="w-3.5 h-3.5" /> Ver jornada no mapa
+                  </Button>
+                </Link>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

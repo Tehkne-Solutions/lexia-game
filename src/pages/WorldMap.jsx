@@ -4,10 +4,11 @@ import { motion } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Lock, Star, Play, Keyboard } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Play, Keyboard, Compass } from 'lucide-react';
 import { buildStats } from '@/lib/achievements';
 import { WORLDS, isWorldUnlocked } from '@/lib/worldMap';
 import { playClickSound } from '@/lib/sounds';
+import { getJourneyState } from '@/game/journeyEngine';
 import WorldUnlockCelebration from '@/components/game/WorldUnlockCelebration';
 
 export default function WorldMap() {
@@ -20,6 +21,7 @@ export default function WorldMap() {
   });
 
   const stats = buildStats(allProgress);
+  const journey = getJourneyState(allProgress);
   const prevCompletedRef = useRef(new Set());
   const [celebrationWorld, setCelebrationWorld] = useState(null);
 
@@ -76,6 +78,15 @@ export default function WorldMap() {
         </div>
 
         <div className="max-w-lg mx-auto p-4 pt-6 space-y-4 relative z-10">
+          <div className="rounded-2xl border-2 border-primary/20 bg-card p-3 flex items-start gap-3 shadow-sm">
+            <Compass className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <p className="font-body text-xs font-bold uppercase tracking-wide text-primary">Próximo destino</p>
+              <p className="font-display text-base text-foreground">{journey.title}</p>
+              <p className="font-body text-xs text-muted-foreground mt-0.5">{journey.description}</p>
+            </div>
+          </div>
+
           <div className="relative">
             {WORLDS.map((world, index) => {
               const completed = Math.min(world.getLessonsCompleted(stats), world.totalLessons);
@@ -84,6 +95,7 @@ export default function WorldMap() {
               const unlocked = isWorldUnlocked(world, stats);
               const isActive = unlocked && pct < 100;
               const isDone = pct >= 100;
+              const isRecommended = journey.worldId === world.id;
 
               return (
                 <motion.div
@@ -99,13 +111,20 @@ export default function WorldMap() {
 
                   <div
                     className={`relative rounded-2xl border-2 overflow-hidden shadow-lg transition-all
-                      ${!unlocked ? 'border-border opacity-60' : isDone ? 'border-yellow-400' : 'border-primary/50'}
+                      ${!unlocked ? 'border-border opacity-60' : isRecommended ? 'border-primary ring-2 ring-primary/20' : isDone ? 'border-yellow-400' : 'border-primary/50'}
                     `}
                   >
+                    {isRecommended && (
+                      <div className="absolute top-2 right-2 z-10 bg-card text-primary border border-primary/30 rounded-full px-2 py-1 flex items-center gap-1 shadow-sm">
+                        <Compass className="w-3 h-3" />
+                        <span className="font-body text-[10px] font-bold uppercase">Missão atual</span>
+                      </div>
+                    )}
+
                     <div className={`bg-gradient-to-r ${world.bgColor} p-4 flex items-center gap-4`}>
                       <motion.div
                         className="text-5xl"
-                        animate={isActive ? { scale: [1, 1.1, 1] } : {}}
+                        animate={isRecommended ? { scale: [1, 1.12, 1] } : isActive ? { scale: [1, 1.1, 1] } : {}}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
                         {world.emoji}
@@ -144,14 +163,14 @@ export default function WorldMap() {
                       </div>
 
                       {unlocked && world.playPath && (
-                        <Link to={world.playPath}>
+                        <Link to={isRecommended ? journey.path : world.playPath}>
                           <Button
                             size="sm"
                             onClick={playClickSound}
                             className="bg-white text-primary hover:bg-white/90 rounded-xl font-body font-bold gap-1 shadow-md"
                           >
                             {world.id === 'alphabet' ? <Play className="w-4 h-4" /> : <Keyboard className="w-4 h-4" />}
-                            Jogar
+                            {isRecommended ? 'Continuar' : 'Jogar'}
                           </Button>
                         </Link>
                       )}
