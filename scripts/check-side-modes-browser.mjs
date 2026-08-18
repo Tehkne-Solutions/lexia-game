@@ -33,7 +33,7 @@ async function waitForHttp(url, timeoutMs = 15000) {
   while (Date.now() < deadline) {
     try {
       const response = await fetch(url);
-      if (response.ok) return;
+      if (response.ok) return response;
       lastError = new Error(`HTTP ${response.status}`);
     } catch (error) {
       lastError = error;
@@ -190,7 +190,7 @@ try {
     assertSurface(await metrics(cdp), `${viewport.name}/story`);
     await capture(cdp, `${viewport.name}-story`);
 
-    await navigate(cdp, `${baseUrl}/speed`);
+    await navigate(cdp, `${baseUrl}/speed-challenge`);
     await waitForText(cdp, 'Desafio Relâmpago!');
     await waitForText(cdp, 'Treino atual');
     await waitForText(cdp, 'Até Letras');
