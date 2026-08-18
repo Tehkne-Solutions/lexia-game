@@ -1,0 +1,52 @@
+name: Lexia Live Production Supabase Post-Switch
+
+on:
+  workflow_dispatch:
+    inputs:
+      production_candidate_run_id:
+        description: 'Successful Lexia Production Candidate Attestation run ID for this exact SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  production-post-switch-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: lexia-production-release
+
+    steps:
+      - name: Checkout production candidate commit
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify M10-D production candidate for this SHA
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          LEXIA_PRODUCTION_CANDIDATE_RUN_ID: ${{ inputs.production_candidate_run_id }}
+        run: node scripts/verify-m10d-production-candidate-run.mjs
+
+      - name: Prove public production Supabase runtime
+        env:
+          LEXIA_LIVE_PREVIEW_URL: ${{ secrets.LEXIA_PRODUCTION_URL }}
+          LEXIA_LIVE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY }}
+          LEXIA_LIVE_TEST_EMAIL: ${{ secrets.LEXIA_LIVE_TEST_EMAIL }}
+          LEXIA_LIVE_TEST_PASSWORD: ${{ secrets.LEXIA_LIVE_TEST_PASSWORD }}
+        run: node scripts/run-live-deployed-supabase-preview-smoke.mjs
+
+      - name: Upload production post-switch evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m10e-production-post-switch
+          path: artifacts/m10b/*.png
+          if-no-files-found: error
+          retention-days: 30
