@@ -83,6 +83,9 @@ jobs:
       - name: Release orchestration contract
         run: node scripts/check-release-orchestration.mjs
 
+      - name: Deployed preview harness contract
+        run: node scripts/check-deployed-preview-harness.mjs
+
       - name: Supabase schema contract
         run: npm run check:supabase-schema
 

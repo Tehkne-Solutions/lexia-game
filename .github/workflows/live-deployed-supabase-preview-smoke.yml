@@ -1,0 +1,40 @@
+name: Lexia Live Deployed Supabase Preview
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deployed-preview-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: lexia-live-smoke
+
+    steps:
+      - name: Checkout expected release commit
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prove deployed HTTPS Supabase preview
+        env:
+          LEXIA_LIVE_PREVIEW_URL: ${{ secrets.LEXIA_LIVE_PREVIEW_URL }}
+          LEXIA_LIVE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY }}
+          LEXIA_LIVE_TEST_EMAIL: ${{ secrets.LEXIA_LIVE_TEST_EMAIL }}
+          LEXIA_LIVE_TEST_PASSWORD: ${{ secrets.LEXIA_LIVE_TEST_PASSWORD }}
+        run: node scripts/run-live-deployed-supabase-preview-smoke.mjs
+
+      - name: Upload deployed preview evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m10b-deployed-supabase-preview
+          path: artifacts/m10b/*.png
+          if-no-files-found: error
+          retention-days: 30
