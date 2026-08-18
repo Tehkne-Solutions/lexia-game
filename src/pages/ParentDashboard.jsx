@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { lexiaPlatform } from '@/platform';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ export default function ParentDashboard() {
   const [sendingReport, setSendingReport] = useState(false);
   const { data: allProgress = [], isLoading, isFetching } = useQuery({
     queryKey: ['childProgress'],
-    queryFn: () => base44.entities.ChildProgress.list(),
+    queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
   });
 
@@ -30,7 +30,7 @@ export default function ParentDashboard() {
   async function handleSendReport() {
     setSendingReport(true);
     try {
-      const me = await base44.auth.me();
+      const me = await lexiaPlatform.auth.me();
       const email = me?.email;
       if (!email) throw new Error('no email');
 
@@ -60,7 +60,7 @@ ${recommendations}
 
 Continue aprendendo com a Corujinha! 🦉`;
 
-      await base44.integrations.Core.SendEmail({
+      await lexiaPlatform.email.send({
         to: email,
         subject: 'Relatório Semanal - Lexia Game',
         body,
@@ -76,7 +76,6 @@ Continue aprendendo com a Corujinha! 🦉`;
   const progressMap = {};
   allProgress.forEach(p => { progressMap[p.letter] = p; });
 
-  // Only count actual alphabet letters (not SYL_/WORD_ progress keys)
   const letterProgress = allProgress.filter(p => p.letter && p.letter.length === 1);
 
   const totalStars = allProgress.reduce((s, p) => s + (p.stars_earned || 0), 0);
@@ -87,7 +86,6 @@ Continue aprendendo com a Corujinha! 🦉`;
   const lettersMastered = letterProgress.filter(p => calculateMastery(p) >= 80).length;
   const maxStreak = letterProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
 
-  // Chart data
   const chartData = ALPHABET.map(item => {
     const p = progressMap[item.letter];
     return {
@@ -107,7 +105,6 @@ Continue aprendendo com a Corujinha! 🦉`;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)]">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
           <Link to="/">
@@ -142,7 +139,6 @@ Continue aprendendo com a Corujinha! 🦉`;
       </div>
 
       <div className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Stats cards */}
         <motion.div
           className="grid grid-cols-2 md:grid-cols-3 gap-3"
           initial={{ opacity: 0, y: 20 }}
@@ -156,7 +152,6 @@ Continue aprendendo com a Corujinha! 🦉`;
           <StatsCard icon={TrendingUp} label="Tentativas" value={totalAttempts} color="bg-teal-500" />
         </motion.div>
 
-        {/* Letter progress grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -172,7 +167,6 @@ Continue aprendendo com a Corujinha! 🦉`;
           </Card>
         </motion.div>
 
-        {/* Mastery chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -204,7 +198,6 @@ Continue aprendendo com a Corujinha! 🦉`;
           </Card>
         </motion.div>
 
-        {/* Tip for parents */}
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4">
             <p className="font-body text-sm text-foreground">
