@@ -77,6 +77,9 @@ jobs:
       - name: Journey review insights contract
         run: node scripts/check-journey-review-insights.mjs
 
+      - name: Learner review quest contract
+        run: node scripts/check-learner-review-quest.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -149,11 +152,14 @@ jobs:
       - name: Review insights browser QA
         run: node scripts/check-review-insights-browser.mjs
 
-      - name: Upload M19 visual evidence
+      - name: Learner review browser QA
+        run: node scripts/check-learner-review-browser.mjs
+
+      - name: Upload M20 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m19-browser-layout
+          name: lexia-m20-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png
@@ -164,5 +170,7 @@ jobs:
             artifacts/m17/*.json
             artifacts/m19/*.png
             artifacts/m19/*.json
+            artifacts/m20/*.png
+            artifacts/m20/*.json
           if-no-files-found: warn
           retention-days: 14
