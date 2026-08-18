@@ -4,12 +4,15 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Home, Eye, Type, Accessibility, Check } from 'lucide-react';
+import { Home, Eye, Type, Accessibility, Check, LogOut, ShieldCheck } from 'lucide-react';
 import { loadAccessibilitySettings, saveAccessibilitySettings, applyAccessibilitySettings } from '@/lib/accessibility';
 import { playClickSound } from '@/lib/sounds';
+import { useAuth } from '@/lib/AuthContext';
+import { activePlatformProvider } from '@/platform';
 
 export default function Settings() {
   const [settings, setSettings] = useState(loadAccessibilitySettings);
+  const { logout } = useAuth();
 
   function update(newSettings) {
     setSettings(newSettings);
@@ -32,9 +35,13 @@ export default function Settings() {
     update({ ...settings, textSize: size });
   }
 
+  function handleLogout() {
+    playClickSound();
+    logout(true);
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)] sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <Link to="/">
@@ -47,7 +54,6 @@ export default function Settings() {
       </div>
 
       <div className="max-w-lg mx-auto p-4 space-y-4">
-        {/* Dyslexia font */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Card>
             <CardHeader>
@@ -67,7 +73,6 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        {/* High contrast */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card>
             <CardHeader>
@@ -87,7 +92,6 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        {/* Text size */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card>
             <CardHeader>
@@ -119,6 +123,33 @@ export default function Settings() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {activePlatformProvider === 'supabase' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-base flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                  Conta de aprendizagem
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="font-body text-sm text-muted-foreground">
+                  Seu progresso fica protegido pela sessão desta conta neste dispositivo.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="w-full rounded-2xl gap-2 font-body font-bold"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sair da conta
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         <p className="font-body text-xs text-muted-foreground text-center pt-4">
           As configurações são salvas automaticamente neste dispositivo 💾
