@@ -1,5 +1,7 @@
 import { getJourneyState, JOURNEY_STAGES } from './journeyEngine.js';
 
+export const REVIEW_COMPLETE_PATH = '/?reviewComplete=1';
+
 export const LEARNER_REVIEW_CHAPTERS = Object.freeze([
   Object.freeze({
     id: 'letters',
@@ -138,6 +140,26 @@ export function buildLearnerReviewQuest(allProgress = [], options = {}) {
     oldestDueAt: nextDue?.nextReviewAt ?? null,
     chapters,
     journeyStage: journey.stage,
+  };
+}
+
+export function getLearnerReviewContinuation(allProgress = [], options = {}) {
+  const reviewQuest = buildLearnerReviewQuest(allProgress, options);
+  if (!reviewQuest.hasDueReviews || !reviewQuest.nextPath) {
+    return {
+      complete: true,
+      path: REVIEW_COMPLETE_PATH,
+      remainingDue: 0,
+      nextEntityKey: null,
+      nextChapter: null,
+    };
+  }
+  return {
+    complete: false,
+    path: reviewQuest.nextPath,
+    remainingDue: reviewQuest.totalDue,
+    nextEntityKey: reviewQuest.nextEntityKey,
+    nextChapter: reviewQuest.nextChapter,
   };
 }
 
