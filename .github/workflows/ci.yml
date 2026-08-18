@@ -50,6 +50,9 @@ jobs:
       - name: World experience contract
         run: node scripts/check-world-experience.mjs
 
+      - name: Game shell contract
+        run: node scripts/check-game-shell.mjs
+
       - name: Platform boundary contract
         run: node scripts/check-platform-boundary.mjs
 
