@@ -1,7 +1,7 @@
 import React from 'react';
-import { BookOpen, LockKeyhole, Sparkles } from 'lucide-react';
+import { BookOpen, Compass, LockKeyhole, Sparkles } from 'lucide-react';
 
-export default function WorldNarrativePanel({ experience }) {
+export default function WorldNarrativePanel({ experience, journey }) {
   if (!experience) return null;
 
   return (
@@ -17,7 +17,18 @@ export default function WorldNarrativePanel({ experience }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-border bg-muted/35 px-3 py-2.5 flex items-center gap-3">
+      {journey && (
+        <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2.5 flex items-start gap-2.5">
+          <Compass className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.12em] font-bold text-primary">Missão atual</p>
+            <p className="font-body text-sm font-bold text-foreground">{journey.title}</p>
+            <p className="font-body text-[11px] text-muted-foreground mt-0.5">{journey.description}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 rounded-2xl border border-border bg-muted/35 px-3 py-2.5 flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-background border border-border flex items-center justify-center">
           {experience.relicUnlocked
             ? <Sparkles className="w-4 h-4 text-amber-600" />
