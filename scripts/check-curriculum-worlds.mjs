@@ -52,8 +52,16 @@ assert.equal(sentenceQuest.goal, 4);
 
 const sentenceJourney = getJourneyState([
   ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => ({
-    letter, stability: 10, difficulty: 3, interval: 30, repetitions: 5,
-    next_review: new Date(Date.now() + 86400000).toISOString(), total_attempts: 5, correct_attempts: 5, last_grade: 4,
+    letter,
+    stability: 10,
+    difficulty: 3,
+    interval: 30,
+    repetitions: 5,
+    next_review: new Date(Date.now() + 86400000).toISOString(),
+    total_attempts: 5,
+    correct_attempts: 5,
+    streak: 5,
+    last_grade: 4,
   })),
   ...Array.from({ length: 20 }, (_, i) => ({ letter: `SYL_${i}`, total_attempts: 3, correct_attempts: 3 })),
   ...Array.from({ length: 20 }, (_, i) => ({ letter: `SYLC_${i}`, total_attempts: 3, correct_attempts: 3 })),
