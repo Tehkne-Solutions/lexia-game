@@ -339,7 +339,7 @@ export default function ParentDashboard() {
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4">
             <p className="font-body text-sm text-foreground leading-relaxed">
-              💡 <strong>Como ler estes dados:</strong> o FSRS organiza revisões adaptativas em letras, sílabas, palavras e frases. Os critérios de domínio curricular continuam preservados para não rebaixar progresso já conquistado; o bloco Ritmo de Revisão mostra quando vale reforçar conteúdos já vistos.
+              💡 <strong>Como ler estes dados:</strong> o FSRS organiza revisões adaptativas em toda a jornada. Sílabas, palavras e frases também entram no ritmo de revisão, além das letras. Os critérios de domínio curricular continuam preservados para não rebaixar progresso já conquistado; o bloco Ritmo de Revisão mostra quando vale reforçar conteúdos já vistos.
             </p>
           </CardContent>
         </Card>
