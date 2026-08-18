@@ -28,7 +28,9 @@ const rawMode = urlParams.get('mode');
 const MODE = rawMode === 'words' ? 'words' : rawMode === 'complex' ? 'complex' : 'syllables';
 const isPracticeMode = rawMode === 'practice' || urlParams.get('practice') === 'true';
 const isDailyMode = urlParams.get('daily') === '1';
+const isReviewMode = urlParams.get('review') === '1';
 const requestedDailyTargetKey = urlParams.get('dailyTarget');
+const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
 
 const MODE_CONFIG = Object.freeze({
   syllables: {
@@ -73,9 +75,18 @@ function findDailyItemIndex(targetKey) {
   return ITEMS.findIndex((item) => `${ENTITY_PREFIX}${item[TARGET_KEY]}` === targetKey);
 }
 
+function findReviewItemIndex(targetKey) {
+  if (!targetKey) return -1;
+  return ITEMS.findIndex((item) => `${ENTITY_PREFIX}${item[TARGET_KEY]}` === targetKey);
+}
+
+const requestedDailyItemIndex = isDailyMode ? findDailyItemIndex(requestedDailyTargetKey) : -1;
+const requestedReviewItemIndex = isReviewMode ? findReviewItemIndex(requestedReviewTargetKey) : -1;
+
 function getInitialIndex() {
-  const requestedIndex = isDailyMode ? findDailyItemIndex(requestedDailyTargetKey) : -1;
-  return requestedIndex >= 0 ? requestedIndex : 0;
+  if (requestedDailyItemIndex >= 0) return requestedDailyItemIndex;
+  if (requestedReviewItemIndex >= 0) return requestedReviewItemIndex;
+  return 0;
 }
 
 export default function PlaySyllables() {
@@ -97,7 +108,7 @@ export default function PlaySyllables() {
   const sessionQuestRef = useRef(initialQuest);
   const encounterSequenceRef = useRef(0);
   const inputRef = useRef(null);
-  const reviewSelectionInitializedRef = useRef(isDailyMode);
+  const reviewSelectionInitializedRef = useRef(isDailyMode || requestedReviewItemIndex >= 0);
   const queryClient = useQueryClient();
 
   const current = ITEMS[index];
@@ -306,7 +317,7 @@ export default function PlaySyllables() {
         <div className="w-8" />
       </div>
 
-      {!isPracticeMode && (
+      {!isPracticeMode && !isReviewMode && (
         <div className="px-3 py-1.5 border-b border-border/60 bg-card/70 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
           <Compass className="w-3.5 h-3.5 text-primary" />
           <span className="font-bold text-primary">Capítulo</span>
