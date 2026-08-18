@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Star, Target, Flame, BookOpen, Trophy, TrendingUp, RefreshCw, Mail, Compass } from 'lucide-react';
+import { ArrowLeft, Star, Target, Flame, BookOpen, Trophy, TrendingUp, RefreshCw, Mail, Compass, Clock3, CalendarClock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { ALPHABET } from '@/lib/alphabetData';
 import { calculateMastery } from '@/lib/fsrs';
@@ -13,6 +13,18 @@ import { buildParentJourneyInsights, buildParentWeeklyReport } from '@/game/pare
 import StatsCard from '@/components/parent/StatsCard';
 import LetterProgressGrid from '@/components/parent/LetterProgressGrid';
 import { useToast } from '@/components/ui/use-toast';
+
+function formatNextReview(value) {
+  if (!value) return 'Nenhuma futura';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Nenhuma futura';
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
 
 export default function ParentDashboard() {
   const { toast } = useToast();
@@ -175,6 +187,9 @@ export default function ParentDashboard() {
                             <span>{chapter.completionPct}% dominado</span>
                             <span>{chapter.started}/{chapter.total} iniciados</span>
                             <span>Precisão {chapter.accuracy}%</span>
+                            {chapter.dueReviews > 0 && (
+                              <span className="font-bold text-amber-700">{chapter.dueReviews} {chapter.dueReviews === 1 ? 'revisão pronta' : 'revisões prontas'}</span>
+                            )}
                             {chapter.completed && <span className="font-bold text-primary">Capítulo completo</span>}
                           </div>
                         </div>
@@ -182,6 +197,69 @@ export default function ParentDashboard() {
                     </div>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <Card className="border-amber-200">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="font-display text-lg">Ritmo de Revisão</CardTitle>
+                  <p className="font-body text-sm text-muted-foreground mt-1">
+                    O Lexia agenda revisões curtas para reforçar o que já foi aprendido.
+                  </p>
+                </div>
+                <div className="rounded-xl bg-amber-50 text-amber-700 p-2" aria-hidden="true">
+                  <Clock3 className="w-5 h-5" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                  <p className="font-body text-[10px] font-bold uppercase tracking-wide text-amber-700">Prontas agora</p>
+                  <p className="font-display text-2xl text-foreground mt-1">{insights.dueReviews}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-3">
+                  <p className="font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Com agenda</p>
+                  <p className="font-display text-2xl text-foreground mt-1">{insights.scheduledReviews}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-3">
+                  <p className="font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Futuras</p>
+                  <p className="font-display text-2xl text-foreground mt-1">{insights.upcomingReviews}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-card p-3">
+                  <p className="font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Estabilidade média</p>
+                  <p className="font-display text-2xl text-foreground mt-1">{insights.averageStability}</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/30 p-3 flex items-center gap-3">
+                <CalendarClock className="w-5 h-5 text-primary flex-none" />
+                <div className="min-w-0">
+                  <p className="font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Próxima revisão futura</p>
+                  <p className="font-body text-sm font-bold text-foreground mt-0.5">{formatNextReview(insights.nextReviewAt)}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {insights.chapters.map((chapter) => (
+                  <div key={chapter.id} className="flex items-center gap-3 rounded-xl border border-border px-3 py-2">
+                    <span className="text-lg" aria-hidden="true">{chapter.emoji}</span>
+                    <span className="font-body text-xs font-bold text-foreground flex-1 truncate">{chapter.shortLabel}</span>
+                    <span className={`font-body text-xs font-bold whitespace-nowrap ${chapter.dueReviews > 0 ? 'text-amber-700' : 'text-muted-foreground'}`}>
+                      {chapter.dueReviews} agora
+                    </span>
+                    <span className="font-body text-xs text-muted-foreground whitespace-nowrap">{chapter.upcomingReviews} futuras</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -261,7 +339,7 @@ export default function ParentDashboard() {
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4">
             <p className="font-body text-sm text-foreground leading-relaxed">
-              💡 <strong>Como ler estes dados:</strong> letras usam o algoritmo de repetição espaçada FSRS para adaptar revisões. Sílabas, palavras e frases são consideradas dominadas após repetição correta consistente. A precisão geral acima combina todos os capítulos já praticados, não apenas o alfabeto.
+              💡 <strong>Como ler estes dados:</strong> o FSRS organiza revisões adaptativas em letras, sílabas, palavras e frases. Os critérios de domínio curricular continuam preservados para não rebaixar progresso já conquistado; o bloco Ritmo de Revisão mostra quando vale reforçar conteúdos já vistos.
             </p>
           </CardContent>
         </Card>
