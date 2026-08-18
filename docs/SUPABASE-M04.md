@@ -4,66 +4,57 @@
 
 ## Current status
 
-M04-A staged the independent data provider and RLS schema. M04-B adds the independent email/password authentication experience, while Base44 deliberately remains the default production runtime.
+M04-A staged data/RLS. M04-B staged independent authentication. M04-C now adds the server-side Edge Function implementation for private drawing upload, handwriting-AI proxying and parent-report email delivery. Base44 deliberately remains the default runtime until the independent stack is deployed and migrated.
 
 ## Provider selection
 
-`VITE_LEXIA_PLATFORM_PROVIDER` accepts:
+`VITE_LEXIA_PLATFORM_PROVIDER` accepts `base44` (default) or `supabase` (guarded). Supabase activation still requires URL, publishable key, auth-ready and edge-ready flags.
 
-- `base44` — default and current production behavior;
-- `supabase` — independent provider, guarded by readiness checks.
+## Data and auth
 
-Supabase selection fails fast unless all release markers are present:
+- progress: `/rest/v1/lexia_progress`, scoped by authenticated JWT + RLS;
+- auth: password sign-in, signup, recovery and refresh session;
+- schema: `supabase/migrations/202608180001_lexia_progress.sql`;
+- private drawings bucket: `supabase/migrations/202608180002_lexia_drawings_bucket.sql`.
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY` (legacy `VITE_SUPABASE_ANON_KEY` remains a temporary fallback)
-- `VITE_LEXIA_SUPABASE_AUTH_READY=true`
-- `VITE_LEXIA_SUPABASE_EDGE_READY=true`
+## Edge Functions — M04-C
 
-## Data path
+All three functions require an authenticated user JWT.
 
-`src/platform/adapters/supabaseAdapter.js` implements the Lexia platform contract without adding a Supabase JavaScript SDK dependency. Progress uses `/rest/v1/lexia_progress`; authenticated JWTs plus RLS isolate each account's records.
+### `lexia-upload`
 
-`supabase/migrations/202608180001_lexia_progress.sql` preserves the current FSRS/gamification fields and supports letter, syllable and word progress keys.
+- accepts one PNG/JPEG/WebP drawing;
+- maximum 2 MiB;
+- writes to private bucket `lexia-drawings` under the authenticated user path;
+- returns a signed URL with a 5-minute lifetime;
+- never exposes a secret key to the browser.
 
-## Authentication — M04-B
+### `lexia-ai`
 
-The platform contract now includes:
+- validates the drawing-evaluation request;
+- forwards to a Tehkné-controlled/configurable upstream defined by `LEXIA_AI_UPSTREAM_URL`;
+- optional upstream credential lives in Edge Function secret `LEXIA_AI_UPSTREAM_KEY`;
+- validates and normalizes `score`, `grade`, `feedback` and `recognized_as` before returning data to the game.
 
-- `auth.signInWithPassword`
-- `auth.signUp`
-- `auth.requestPasswordReset`
+### `lexia-email`
 
-The Supabase adapter persists access/refresh tokens locally for the staged client-only flow, refreshes near-expiry sessions, and maps the password/signup/recovery endpoints. `/login` is public only when the Supabase provider is active; Base44 continues using its hosted authentication flow.
+- forwards parent reports through `LEXIA_EMAIL_UPSTREAM_URL`;
+- optional credential: `LEXIA_EMAIL_UPSTREAM_KEY`;
+- forces the recipient to match the authenticated user's e-mail, preventing the game endpoint from becoming an arbitrary mail relay.
 
-The login page supports:
+## Secrets and deployment
 
-- email/password sign-in;
-- account creation with email confirmation as a valid outcome;
-- password-recovery email request;
-- same-origin validation for `returnTo` to prevent external open redirects.
-
-Before activation, Supabase Auth redirect URLs must include the production Lexia origin and the login/recovery destination.
-
-## AI, upload and email staging
-
-The provider contract routes these capabilities through guarded Supabase Edge Function names:
-
-- `lexia-upload`
-- `lexia-ai`
-- `lexia-email`
-
-They remain protected by `VITE_LEXIA_SUPABASE_EDGE_READY=true`. M04-C must implement the functions, secrets and integration tests before the provider can activate.
+No upstream secret belongs in Vite/client environment variables. Edge Function secrets must be configured in Supabase before deployment. The repository contains no production keys.
 
 ## Activation rule
 
-No production environment should set `VITE_LEXIA_PLATFORM_PROVIDER=supabase` until:
+Do not set `VITE_LEXIA_PLATFORM_PROVIDER=supabase` in production until:
 
-1. the SQL migration is applied;
-2. Base44 progress data is exported and reconciled per user;
-3. Supabase Auth redirect URLs and email flow are validated;
-4. Edge Functions are deployed;
-5. provider contract, lint, build and end-to-end tests pass;
-6. a rollback path to Base44 is retained for the first release cohort.
+1. both SQL migrations are applied;
+2. Base44 progress is exported/reconciled per user;
+3. Auth redirect URLs and e-mail confirmation/recovery are validated;
+4. all three Edge Functions are deployed and their upstream secrets configured;
+5. the M04 contracts plus browser E2E pass against the real Supabase project;
+6. rollback to Base44 remains available for the first release cohort.
 
 — Tehkné Solutions

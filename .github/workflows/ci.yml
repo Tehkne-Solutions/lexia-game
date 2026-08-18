@@ -43,6 +43,9 @@ jobs:
       - name: Independent provider contract
         run: node scripts/check-independent-provider.mjs
 
+      - name: Edge Functions contract
+        run: node scripts/check-edge-functions.mjs
+
       - name: Lint
         run: npm run lint
 
