@@ -2,6 +2,8 @@ import { getSupabaseReadiness } from '../providerConfig.js';
 
 const SESSION_KEY = 'lexia_supabase_session';
 
+/** @typedef {Error & { status?: number, data?: unknown }} LexiaHttpError */
+
 function encodeFilterValue(value) {
   return encodeURIComponent(String(value));
 }
@@ -9,6 +11,13 @@ function encodeFilterValue(value) {
 function parseJsonSafely(text) {
   if (!text) return null;
   try { return JSON.parse(text); } catch { return text; }
+}
+
+function createHttpError(message, status, data) {
+  const error = /** @type {LexiaHttpError} */ (new Error(message));
+  error.status = status;
+  error.data = data;
+  return error;
 }
 
 export function createSupabaseAdapter(config) {
@@ -65,10 +74,11 @@ export function createSupabaseAdapter(config) {
     const text = await response.text();
     const payload = parseJsonSafely(text);
     if (!response.ok) {
-      const error = new Error(payload?.message || payload?.error_description || payload?.error || `Supabase request failed (${response.status})`);
-      error.status = response.status;
-      error.data = payload;
-      throw error;
+      throw createHttpError(
+        payload?.message || payload?.error_description || payload?.error || `Supabase request failed (${response.status})`,
+        response.status,
+        payload,
+      );
     }
     return payload;
   }
@@ -149,7 +159,8 @@ export function createSupabaseAdapter(config) {
     try {
       return await request('/auth/v1/user');
     } catch (error) {
-      if (error.status !== 401) throw error;
+      const httpError = /** @type {LexiaHttpError} */ (error);
+      if (httpError.status !== 401) throw error;
       const refreshed = await refreshSession();
       if (!refreshed) throw error;
       return request('/auth/v1/user');
@@ -222,10 +233,11 @@ export function createSupabaseAdapter(config) {
     const text = await response.text();
     const payload = parseJsonSafely(text);
     if (!response.ok) {
-      const error = new Error(payload?.message || payload?.error || `Supabase Edge Function failed (${response.status})`);
-      error.status = response.status;
-      error.data = payload;
-      throw error;
+      throw createHttpError(
+        payload?.message || payload?.error || `Supabase Edge Function failed (${response.status})`,
+        response.status,
+        payload,
+      );
     }
     return payload;
   }
