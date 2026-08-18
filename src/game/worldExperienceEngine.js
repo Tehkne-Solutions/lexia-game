@@ -90,21 +90,26 @@ export function getWorldExperience(worldId, stats = {}) {
   };
 }
 
+export function getWorldRelics(stats = {}) {
+  return Object.entries(WORLD_EXPERIENCES).map(([worldId, experience]) => ({
+    worldId,
+    chapter: experience.chapter,
+    worldTitle: experience.title,
+    ...experience.relic,
+    unlocked: Boolean(experience.isRelicUnlocked(stats)),
+  }));
+}
+
 export function getUnlockedWorldRelics(stats = {}) {
-  return Object.entries(WORLD_EXPERIENCES)
-    .map(([worldId, experience]) => ({
-      worldId,
-      ...experience.relic,
-      unlocked: Boolean(experience.isRelicUnlocked(stats)),
-    }))
-    .filter((relic) => relic.unlocked);
+  return getWorldRelics(stats).filter((relic) => relic.unlocked);
 }
 
 export function getWorldRelicProgress(stats = {}) {
-  const relics = getUnlockedWorldRelics(stats);
+  const allRelics = getWorldRelics(stats);
+  const relics = allRelics.filter((relic) => relic.unlocked);
   return {
     unlocked: relics.length,
-    total: Object.keys(WORLD_EXPERIENCES).length,
+    total: allRelics.length,
     relics,
   };
 }

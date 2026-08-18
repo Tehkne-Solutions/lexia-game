@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const artifactsDir = path.join(root, 'artifacts', 'm13');
+const artifactsDir = path.join(root, 'artifacts', 'm14');
 const previewPort = 4173;
 const debugPort = 9222;
 const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -134,6 +134,18 @@ async function waitForText(cdp, text, timeoutMs = 10000) {
   throw new Error(`Timed out waiting for text ${JSON.stringify(text)} at ${url}`);
 }
 
+async function clickButtonByText(cdp, text) {
+  const clicked = await cdp.evaluate(`(() => {
+    const target = [...document.querySelectorAll('button')]
+      .find((button) => button.innerText?.includes(${JSON.stringify(text)}));
+    if (!target) return false;
+    target.click();
+    return true;
+  })()`);
+  assert.equal(clicked, true, `button containing ${JSON.stringify(text)} must be clickable`);
+  await sleep(700);
+}
+
 async function navigate(cdp, url, selector) {
   await cdp.send('Page.navigate', { url });
   const deadline = Date.now() + 10000;
@@ -248,7 +260,7 @@ let cdp;
 try {
   await waitForHttp(baseUrl);
   const chromeBin = findChrome();
-  const profileDir = path.join(root, '.tmp-m13-chrome');
+  const profileDir = path.join(root, '.tmp-m14-chrome');
   await rm(profileDir, { recursive: true, force: true });
   chrome = spawn(chromeBin, [
     '--headless=new',
@@ -323,9 +335,18 @@ try {
     const profileMetrics = await getDocumentMetrics(cdp);
     assertDocumentSurface(profileMetrics, `${viewport.name}/profile`);
     await capture(cdp, `${viewport.name}-profile`);
+
+    await clickButtonByText(cdp, 'Adesivos');
+    await waitForText(cdp, 'Relíquias da Jornada');
+    await waitForText(cdp, 'Álbum do Alfabeto');
+    await waitForText(cdp, 'Marcos da Aventura');
+    await waitForText(cdp, '0/40 itens colecionados');
+    const collectionMetrics = await getDocumentMetrics(cdp);
+    assertDocumentSurface(collectionMetrics, `${viewport.name}/profile-collection`);
+    await capture(cdp, `${viewport.name}-profile-collection`);
   }
 
-  console.log('Lexia Browser Layout M13: PASS (Chrome mobile-short/mobile/desktop; 7 journey/parent/profile surfaces × 3 viewports = 21 screenshots)');
+  console.log('Lexia Browser Layout M14: PASS (Chrome mobile-short/mobile/desktop; 8 journey/parent/profile/collection surfaces × 3 viewports = 24 screenshots)');
 } finally {
   cdp?.close();
   chrome?.kill('SIGTERM');
