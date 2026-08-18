@@ -18,6 +18,7 @@ import DailyChallengeCard from '@/components/game/DailyChallengeCard';
 
 import { ALPHABET, getLetterData } from '@/lib/alphabetData';
 import { createNewCard, reviewCard, calculateMastery, pickNextLetter } from '@/lib/fsrs';
+import { getInitialLearningLetter } from '@/learning/engine';
 import { buildStats, getEarnedAchievements } from '@/lib/achievements';
 import { getDailyChallenge, updateChallengeProgress } from '@/lib/dailyChallenge';
 import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
@@ -28,10 +29,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const isPracticeMode = urlParams.get('mode') === 'practice';
 
 export default function PlayGame() {
-  const [currentLetter, setCurrentLetter] = useState(() => {
-    const randomIndex = Math.floor(Math.random() * 5);
-    return ALPHABET[randomIndex].letter;
-  });
+  const [currentLetter, setCurrentLetter] = useState(() => getInitialLearningLetter(ALPHABET));
   const [phase, setPhase] = useState('draw');
   const [aiResult, setAiResult] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
