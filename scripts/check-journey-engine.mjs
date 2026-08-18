@@ -76,6 +76,9 @@ assert.ok(playGame.includes('isFetched: hasLoadedProgress'), 'guided activity mu
 assert.ok(playGame.includes('setCurrentLetter(journey.target)'), 'PlayGame must start on the Journey Engine target for returning learners');
 assert.ok(playGame.includes("journey.stage === JOURNEY_STAGES.LETTERS"));
 assert.ok(playGame.includes('Ver jornada no mapa'));
-assert.ok(playGame.includes('if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: 2 })'), 'practice fallback must not persist progress');
+assert.ok(
+  playGame.includes('if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: 2, encounterId })'),
+  'practice fallback must not persist progress'
+);
 
 console.log('Lexia Journey Engine M07 contract: PASS (engine + Welcome + World Map + PlayGame handoff aligned)');

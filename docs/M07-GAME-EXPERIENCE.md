@@ -62,7 +62,30 @@ The letter activity now consumes the same journey state:
 - the result state offers a direct handoff back to the journey map;
 - AI fallback in Practice mode no longer persists progress.
 
-## Release contract
+## M07-E — Session Quest Loop — COMPLETE
+
+Guided PlayGame sessions are now framed as short expeditions instead of an endless sequence of isolated exercises.
+
+The first live quest is `Expedição das Letras`:
+
+- goal: 3 successful persisted encounters;
+- failed attempts do not advance the expedition;
+- one drawing encounter can advance the quest at most once, even when a parent/learner corrects the AI judgment manually;
+- the quest only summarizes stars already earned by the existing scoring system;
+- no new FSRS weight, mastery threshold, currency or hidden score is introduced;
+- Practice mode is excluded from the quest system.
+
+PlayGame presents:
+
+- a compact expedition progress bar;
+- current checkpoints and stars earned during that session;
+- a completion handoff with narrative feedback;
+- `Voltar ao mapa` as the primary completion action;
+- `Continuar treinando` as the optional continuation action.
+
+When expedition completion and a combo celebration would happen on the same result, expedition completion takes presentation priority so overlays do not compete.
+
+## Release contracts
 
 The blocking Journey Engine contract covers:
 
@@ -77,11 +100,21 @@ The blocking Journey Engine contract covers:
 - PlayGame waits for progress and synchronizes the recommended target;
 - Practice fallback cannot persist learner progress.
 
-The Journey Engine is included in the blocking core typecheck.
+The blocking Session Quest contract covers:
+
+- 3-checkpoint guided letter expeditions;
+- failures do not advance a quest;
+- duplicate encounter IDs cannot advance twice;
+- only existing stars are summarized;
+- completion occurs exactly at the configured goal;
+- Practice mode cannot create or advance a guided session quest;
+- PlayGame carries stable encounter identity through AI evaluation and manual correction;
+- session progress and completion presentation remain connected to the guided activity.
+
+Journey and Session Quest engines are included in the blocking core typecheck.
 
 ## Next slices
 
-- M07-E: mission completion/session handoff and session-level rewards;
 - M07-F: world-specific narrative and rewards without changing pedagogical scoring;
 - M07-G: game-shell/mobile viewport refinement and visual QA.
 
