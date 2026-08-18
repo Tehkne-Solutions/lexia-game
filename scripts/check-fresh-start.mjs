@@ -39,4 +39,13 @@ assert.ok(policy.includes('0 rows in `public.lexia_progress`'));
 assert.ok(policy.includes('No Base44 or previous Supabase user/progress history will be migrated'));
 assert.ok(policy.includes('No legacy user ownership decision'));
 
-console.log('Lexia Fresh Start M06 contract: PASS (legacy migration runtime retired, clean-start policy enforced)');
+const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
+assert.ok(app.includes("activePlatformProvider === 'supabase' && location.pathname === '/'"), 'Supabase Welcome must remain public before authentication');
+assert.ok(app.includes("authError.type === 'auth_required' && !isPublicSupabaseWelcome"), 'protected routes must still require authentication');
+
+const login = await readFile(new URL('../src/pages/Login.jsx', import.meta.url), 'utf8');
+assert.ok(login.includes("onboarding_version: 'fresh-start-v1'"), 'new Supabase accounts must carry the fresh-start onboarding marker');
+assert.ok(login.includes('Sua jornada começa do zero'), 'signup UX must explicitly communicate fresh start');
+assert.ok(login.includes('parsed.origin !== window.location.origin'), 'returnTo must remain same-origin only');
+
+console.log('Lexia Fresh Start M06 contract: PASS (legacy migration retired, public onboarding + protected learning flow enforced)');
