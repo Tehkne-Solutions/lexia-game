@@ -5,10 +5,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Star, Target, Flame, BookOpen, Trophy, TrendingUp, RefreshCw, Mail } from 'lucide-react';
+import { ArrowLeft, Star, Target, Flame, BookOpen, Trophy, TrendingUp, RefreshCw, Mail, Compass } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { ALPHABET } from '@/lib/alphabetData';
 import { calculateMastery } from '@/lib/fsrs';
+import { buildParentJourneyInsights, buildParentWeeklyReport } from '@/game/parentInsightsEngine';
 import StatsCard from '@/components/parent/StatsCard';
 import LetterProgressGrid from '@/components/parent/LetterProgressGrid';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,6 +24,9 @@ export default function ParentDashboard() {
     initialData: [],
   });
 
+  const insights = buildParentJourneyInsights(allProgress);
+  const letterChapter = insights.chapters.find((chapter) => chapter.id === 'letters');
+
   function handleRefresh() {
     queryClient.invalidateQueries({ queryKey: ['childProgress'] });
   }
@@ -34,36 +38,10 @@ export default function ParentDashboard() {
       const email = me?.email;
       if (!email) throw new Error('no email');
 
-      const recommendations = [
-        lettersMastered < 26
-          ? `• Continue praticando! Faltam ${26 - lettersMastered} letras para dominar o alfabeto.`
-          : '• Parabéns! O alfabeto foi dominado. Explore sílabas e palavras!',
-        accuracy < 70
-          ? '• Foque na precisão: pratique com calma e peça ajuda quando precisar.'
-          : '• Excelente precisão! Continue assim!',
-        maxStreak < 5
-          ? '• Tente acertar 5 seguidas para ganhar um combo!'
-          : '• Que sequência incrível! Continue mantendo o ritmo.',
-      ].join('\n');
-
-      const body = `Relatório Semanal — Lexia Game
-
-Estrelas: ${totalStars}
-Letras Iniciadas: ${lettersStarted}/26
-Letras Dominadas: ${lettersMastered}/26
-Precisão: ${accuracy}%
-Maior Sequência: ${maxStreak}
-Tentativas Totais: ${totalAttempts}
-
-Recomendações:
-${recommendations}
-
-Continue aprendendo com a Corujinha! 🦉`;
-
       await lexiaPlatform.email.send({
         to: email,
-        subject: 'Relatório Semanal - Lexia Game',
-        body,
+        subject: 'Relatório de Jornada - Lexia Game',
+        body: buildParentWeeklyReport(insights),
       });
 
       toast({ title: '📧 Relatório enviado!', description: `Verifique seu email: ${email}` });
@@ -74,23 +52,13 @@ Continue aprendendo com a Corujinha! 🦉`;
   }
 
   const progressMap = {};
-  allProgress.forEach(p => { progressMap[p.letter] = p; });
+  allProgress.forEach((progress) => { progressMap[progress.letter] = progress; });
 
-  const letterProgress = allProgress.filter(p => p.letter && p.letter.length === 1);
-
-  const totalStars = allProgress.reduce((s, p) => s + (p.stars_earned || 0), 0);
-  const totalAttempts = letterProgress.reduce((s, p) => s + (p.total_attempts || 0), 0);
-  const totalCorrect = letterProgress.reduce((s, p) => s + (p.correct_attempts || 0), 0);
-  const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
-  const lettersStarted = letterProgress.filter(p => p.total_attempts > 0).length;
-  const lettersMastered = letterProgress.filter(p => calculateMastery(p) >= 80).length;
-  const maxStreak = letterProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
-
-  const chartData = ALPHABET.map(item => {
-    const p = progressMap[item.letter];
+  const chartData = ALPHABET.map((item) => {
+    const progress = progressMap[item.letter];
     return {
       letter: item.letter,
-      mastery: p ? calculateMastery(p) : 0,
+      mastery: progress ? calculateMastery(progress) : 0,
       color: item.color,
     };
   });
@@ -105,32 +73,34 @@ Continue aprendendo com a Corujinha! 🦉`;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
+      <div className="bg-card border-b border-border p-3 sm:p-4 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3">
           <Link to="/">
             <Button variant="ghost" size="icon" className="rounded-xl">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
-          <div className="flex-1">
-            <h1 className="font-display text-2xl text-foreground">Área dos Pais</h1>
-            <p className="font-body text-sm text-muted-foreground">Acompanhe o progresso da aprendizagem</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display text-xl sm:text-2xl text-foreground whitespace-nowrap">Área dos Pais</h1>
+            <p className="hidden sm:block font-body text-sm text-muted-foreground">Acompanhe toda a jornada de alfabetização</p>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleSendReport}
             disabled={sendingReport}
-            className="rounded-xl gap-1.5 font-body font-bold text-xs"
+            aria-label={sendingReport ? 'Enviando relatório' : 'Enviar relatório de jornada'}
+            className="h-10 w-10 p-0 sm:h-9 sm:w-auto sm:px-3 rounded-xl gap-1.5 font-body font-bold text-xs"
           >
             {sendingReport ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-            {sendingReport ? 'Enviando...' : 'Relatório'}
+            <span className="hidden sm:inline">{sendingReport ? 'Enviando...' : 'Relatório'}</span>
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleRefresh}
             disabled={isFetching}
+            aria-label="Atualizar progresso"
             className="rounded-xl"
           >
             <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
@@ -144,12 +114,77 @@ Continue aprendendo com a Corujinha! 🦉`;
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <StatsCard icon={Star} label="Estrelas" value={totalStars} color="bg-yellow-500" />
-          <StatsCard icon={Target} label="Precisão" value={`${accuracy}%`} color="bg-green-500" />
-          <StatsCard icon={BookOpen} label="Letras Iniciadas" value={`${lettersStarted}/26`} color="bg-blue-500" />
-          <StatsCard icon={Trophy} label="Dominadas" value={lettersMastered} color="bg-purple-500" />
-          <StatsCard icon={Flame} label="Maior Sequência" value={maxStreak} color="bg-red-500" />
-          <StatsCard icon={TrendingUp} label="Tentativas" value={totalAttempts} color="bg-teal-500" />
+          <StatsCard icon={Star} label="Estrelas" value={insights.totalStars} color="bg-yellow-500" />
+          <StatsCard icon={Target} label="Precisão geral" value={`${insights.overallAccuracy}%`} color="bg-green-500" />
+          <StatsCard icon={TrendingUp} label="Jornada" value={`${insights.totalMastered}/${insights.totalTargets}`} color="bg-blue-500" />
+          <StatsCard icon={Trophy} label="Capítulos" value={`${insights.chaptersCompleted}/${insights.totalChapters}`} color="bg-purple-500" />
+          <StatsCard icon={Flame} label="Maior sequência" value={insights.maxStreak} color="bg-red-500" />
+          <StatsCard icon={BookOpen} label="Tentativas" value={insights.totalAttempts} color="bg-teal-500" />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="font-display text-lg">Jornada de Alfabetização</CardTitle>
+                  <p className="font-body text-sm text-muted-foreground mt-1">
+                    {insights.totalMastered}/{insights.totalTargets} objetivos dominados · {insights.overallCompletionPct}% do caminho principal
+                  </p>
+                </div>
+                <div className="rounded-xl bg-primary/10 text-primary p-2" aria-hidden="true">
+                  <Compass className="w-5 h-5" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <p className="font-body text-[11px] uppercase tracking-[0.12em] text-primary font-bold">Missão atual</p>
+                <p className="font-display text-base text-foreground mt-0.5">{insights.journey.title}</p>
+                <p className="font-body text-xs text-muted-foreground mt-1">{insights.journey.description}</p>
+              </div>
+
+              <div className="space-y-2">
+                {insights.chapters.map((chapter) => {
+                  const isCurrent = insights.journey.stage === chapter.stage;
+                  return (
+                    <div
+                      key={chapter.id}
+                      className={`rounded-xl border p-3 ${isCurrent ? 'border-primary/40 bg-primary/5' : 'border-border bg-card'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl" aria-hidden="true">{chapter.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-body font-bold text-sm text-foreground truncate">{chapter.label}</p>
+                            <span className="font-body text-xs font-bold text-muted-foreground whitespace-nowrap">
+                              {chapter.mastered}/{chapter.total}
+                            </span>
+                          </div>
+                          <div className="mt-1.5 h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-primary transition-[width] duration-500"
+                              style={{ width: `${chapter.completionPct}%` }}
+                            />
+                          </div>
+                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 font-body text-[11px] text-muted-foreground">
+                            <span>{chapter.completionPct}% dominado</span>
+                            <span>{chapter.started}/{chapter.total} iniciados</span>
+                            <span>Precisão {chapter.accuracy}%</span>
+                            {chapter.completed && <span className="font-bold text-primary">Capítulo completo</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         <motion.div
@@ -157,9 +192,34 @@ Continue aprendendo com a Corujinha! 🦉`;
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
+          <Card className="border-primary/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="font-display text-lg">Próximo foco em casa</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {insights.recommendations.map((recommendation) => (
+                  <li key={recommendation} className="font-body text-sm text-foreground flex gap-2 leading-relaxed">
+                    <span className="text-primary" aria-hidden="true">•</span>
+                    <span>{recommendation}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
           <Card>
             <CardHeader>
-              <CardTitle className="font-display text-lg">Progresso por Letra</CardTitle>
+              <CardTitle className="font-display text-lg">Detalhe do Mundo das Letras</CardTitle>
+              <p className="font-body text-sm text-muted-foreground">
+                {letterChapter?.mastered || 0}/26 letras dominadas · {letterChapter?.accuracy || 0}% de precisão no capítulo
+              </p>
             </CardHeader>
             <CardContent>
               <LetterProgressGrid progressMap={progressMap} />
@@ -187,8 +247,8 @@ Continue aprendendo com a Corujinha! 🦉`;
                       contentStyle={{ borderRadius: '12px', fontFamily: 'var(--font-body)' }}
                     />
                     <Bar dataKey="mastery" radius={[4, 4, 0, 0]}>
-                      {chartData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} opacity={entry.mastery > 0 ? 0.8 : 0.2} />
+                      {chartData.map((entry, index) => (
+                        <Cell key={entry.letter || index} fill={entry.color} opacity={entry.mastery > 0 ? 0.8 : 0.2} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -200,10 +260,8 @@ Continue aprendendo com a Corujinha! 🦉`;
 
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4">
-            <p className="font-body text-sm text-foreground">
-              💡 <strong>Dica:</strong> O algoritmo de repetição espaçada (FSRS) adapta automaticamente 
-              o ritmo de aprendizagem. Letras mais difíceis aparecem com mais frequência, e as já dominadas 
-              são revisadas em intervalos maiores para fixar na memória de longo prazo.
+            <p className="font-body text-sm text-foreground leading-relaxed">
+              💡 <strong>Como ler estes dados:</strong> letras usam o algoritmo de repetição espaçada FSRS para adaptar revisões. Sílabas, palavras e frases são consideradas dominadas após repetição correta consistente. A precisão geral acima combina todos os capítulos já praticados, não apenas o alfabeto.
             </p>
           </CardContent>
         </Card>
