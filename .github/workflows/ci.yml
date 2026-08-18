@@ -77,6 +77,9 @@ jobs:
       - name: Live private services smoke harness contract
         run: node scripts/check-live-services-smoke-contract.mjs
 
+      - name: Browser cutover harness contract
+        run: node scripts/check-browser-cutover-harness.mjs
+
       - name: Supabase schema contract
         run: npm run check:supabase-schema
 
