@@ -95,6 +95,9 @@ jobs:
       - name: Production post-switch harness contract
         run: node scripts/check-production-post-switch-harness.mjs
 
+      - name: Release control contract
+        run: node scripts/check-release-control.mjs
+
       - name: Supabase schema contract
         run: npm run check:supabase-schema
 
