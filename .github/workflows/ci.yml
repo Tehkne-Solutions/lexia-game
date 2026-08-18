@@ -41,6 +41,9 @@ jobs:
       - name: Learning engine contract
         run: node scripts/check-learning-engine.mjs
 
+      - name: Journey engine contract
+        run: node scripts/check-journey-engine.mjs
+
       - name: Platform boundary contract
         run: node scripts/check-platform-boundary.mjs
 
