@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { lexiaPlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Home, Grid3X3, ChevronRight, Volume2, ThumbsDown, ThumbsUp, Zap, Sparkles } from 'lucide-react';
@@ -47,7 +47,7 @@ export default function PlayGame() {
 
   const { data: allProgress = [] } = useQuery({
     queryKey: ['childProgress'],
-    queryFn: () => base44.entities.ChildProgress.list(),
+    queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
   });
 
@@ -110,9 +110,9 @@ export default function PlayGame() {
       };
 
       if (existing) {
-        await base44.entities.ChildProgress.update(existing.id, data);
+        await lexiaPlatform.progress.update(existing.id, data);
       } else {
-        await base44.entities.ChildProgress.create(data);
+        await lexiaPlatform.progress.create(data);
       }
 
       if (isCorrect && isChallengeLetter) {
@@ -160,11 +160,11 @@ export default function PlayGame() {
     try {
       const blob = await (await fetch(imageDataUrl)).blob();
       const file = new File([blob], 'drawing.png', { type: 'image/png' });
-      const { file_url } = await withTimeout(base44.integrations.Core.UploadFile({ file }));
+      const { file_url } = await withTimeout(lexiaPlatform.storage.uploadFile(file));
 
       setMascotMessage('Quase lá...');
 
-      const result = await withTimeout(base44.integrations.Core.InvokeLLM({
+      const result = await withTimeout(lexiaPlatform.ai.invoke({
         prompt: `You are evaluating a child's handwriting. The child was asked to write the UPPERCASE letter "${currentLetter}".
 
 IMPORTANT RULES:
