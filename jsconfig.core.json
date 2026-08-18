@@ -1,0 +1,16 @@
+{
+  "extends": "./jsconfig.json",
+  "compilerOptions": {
+    "checkJs": true,
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": [
+    "src/platform/adapters/supabaseAdapter.js",
+    "src/platform/providerConfig.js",
+    "src/platform/contracts.js",
+    "src/learning/**/*.js",
+    "src/vite-env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'integration/**'
+      - 'sprint/**'
   pull_request:
     branches:
       - main
@@ -30,9 +31,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck legacy baseline
+      - name: Typecheck legacy UI baseline
         continue-on-error: true
         run: npm run typecheck
+
+      - name: Typecheck core
+        run: npm run typecheck:core
 
       - name: Learning engine contract
         run: node scripts/check-learning-engine.mjs
@@ -46,11 +50,8 @@ jobs:
       - name: Edge Functions contract
         run: node scripts/check-edge-functions.mjs
 
-      - name: Progress migration contract
-        run: node scripts/check-progress-migration.mjs
-
-      - name: Ownership reconciliation contract
-        run: node scripts/check-ownership-reconciliation.mjs
+      - name: Fresh Start contract
+        run: node scripts/check-fresh-start.mjs
 
       - name: Supabase schema contract
         run: npm run check:supabase-schema
