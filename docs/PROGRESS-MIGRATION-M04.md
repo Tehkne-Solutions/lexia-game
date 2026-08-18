@@ -1,10 +1,10 @@
-# Lexia M04-D — Portable Progress Migration
+# Lexia M04-D/E — Portable Progress Migration
 
 **Tehkné Solutions**
 
 ## Goal
 
-Make learner progress portable between Base44 and the independent provider without carrying vendor-specific identifiers into the destination.
+Make learner progress portable between Base44 and the independent provider without carrying vendor-specific identifiers into the destination, while handling mixed anonymous/authenticated source ownership safely.
 
 ## Snapshot format
 
@@ -35,7 +35,15 @@ Only Lexia domain state is retained:
 
 Keys such as `A`, `SYL_BA` and `WORD_CASA` remain valid, so migration covers the full game rather than letters only.
 
-## Import policy
+## Ownership reconciliation
+
+Base44 source history can contain multiple ownership buckets, including `anonymous` and registered accounts. M04-E adds an explicit reconciliation stage before the portable snapshot is created.
+
+The migration operator must provide `selectedOwnerRefs`. The reconciler never assumes anonymous history belongs to a registered account. When explicitly selected owner buckets contain the same progress key, the stronger record is retained using the same conservative progress comparison used during destination import.
+
+Provider owner references are used only during reconciliation and are removed from the resulting snapshot.
+
+## Destination import policy
 
 Import matches destination records by normalized progress key.
 
@@ -46,21 +54,22 @@ Default behavior is conservative:
 3. destination equal or stronger → skip;
 4. `force=true` explicitly overrides the conservative rule.
 
-Strength is compared by attempts, repetitions, stars, correct attempts, streak, stability and level, in that order. This is designed to prevent an old backup from silently replacing richer learner history.
+Strength is compared by attempts, repetitions, stars, correct attempts, streak, stability and level, in that order.
 
 ## Security and privacy
 
-Snapshots contain no provider user ID or authentication token. E-mail addresses and credentials are not part of the format. Import always uses the currently authenticated destination platform account.
+Portable snapshots contain no provider user ID, authentication token or e-mail address. Import always uses the currently authenticated destination platform account.
 
-## Next operational step
+## Operational sequence
 
 When a real Supabase project is connected:
 
-1. export each Base44 learner's progress through the current platform adapter;
-2. create/confirm the corresponding Supabase account;
-3. authenticate as that destination learner or execute an approved administrative migration path;
-4. validate the snapshot;
-5. import and reconcile counts;
-6. retain the original snapshot as rollback evidence until cohort validation is complete.
+1. audit Base44 ownership buckets;
+2. explicitly confirm source-owner-to-destination-user mapping;
+3. reconcile selected source ownership buckets;
+4. generate and validate the portable snapshot;
+5. authenticate as the destination learner or execute an approved administrative migration path;
+6. import and reconcile create/update/skip counts;
+7. retain the original snapshot as rollback evidence until cohort validation is complete.
 
 — Tehkné Solutions

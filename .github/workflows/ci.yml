@@ -49,6 +49,9 @@ jobs:
       - name: Progress migration contract
         run: node scripts/check-progress-migration.mjs
 
+      - name: Ownership reconciliation contract
+        run: node scripts/check-ownership-reconciliation.mjs
+
       - name: Lint
         run: npm run lint
 
