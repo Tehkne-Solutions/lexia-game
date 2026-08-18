@@ -85,6 +85,37 @@ PlayGame presents:
 
 When expedition completion and a combo celebration would happen on the same result, expedition completion takes presentation priority so overlays do not compete.
 
+## M07-F — World Narrative & Relics — COMPLETE
+
+The map now presents the learning progression as named story chapters instead of generic content tiers.
+
+Canonical chapter layer:
+
+1. **Capítulo I — O Bosque dos Símbolos** — letters;
+2. **Capítulo II — As Pontes do Som** — simple syllables;
+3. **Capítulo III — O Labirinto dos Encontros** — complex syllables;
+4. **Capítulo IV — A Biblioteca Desperta** — first words;
+5. **Capítulo V — O Jardim das Histórias** — sentences;
+6. **Epílogo — A Torre da Maestria** — continued mastery.
+
+Each chapter exposes a narrative briefing, completion text and one thematic relic. Relics are **derived rewards**, not a new economy:
+
+- no relic row, inventory table or new backend field is created;
+- no currency, purchase, loot roll or hidden score exists;
+- a relic is considered unlocked only when the existing progress stats already prove the chapter's mastery condition;
+- clearing data automatically removes the derived relic state because there is no independent relic persistence.
+
+Current relic set:
+
+- `Pena das 26 Vozes` — alphabet mastery;
+- `Concha das Sílabas` — simple syllable mastery;
+- `Bússola dos Encontros` — complex syllable chapter;
+- `Chave das Primeiras Palavras` — first-word mastery;
+- `Semente das Histórias` — sentence chapter;
+- `Lanterna da Maestria` — letters + simple syllables + first words mastered.
+
+Welcome and World Map consume the same world-experience engine. The Home announces the current chapter above the current mission; the map displays the active chapter briefing, each world's chapter identity, relic status and aggregate relic collection progress.
+
 ## Release contracts
 
 The blocking Journey Engine contract covers:
@@ -111,11 +142,19 @@ The blocking Session Quest contract covers:
 - PlayGame carries stable encounter identity through AI evaluation and manual correction;
 - session progress and completion presentation remain connected to the guided activity.
 
-Journey and Session Quest engines are included in the blocking core typecheck.
+The blocking World Experience contract covers:
 
-## Next slices
+- canonical chapter catalog and chapter-to-world mapping;
+- fresh accounts start with locked chapter relics;
+- existing mastery deterministically unlocks only the corresponding relics;
+- the core completed journey derives alphabet, simple-syllable, first-word and mastery relics;
+- Home and World Map consume the same active chapter source;
+- the world-experience engine contains no platform persistence or parallel scoring path.
 
-- M07-F: world-specific narrative and rewards without changing pedagogical scoring;
+Journey, Session Quest and World Experience engines are included in the blocking core typecheck.
+
+## Next slice
+
 - M07-G: game-shell/mobile viewport refinement and visual QA.
 
 — Tehkné Solutions

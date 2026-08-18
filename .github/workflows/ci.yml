@@ -47,6 +47,9 @@ jobs:
       - name: Session quest contract
         run: node scripts/check-session-quest.mjs
 
+      - name: World experience contract
+        run: node scripts/check-world-experience.mjs
+
       - name: Platform boundary contract
         run: node scripts/check-platform-boundary.mjs
 

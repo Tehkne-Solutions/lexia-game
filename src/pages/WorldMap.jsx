@@ -9,7 +9,14 @@ import { buildStats } from '@/lib/achievements';
 import { WORLDS, isWorldUnlocked } from '@/lib/worldMap';
 import { playClickSound } from '@/lib/sounds';
 import { getJourneyState } from '@/game/journeyEngine';
+import {
+  getJourneyWorldExperience,
+  getWorldExperience,
+  getWorldRelicProgress,
+} from '@/game/worldExperienceEngine';
 import WorldUnlockCelebration from '@/components/game/WorldUnlockCelebration';
+import WorldNarrativePanel from '@/components/game/WorldNarrativePanel';
+import WorldRelicBadge from '@/components/game/WorldRelicBadge';
 
 export default function WorldMap() {
   const { data: allProgress = [] } = useQuery({
@@ -22,6 +29,8 @@ export default function WorldMap() {
 
   const stats = buildStats(allProgress);
   const journey = getJourneyState(allProgress);
+  const activeExperience = getJourneyWorldExperience(journey, stats);
+  const relicProgress = getWorldRelicProgress(stats);
   const prevCompletedRef = useRef(new Set());
   const [celebrationWorld, setCelebrationWorld] = useState(null);
 
@@ -78,14 +87,7 @@ export default function WorldMap() {
         </div>
 
         <div className="max-w-lg mx-auto p-4 pt-6 space-y-4 relative z-10">
-          <div className="rounded-2xl border-2 border-primary/20 bg-card p-3 flex items-start gap-3 shadow-sm">
-            <Compass className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <p className="font-body text-xs font-bold uppercase tracking-wide text-primary">Próximo destino</p>
-              <p className="font-display text-base text-foreground">{journey.title}</p>
-              <p className="font-body text-xs text-muted-foreground mt-0.5">{journey.description}</p>
-            </div>
-          </div>
+          <WorldNarrativePanel experience={activeExperience} journey={journey} />
 
           <div className="relative">
             {WORLDS.map((world, index) => {
@@ -96,6 +98,7 @@ export default function WorldMap() {
               const isActive = unlocked && pct < 100;
               const isDone = pct >= 100;
               const isRecommended = journey.worldId === world.id;
+              const worldExperience = getWorldExperience(world.id, stats);
 
               return (
                 <motion.div
@@ -130,7 +133,10 @@ export default function WorldMap() {
                         {world.emoji}
                       </motion.div>
 
-                      <div className="flex-1 text-white">
+                      <div className="flex-1 text-white min-w-0">
+                        <p className="font-body text-[10px] uppercase tracking-[0.12em] opacity-75">
+                          {worldExperience.chapter} · {worldExperience.title}
+                        </p>
                         <div className="flex items-center gap-2">
                           <h2 className="font-display text-lg">{world.name}</h2>
                           {isDone && <span className="text-lg">🏆</span>}
@@ -152,6 +158,10 @@ export default function WorldMap() {
                             </div>
                           </div>
                         )}
+
+                        <div className="mt-2">
+                          <WorldRelicBadge experience={worldExperience} />
+                        </div>
 
                         {!unlocked && (
                           <p className="text-xs opacity-80 mt-1">
@@ -190,7 +200,11 @@ export default function WorldMap() {
                         {[1, 2, 3].map(s => (
                           <Star key={s} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                         ))}
-                        <span className="text-xs font-body text-yellow-700 ml-1">Mundo completo!</span>
+                        <span className="text-xs font-body text-yellow-700 ml-1">
+                          {worldExperience.relicUnlocked
+                            ? `${worldExperience.relic.name} conquistada!`
+                            : 'Mundo completo!'}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -201,10 +215,10 @@ export default function WorldMap() {
 
           <div className="text-center py-4">
             <p className="font-body text-sm text-muted-foreground">
-              🦉 Continue aprendendo para desbloquear novos mundos!
+              🦉 Continue aprendendo para desbloquear novos mundos e relíquias!
             </p>
             <p className="font-body text-xs text-muted-foreground mt-1">
-              Letras: <strong>{stats.lettersMastered || 0}/26</strong> · Sílabas: <strong>{stats.syllablesBasicMastered || 0}/20</strong> · Palavras: <strong>{stats.wordsMastered || 0}/20</strong>
+              Letras: <strong>{stats.lettersMastered || 0}/26</strong> · Sílabas: <strong>{stats.syllablesBasicMastered || 0}/20</strong> · Palavras: <strong>{stats.wordsMastered || 0}/20</strong> · Relíquias: <strong>{relicProgress.unlocked}/{relicProgress.total}</strong>
             </p>
           </div>
         </div>

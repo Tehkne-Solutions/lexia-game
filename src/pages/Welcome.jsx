@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass } from 'lucide-react';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import { speak, playClickSound } from '@/lib/sounds';
+import { buildStats } from '@/lib/achievements';
 import { lexiaPlatform, activePlatformProvider } from '@/platform';
 import { useAuth } from '@/lib/AuthContext';
 import { getJourneyState } from '@/game/journeyEngine';
+import { getJourneyWorldExperience } from '@/game/worldExperienceEngine';
 
 export default function Welcome() {
   const [showMessage, setShowMessage] = useState(false);
@@ -22,9 +24,15 @@ export default function Welcome() {
     enabled: canLoadProgress,
   });
 
+  const visibleProgress = canLoadProgress ? allProgress : [];
   const journey = useMemo(
-    () => getJourneyState(canLoadProgress ? allProgress : []),
-    [allProgress, canLoadProgress],
+    () => getJourneyState(visibleProgress),
+    [visibleProgress],
+  );
+  const stats = useMemo(() => buildStats(visibleProgress), [visibleProgress]);
+  const activeExperience = useMemo(
+    () => getJourneyWorldExperience(journey, stats),
+    [journey, stats],
   );
   const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
 
@@ -103,6 +111,12 @@ export default function Welcome() {
           transition={{ delay: 0.7 }}
         >
           <div className="flex items-center gap-2 mb-2">
+            <BookOpen className="w-4 h-4 text-primary" />
+            <span className="font-body text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+              {activeExperience.chapter} · {activeExperience.title}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mb-1.5">
             <Compass className="w-5 h-5 text-primary" />
             <span className="font-body text-xs font-bold uppercase tracking-wide text-primary">Missão atual</span>
           </div>
