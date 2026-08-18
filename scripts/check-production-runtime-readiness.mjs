@@ -67,17 +67,30 @@ for (const proven of [
 ]) {
   assert.ok(runbook.includes(proven), `M09 live evidence missing: ${proven}`);
 }
+
+assert.ok(runbook.includes('Prepared live proof harnesses — not yet a PASS'));
+assert.ok(runbook.includes('their presence is not evidence that the live workflows have run successfully'));
+for (const harness of [
+  'live-supabase-auth-smoke.yml',
+  'live-supabase-services-smoke.yml',
+  'live-supabase-browser-smoke.yml',
+]) {
+  assert.ok(runbook.includes(harness), `M09 must document prepared harness without overclaiming: ${harness}`);
+}
+
 for (const remaining of [
   'real GoTrue password sign-up',
   'token refresh after reload',
   'password recovery/redirect behavior',
   'authenticated browser CRUD',
-  'preview provider switch to Supabase',
+  'exact Auth site URL / redirect allow-list configuration',
+  'Supabase provider-switch browser execution',
   'production provider cutover',
 ]) {
   assert.ok(runbook.includes(remaining), `M09 must keep unresolved gate explicit: ${remaining}`);
 }
+assert.ok(runbook.includes('remain unproven until those secret-backed workflows themselves produce green evidence'));
 assert.ok(runbook.includes('does **not** authorize skipping Auth/browser E2E'));
 assert.ok(runbook.includes('does not reopen legacy data migration'));
 
-console.log('Lexia Production Runtime Readiness M09 contract: PASS (live proof recorded, cutover remains fail-closed)');
+console.log('Lexia Production Runtime Readiness M09 contract: PASS (live proof recorded, prepared harnesses do not authorize cutover)');
