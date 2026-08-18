@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Star, Trophy, Flame, Target } from 'lucide-react';
+import { ArrowLeft, Star, Trophy, Flame, Target, Compass } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AVATARS, getAvatarById } from '@/lib/avatars';
 import { ALPHABET } from '@/lib/alphabetData';
 import { calculateMastery } from '@/lib/fsrs';
 import { ACHIEVEMENTS, getEarnedAchievements, buildStats } from '@/lib/achievements';
+import { buildParentJourneyInsights } from '@/game/parentInsightsEngine';
+import { getJourneyWorldExperience, getWorldRelicProgress } from '@/game/worldExperienceEngine';
 import { playClickSound } from '@/lib/sounds';
 import DeleteAccountButton from '@/components/profile/DeleteAccountButton';
 import StickerAlbum from '@/components/game/StickerAlbum';
@@ -39,6 +41,11 @@ export default function Profile() {
   allProgress.forEach(p => { progressMap[p.letter] = p; });
 
   const stats = buildStats(allProgress);
+  const journeyInsights = buildParentJourneyInsights(allProgress);
+  const journey = journeyInsights.journey;
+  const activeExperience = getJourneyWorldExperience(journey, stats);
+  const relicProgress = getWorldRelicProgress(stats);
+  const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
   const totalStars = stats.totalStars;
   const earnedBadges = getEarnedAchievements(stats);
   const currentAvatar = getAvatarById(profile.avatarId || 'owl');
@@ -75,8 +82,8 @@ export default function Profile() {
           className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl border-2 border-primary/20 p-5 flex items-center gap-4"
         >
           <div className="text-6xl">{currentAvatar.emoji}</div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <p className="font-display text-xl text-foreground">{currentAvatar.name}</p>
               {dailyDone && (
                 <motion.span
@@ -95,15 +102,56 @@ export default function Profile() {
                   style={{ width: `${((5 - starsToNextLevel) / 5) * 100}%` }}
                 />
               </div>
-              <span className="text-xs font-body text-muted-foreground">{starsToNextLevel} ⭐ p/ nível {level + 1}</span>
+              <span className="text-xs font-body text-muted-foreground whitespace-nowrap">{starsToNextLevel} ⭐ p/ nível {level + 1}</span>
             </div>
           </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <Card className="border-primary/30">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl bg-primary/10 text-primary p-2.5" aria-hidden="true">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-body text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                    {activeExperience.chapter} · {activeExperience.title}
+                  </p>
+                  <h2 className="font-display text-lg text-foreground mt-1">{journey.title}</h2>
+                  <p className="font-body text-sm text-muted-foreground mt-1">{journey.description}</p>
+
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-500"
+                        style={{ width: `${missionPct}%` }}
+                      />
+                    </div>
+                    <span className="font-body text-xs font-bold text-muted-foreground whitespace-nowrap">
+                      {journey.current}/{journey.total}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 font-body text-xs text-muted-foreground">
+                    <span><strong className="text-foreground">{journeyInsights.totalMastered}/{journeyInsights.totalTargets}</strong> na jornada</span>
+                    <span><strong className="text-foreground">{journeyInsights.chaptersCompleted}/{journeyInsights.totalChapters}</strong> capítulos</span>
+                    <span><strong className="text-foreground">{relicProgress.unlocked}/{relicProgress.total}</strong> relíquias</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         <div className="grid grid-cols-4 gap-2">
           {[
             { icon: Star, label: 'Estrelas', value: totalStars, color: 'text-yellow-500' },
-            { icon: Trophy, label: 'Letras', value: stats.masteredCount, color: 'text-purple-500' },
+            { icon: Trophy, label: 'Jornada', value: `${journeyInsights.totalMastered}/${journeyInsights.totalTargets}`, color: 'text-purple-500' },
             { icon: Flame, label: 'Sequência', value: stats.maxStreak, color: 'text-red-500' },
             { icon: Target, label: 'Precisão', value: `${stats.accuracy}%`, color: 'text-green-500' },
           ].map(s => (
@@ -117,7 +165,7 @@ export default function Profile() {
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {[
             { id: 'avatar', label: '🐾 Avatar' },
             { id: 'mascot', label: '🎨 Corujinha' },
@@ -128,7 +176,7 @@ export default function Profile() {
             <button
               key={t.id}
               onClick={() => { playClickSound(); setTab(t.id); }}
-              className={`flex-1 py-2 rounded-xl font-body font-bold text-sm transition-all
+              className={`flex-none min-w-[92px] py-2 px-3 rounded-xl font-body font-bold text-sm transition-all
                 ${tab === t.id ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
             >
               {t.label}
@@ -189,6 +237,9 @@ export default function Profile() {
                   <CardTitle className="font-display text-base">
                     Histórico de Letras · {stats.masteredCount}/26 dominadas
                   </CardTitle>
+                  <p className="font-body text-xs text-muted-foreground">
+                    Precisão deste capítulo: {stats.letterAccuracy}% · {stats.letterAttempts} tentativas
+                  </p>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
