@@ -70,6 +70,23 @@ function normalizeNow(now) {
   return Number.isFinite(now) ? now : Date.now();
 }
 
+export function buildExactReviewPath(path, entityKey) {
+  if (!path || !entityKey) return path || null;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}reviewTarget=${encodeURIComponent(entityKey)}`;
+}
+
+export function getRequestedReviewTarget(search = globalThis?.location?.search || '') {
+  try {
+    const params = new URLSearchParams(search);
+    if (params.get('review') !== '1') return null;
+    const target = String(params.get('reviewTarget') || '').trim();
+    return target || null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildLearnerReviewQuest(allProgress = [], options = {}) {
   const records = Array.isArray(allProgress) ? allProgress : [];
   const now = normalizeNow(options?.now);
@@ -95,11 +112,14 @@ export function buildLearnerReviewQuest(allProgress = [], options = {}) {
   const chapters = LEARNER_REVIEW_CHAPTERS
     .map((chapter, index) => {
       const chapterDue = dueRecords.filter((entry) => entry.chapterId === chapter.id);
+      const oldestEntityKey = chapterDue[0]?.record?.letter || null;
       return {
         ...chapter,
         unlocked: index <= maxUnlockedIndex,
         dueCount: chapterDue.length,
         oldestDueAt: chapterDue[0]?.nextReviewAt ?? null,
+        oldestEntityKey,
+        reviewPath: oldestEntityKey ? buildExactReviewPath(chapter.path, oldestEntityKey) : chapter.path,
       };
     })
     .filter((chapter) => chapter.unlocked);
@@ -113,7 +133,7 @@ export function buildLearnerReviewQuest(allProgress = [], options = {}) {
     totalDue: dueRecords.length,
     hasDueReviews: dueRecords.length > 0,
     nextChapter,
-    nextPath: nextChapter?.path || null,
+    nextPath: nextChapter?.reviewPath || null,
     nextEntityKey: nextDue?.record?.letter || null,
     oldestDueAt: nextDue?.nextReviewAt ?? null,
     chapters,

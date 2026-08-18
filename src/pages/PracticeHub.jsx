@@ -105,8 +105,8 @@ export default function PracticeHub() {
 
                 {option.unlocked ? (
                   <div className="grid gap-2">
-                    {dueCount > 0 && reviewChapter?.path && (
-                      <Link to={reviewChapter.path} className="w-full">
+                    {dueCount > 0 && reviewChapter?.reviewPath && (
+                      <Link to={reviewChapter.reviewPath} className="w-full">
                         <Button variant="outline" className="w-full rounded-2xl gap-2 font-body font-bold border-sky-300 text-sky-700 hover:bg-sky-50" onClick={playClickSound}>
                           <RotateCcw className="w-4 h-4" /> Revisar {dueCount} agora
                         </Button>
