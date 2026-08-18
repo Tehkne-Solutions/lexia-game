@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const retiredPaths = [
   'src/migration/progressSnapshot.js',
@@ -24,7 +25,7 @@ async function walk(dir) {
   return files;
 }
 
-const sourceRoot = new URL('../src/', import.meta.url);
+const sourceRoot = fileURLToPath(new URL('../src/', import.meta.url));
 const sourceFiles = (await walk(sourceRoot)).filter((file) => /\.(js|jsx|ts|tsx)$/.test(file));
 for (const file of sourceFiles) {
   const content = await readFile(file, 'utf8');
