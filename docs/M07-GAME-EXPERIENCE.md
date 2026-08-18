@@ -116,6 +116,49 @@ Current relic set:
 
 Welcome and World Map consume the same world-experience engine. The Home announces the current chapter above the current mission; the map displays the active chapter briefing, each world's chapter identity, relic status and aggregate relic collection progress.
 
+## M07-G — Game Shell & Mobile Visual QA — COMPLETE
+
+The primary game journey now runs inside a shared dynamic-viewport shell rather than document-level `min-h-screen` layouts.
+
+Shared shell rules:
+
+- `100dvh` with `100vh` fallback;
+- safe-area support for top and bottom device insets;
+- no horizontal document overflow;
+- bounded internal scrolling where content legitimately exceeds the viewport;
+- short-height compact behavior;
+- drawing surface capped by both desktop width and available dynamic viewport height.
+
+Surface behavior:
+
+- **Welcome:** one safe-area-aware viewport scroll surface; chapter, mission and primary journey CTA remain visible on the 360×640 short-mobile reference after entrance animations settle;
+- **PlayGame:** HUD, mission and session quest remain stable while only the central activity region may scroll; the square drawing board scales to `min(260px, 42dvh, 100%)` so its actions remain reachable;
+- **World Map:** header remains fixed in the game shell while chapter/world content scrolls only inside the map region.
+
+### Real browser release evidence
+
+M07-G adds a blocking Chrome/CDP browser gate that builds and serves the production Vite output and validates three viewport classes:
+
+1. mobile-short — `360×640`;
+2. mobile — `390×844`;
+3. desktop — `1440×900`.
+
+For each viewport the gate captures and measures:
+
+- Welcome;
+- PlayGame;
+- World Map.
+
+That produces **9 visual evidence screenshots per run**. The automated measurements verify shell/viewport parity, absence of horizontal overflow, bounded scrolling and square/responsive drawing geometry. Screenshots are captured only after entrance animations have settled and are uploaded as the `lexia-m07g-browser-layout` GitHub Actions artifact for visual review.
+
+The final reviewed evidence confirms:
+
+- mobile-short shows the chapter, current mission and `Começar jornada` CTA without mandatory scrolling;
+- standard mobile exposes the complete primary Home navigation;
+- PlayGame keeps its HUD, expedition state and drawing interaction usable across all three viewport classes;
+- World Map preserves chapter, mission, relic state and first world card without page-level overflow;
+- desktop remains stable while retaining the existing focused central game composition.
+
 ## Release contracts
 
 The blocking Journey Engine contract covers:
@@ -151,10 +194,24 @@ The blocking World Experience contract covers:
 - Home and World Map consume the same active chapter source;
 - the world-experience engine contains no platform persistence or parallel scoring path.
 
-Journey, Session Quest and World Experience engines are included in the blocking core typecheck.
+The blocking Game Shell contract covers:
 
-## Next slice
+- shared `100dvh` viewport primitives;
+- safe areas;
+- bounded scrolling on Welcome, PlayGame and World Map;
+- removal of legacy document-level screen-height shells from those surfaces;
+- responsive drawing-board geometry.
 
-- M07-G: game-shell/mobile viewport refinement and visual QA.
+The blocking Browser Layout QA adds real Chrome validation and screenshot evidence on mobile-short, mobile and desktop.
+
+Journey, Session Quest and World Experience engines remain in the blocking core typecheck. The inherited Base44-generated UI type debt remains separately visible as an advisory legacy typecheck.
+
+## M07 final state
+
+**M07-A through M07-G are complete.**
+
+The Game Experience Foundation now provides one continuous path from fresh account → mission → guided activity → short expedition → world map → chapter narrative → derived relic reward, with responsive web behavior verified in a real browser.
+
+The next macro-phase is **M08 — Curriculum Worlds Expansion**, focused on converting the currently placeholder advanced worlds into fully playable curriculum experiences while preserving the M07 journey contracts.
 
 — Tehkné Solutions
