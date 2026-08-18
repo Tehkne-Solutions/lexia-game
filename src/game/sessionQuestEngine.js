@@ -70,7 +70,13 @@ export function createSessionQuest(journey, { enabled = true } = {}) {
   };
 }
 
-export function advanceSessionQuest(quest, { isCorrect, starsEarned = 0, encounterId } = {}) {
+/**
+ * Advance one in-memory expedition checkpoint after a persisted learning result.
+ * @param {any} quest
+ * @param {{ isCorrect?: boolean, starsEarned?: number, encounterId?: string | number }} [event]
+ */
+export function advanceSessionQuest(quest, event = {}) {
+  const { isCorrect, starsEarned = 0, encounterId } = event;
   if (!quest?.enabled || quest.completed || !isCorrect) return quest;
 
   const id = String(encounterId || '').trim();
