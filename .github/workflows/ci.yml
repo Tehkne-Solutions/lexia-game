@@ -62,6 +62,9 @@ jobs:
       - name: Journey collectibles contract
         run: node scripts/check-journey-collectibles.mjs
 
+      - name: Journey side modes contract
+        run: node scripts/check-journey-side-modes.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -122,11 +125,17 @@ jobs:
       - name: Browser layout QA
         run: node scripts/check-browser-layout.mjs
 
-      - name: Upload M14 visual evidence
+      - name: Side modes browser QA
+        run: node scripts/check-side-modes-browser.mjs
+
+      - name: Upload M15 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m14-browser-layout
-          path: artifacts/m14/*.png
+          name: lexia-m15-browser-layout
+          path: |
+            artifacts/m14/*.png
+            artifacts/m15/*.png
+            artifacts/m15/*.json
           if-no-files-found: warn
           retention-days: 14
