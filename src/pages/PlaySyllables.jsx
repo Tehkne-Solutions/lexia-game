@@ -13,6 +13,7 @@ import OnScreenKeyboard from '@/components/game/OnScreenKeyboard';
 import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '@/lib/syllablesData';
 import { JOURNEY_STAGES } from '@/game/journeyEngine';
 import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
+import { pickNextJourneyItemIndex, reviewJourneyProgress } from '@/learning/journeyReviewEngine';
 import {
   getChallengeStarMultiplier,
   getDailyChallenge,
@@ -74,7 +75,7 @@ function findDailyItemIndex(targetKey) {
 
 function getInitialIndex() {
   const requestedIndex = isDailyMode ? findDailyItemIndex(requestedDailyTargetKey) : -1;
-  return requestedIndex >= 0 ? requestedIndex : Math.floor(Math.random() * ITEMS.length);
+  return requestedIndex >= 0 ? requestedIndex : 0;
 }
 
 export default function PlaySyllables() {
@@ -96,12 +97,13 @@ export default function PlaySyllables() {
   const sessionQuestRef = useRef(initialQuest);
   const encounterSequenceRef = useRef(0);
   const inputRef = useRef(null);
+  const reviewSelectionInitializedRef = useRef(isDailyMode);
   const queryClient = useQueryClient();
 
   const current = ITEMS[index];
   const target = current[TARGET_KEY];
 
-  const { data: allProgress = [] } = useQuery({
+  const { data: allProgress = [], isFetched } = useQuery({
     queryKey: ['childProgress'],
     queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
@@ -112,6 +114,19 @@ export default function PlaySyllables() {
     setTotalStars(stars);
   }, [allProgress]);
 
+  useEffect(() => {
+    if (!isFetched || reviewSelectionInitializedRef.current) return;
+    const recommendedIndex = pickNextJourneyItemIndex({
+      items: ITEMS,
+      allProgress,
+      entityPrefix: ENTITY_PREFIX,
+      targetKey: TARGET_KEY,
+      currentIndex: -1,
+    });
+    setIndex(recommendedIndex);
+    reviewSelectionInitializedRef.current = true;
+  }, [isFetched, allProgress]);
+
   const saveMutation = useMutation({
     mutationFn: async ({ isCorrect, encounterId }) => {
       const entityKey = ENTITY_PREFIX + target;
@@ -120,6 +135,7 @@ export default function PlaySyllables() {
       const effectiveMultiplier = isCorrect
         ? getChallengeStarMultiplier(challenge, entityKey)
         : 1;
+      const reviewed = reviewJourneyProgress(existing, isCorrect);
       const data = {
         child_name: 'Jogador',
         letter: entityKey,
@@ -127,12 +143,12 @@ export default function PlaySyllables() {
         correct_attempts: (existing?.correct_attempts || 0) + (isCorrect ? 1 : 0),
         streak: isCorrect ? (existing?.streak || 0) + 1 : 0,
         stars_earned: (existing?.stars_earned || 0) + (isCorrect ? 1 : 0),
-        stability: existing?.stability || 0,
-        difficulty: existing?.difficulty || 0,
-        interval: existing?.interval || 0,
-        repetitions: existing?.repetitions || 0,
-        next_review: existing?.next_review || new Date().toISOString(),
-        last_grade: isCorrect ? 3 : 1,
+        stability: reviewed.stability,
+        difficulty: reviewed.difficulty,
+        interval: reviewed.interval,
+        repetitions: reviewed.repetitions,
+        next_review: reviewed.next_review,
+        last_grade: reviewed.last_grade,
         level: 1,
       };
       if (existing) {
@@ -235,8 +251,13 @@ export default function PlaySyllables() {
       }
     }
 
-    let next;
-    do { next = Math.floor(Math.random() * ITEMS.length); } while (next === index && ITEMS.length > 1);
+    const next = pickNextJourneyItemIndex({
+      items: ITEMS,
+      allProgress,
+      entityPrefix: ENTITY_PREFIX,
+      targetKey: TARGET_KEY,
+      currentIndex: index,
+    });
     setIndex(next);
   }, [index, allProgress]);
 

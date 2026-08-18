@@ -71,6 +71,9 @@ jobs:
       - name: Journey free practice contract
         run: node scripts/check-journey-free-practice.mjs
 
+      - name: Adaptive journey review contract
+        run: node scripts/check-adaptive-journey-review.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -140,11 +143,11 @@ jobs:
       - name: Practice hub browser QA
         run: node scripts/check-practice-hub-browser.mjs
 
-      - name: Upload M17 visual evidence
+      - name: Upload M18 visual regression evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m17-browser-layout
+          name: lexia-m18-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png

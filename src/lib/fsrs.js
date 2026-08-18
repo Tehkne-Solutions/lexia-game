@@ -2,7 +2,7 @@ import { calculateMastery } from '../learning/mastery.js';
 import { pickNextLearningLetter } from '../learning/engine.js';
 
 // FSRS v4.5 - Free Spaced Repetition Scheduler
-// Simplified implementation for alphabet learning
+// Simplified implementation shared across the literacy journey.
 
 const DEFAULT_PARAMS = {
   w: [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61],
@@ -37,7 +37,11 @@ export function reviewCard(card, grade) {
     else if (grade === 3) newInterval = 3;
     else newInterval = 5;
   } else {
-    const elapsedDays = Math.max(0, (now - new Date(card.nextReview)) / (1000 * 60 * 60 * 24));
+    const nextReviewAt = Date.parse(card.nextReview || '');
+    const elapsedDays = Math.max(
+      0,
+      (now.getTime() - (Number.isFinite(nextReviewAt) ? nextReviewAt : now.getTime())) / (1000 * 60 * 60 * 24),
+    );
     const retrievability = Math.pow(1 + elapsedDays / (9 * card.stability), -1);
 
     newDifficulty = card.difficulty - w[6] * (grade - 3);
@@ -69,10 +73,18 @@ export function reviewCard(card, grade) {
 }
 
 export function getLettersDueForReview(progressList) {
-  const now = new Date();
+  const now = Date.now();
   return progressList
-    .filter(p => new Date(p.next_review || 0) <= now)
-    .sort((a, b) => new Date(a.next_review || 0) - new Date(b.next_review || 0));
+    .filter((progress) => {
+      const dueAt = Date.parse(progress.next_review || '');
+      return Number.isFinite(dueAt) && dueAt <= now;
+    })
+    .sort((a, b) => {
+      const aDueAt = Date.parse(a.next_review || '');
+      const bDueAt = Date.parse(b.next_review || '');
+      return (Number.isFinite(aDueAt) ? aDueAt : Number.POSITIVE_INFINITY)
+        - (Number.isFinite(bDueAt) ? bDueAt : Number.POSITIVE_INFINITY);
+    });
 }
 
 export { calculateMastery };

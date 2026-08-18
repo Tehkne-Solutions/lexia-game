@@ -10,6 +10,7 @@ import SessionQuestBar from '@/components/game/SessionQuestBar';
 import SessionQuestComplete from '@/components/game/SessionQuestComplete';
 import { lexiaPlatform } from '@/platform';
 import { BASIC_SENTENCES } from '@/lib/sentencesData';
+import { pickNextJourneyItemIndex, reviewJourneyProgress } from '@/learning/journeyReviewEngine';
 import {
   getChallengeStarMultiplier,
   getDailyChallenge,
@@ -41,7 +42,7 @@ function findDailySentenceIndex(targetKey) {
 
 function getInitialSentenceIndex() {
   const requestedIndex = isDailyMode ? findDailySentenceIndex(requestedDailyTargetKey) : -1;
-  return requestedIndex >= 0 ? requestedIndex : Math.floor(Math.random() * BASIC_SENTENCES.length);
+  return requestedIndex >= 0 ? requestedIndex : 0;
 }
 
 export default function PlaySentences() {
@@ -63,6 +64,7 @@ export default function PlaySentences() {
   const [showQuestComplete, setShowQuestComplete] = useState(false);
   const sessionQuestRef = useRef(initialQuest);
   const encounterSequenceRef = useRef(0);
+  const reviewSelectionInitializedRef = useRef(isDailyMode);
   const queryClient = useQueryClient();
 
   const current = BASIC_SENTENCES[index];
@@ -73,7 +75,7 @@ export default function PlaySentences() {
   const selectedSentence = selectedTokens.map((token) => token.word).join(' ');
   const availableTokens = tokens.filter((token) => !selectedIds.includes(token.id));
 
-  const { data: allProgress = [] } = useQuery({
+  const { data: allProgress = [], isFetched } = useQuery({
     queryKey: ['childProgress'],
     queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
@@ -83,6 +85,19 @@ export default function PlaySentences() {
     setTotalStars(allProgress.reduce((sum, record) => sum + (record.stars_earned || 0), 0));
   }, [allProgress]);
 
+  useEffect(() => {
+    if (!isFetched || reviewSelectionInitializedRef.current) return;
+    const recommendedIndex = pickNextJourneyItemIndex({
+      items: BASIC_SENTENCES,
+      allProgress,
+      entityPrefix: 'SENT_',
+      targetKey: 'id',
+      currentIndex: -1,
+    });
+    setIndex(recommendedIndex);
+    reviewSelectionInitializedRef.current = true;
+  }, [isFetched, allProgress]);
+
   const saveMutation = useMutation({
     mutationFn: async ({ isCorrect, encounterId }) => {
       const entityKey = `SENT_${current.id}`;
@@ -91,6 +106,7 @@ export default function PlaySentences() {
       const effectiveMultiplier = isCorrect
         ? getChallengeStarMultiplier(challenge, entityKey)
         : 1;
+      const reviewed = reviewJourneyProgress(existing, isCorrect);
       const data = {
         child_name: 'Jogador',
         letter: entityKey,
@@ -98,12 +114,12 @@ export default function PlaySentences() {
         correct_attempts: (existing?.correct_attempts || 0) + (isCorrect ? 1 : 0),
         streak: isCorrect ? (existing?.streak || 0) + 1 : 0,
         stars_earned: (existing?.stars_earned || 0) + (isCorrect ? 1 : 0),
-        stability: existing?.stability || 0,
-        difficulty: existing?.difficulty || 0,
-        interval: existing?.interval || 0,
-        repetitions: existing?.repetitions || 0,
-        next_review: existing?.next_review || new Date().toISOString(),
-        last_grade: isCorrect ? 3 : 1,
+        stability: reviewed.stability,
+        difficulty: reviewed.difficulty,
+        interval: reviewed.interval,
+        repetitions: reviewed.repetitions,
+        next_review: reviewed.next_review,
+        last_grade: reviewed.last_grade,
         level: 1,
       };
 
@@ -217,8 +233,13 @@ export default function PlaySentences() {
       }
     }
 
-    let next;
-    do { next = Math.floor(Math.random() * BASIC_SENTENCES.length); } while (next === index && BASIC_SENTENCES.length > 1);
+    const next = pickNextJourneyItemIndex({
+      items: BASIC_SENTENCES,
+      allProgress,
+      entityPrefix: 'SENT_',
+      targetKey: 'id',
+      currentIndex: index,
+    });
     setIndex(next);
   }, [index, allProgress]);
 
