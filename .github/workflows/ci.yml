@@ -59,6 +59,9 @@ jobs:
       - name: Learner journey profile contract
         run: node scripts/check-learner-journey-profile.mjs
 
+      - name: Journey collectibles contract
+        run: node scripts/check-journey-collectibles.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -119,11 +122,11 @@ jobs:
       - name: Browser layout QA
         run: node scripts/check-browser-layout.mjs
 
-      - name: Upload M13 visual evidence
+      - name: Upload M14 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m13-browser-layout
-          path: artifacts/m13/*.png
+          name: lexia-m14-browser-layout
+          path: artifacts/m14/*.png
           if-no-files-found: warn
           retention-days: 14
