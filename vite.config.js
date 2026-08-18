@@ -2,9 +2,19 @@ import base44 from "@base44/vite-plugin"
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+const releaseSha = process.env.VITE_LEXIA_RELEASE_SHA
+  || process.env.VERCEL_GIT_COMMIT_SHA
+  || process.env.GITHUB_SHA
+  || '';
+const buildProvider = process.env.VITE_LEXIA_PLATFORM_PROVIDER || 'base44';
+
 // https://vite.dev/config/
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
+  define: {
+    'import.meta.env.VITE_LEXIA_RELEASE_SHA': JSON.stringify(releaseSha),
+    'import.meta.env.VITE_LEXIA_BUILD_PROVIDER_MARKER': JSON.stringify(buildProvider),
+  },
   plugins: [
     base44({
       // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
