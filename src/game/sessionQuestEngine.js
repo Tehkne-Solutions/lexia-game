@@ -57,8 +57,22 @@ const QUEST_CONFIG = Object.freeze({
   }),
 });
 
-export function createSessionQuest(journey, { enabled = true } = {}) {
-  if (!enabled || !journey?.stage) {
+export function isLearnerReviewRuntime(search) {
+  const resolvedSearch = typeof search === 'string'
+    ? search
+    : typeof globalThis?.location?.search === 'string'
+      ? globalThis.location.search
+      : '';
+  if (!resolvedSearch) return false;
+  try {
+    return new URLSearchParams(resolvedSearch).get('review') === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function createSessionQuest(journey, { enabled = true, reviewMode = isLearnerReviewRuntime() } = {}) {
+  if (!enabled || reviewMode || !journey?.stage) {
     return {
       enabled: false,
       completed: false,
