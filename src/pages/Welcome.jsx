@@ -1,23 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass } from 'lucide-react';
+import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass, Trophy } from 'lucide-react';
 import MascotAvatar from '@/components/game/MascotAvatar';
+import DailyChallengeCard from '@/components/game/DailyChallengeCard';
 import { speak, playClickSound } from '@/lib/sounds';
 import { buildStats } from '@/lib/achievements';
+import { getDailyChallenge, getChallengeCompletedCount } from '@/lib/dailyChallenge';
 import { lexiaPlatform, activePlatformProvider } from '@/platform';
 import { useAuth } from '@/lib/AuthContext';
 import { getJourneyState } from '@/game/journeyEngine';
 import { getJourneyWorldExperience } from '@/game/worldExperienceEngine';
 
 export default function Welcome() {
+  const navigate = useNavigate();
   const [showMessage, setShowMessage] = useState(false);
+  const [dailyChallenge, setDailyChallenge] = useState(null);
+  const [showDailyChallenge, setShowDailyChallenge] = useState(false);
   const { isAuthenticated } = useAuth();
   const canLoadProgress = activePlatformProvider !== 'supabase' || isAuthenticated;
 
-  const { data: allProgress = [] } = useQuery({
+  const { data: allProgress = [], isFetching } = useQuery({
     queryKey: ['childProgress'],
     queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
@@ -35,6 +40,12 @@ export default function Welcome() {
     [journey, stats],
   );
   const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
+  const dailyCompletedCount = getChallengeCompletedCount(dailyChallenge);
+
+  useEffect(() => {
+    if (!canLoadProgress || isFetching) return;
+    setDailyChallenge(getDailyChallenge(visibleProgress));
+  }, [canLoadProgress, isFetching, visibleProgress]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -45,6 +56,13 @@ export default function Welcome() {
     }, 800);
     return () => clearTimeout(timer);
   }, [journey.firstRun, journey.target]);
+
+  function startDailyChallenge(_nextTarget, challenge) {
+    const targetChallenge = challenge || dailyChallenge;
+    if (!targetChallenge?.playPath) return;
+    setShowDailyChallenge(false);
+    navigate(targetChallenge.playPath);
+  }
 
   return (
     <div className="game-viewport-scroll relative">
@@ -133,6 +151,35 @@ export default function Welcome() {
               </span>
             </div>
           </motion.div>
+
+          {dailyChallenge && (
+            <motion.button
+              type="button"
+              onClick={() => {
+                playClickSound();
+                setShowDailyChallenge(true);
+              }}
+              className="w-full max-w-xs rounded-2xl border border-amber-300 bg-amber-50/80 px-3 py-2.5 text-left shadow-sm hover:border-amber-400 transition-colors"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.78 }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-none">
+                  <Trophy className="w-5 h-5 text-amber-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-body text-[10px] uppercase tracking-[0.12em] font-bold text-amber-700">
+                    Desafio diário · {dailyChallenge.typeLabel}
+                  </p>
+                  <p className="font-display text-sm text-foreground truncate">{dailyChallenge.title}</p>
+                </div>
+                <span className="font-body text-xs font-bold text-amber-800 whitespace-nowrap">
+                  {dailyCompletedCount}/3 · ⭐×2
+                </span>
+              </div>
+            </motion.button>
+          )}
 
           <motion.div
             className="flex flex-col gap-3 w-full max-w-xs"
@@ -248,6 +295,16 @@ export default function Welcome() {
           </motion.p>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {showDailyChallenge && dailyChallenge && (
+          <DailyChallengeCard
+            challenge={dailyChallenge}
+            onStart={startDailyChallenge}
+            onClose={() => setShowDailyChallenge(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
