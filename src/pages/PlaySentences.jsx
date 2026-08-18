@@ -10,10 +10,19 @@ import SessionQuestBar from '@/components/game/SessionQuestBar';
 import SessionQuestComplete from '@/components/game/SessionQuestComplete';
 import { lexiaPlatform } from '@/platform';
 import { BASIC_SENTENCES } from '@/lib/sentencesData';
+import {
+  getChallengeStarMultiplier,
+  getDailyChallenge,
+  getNextChallengeTarget,
+} from '@/lib/dailyChallenge';
 import { JOURNEY_STAGES } from '@/game/journeyEngine';
 import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
 import { playClickSound, playCorrectSound, playWrongSound, speak } from '@/lib/sounds';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
+
+const urlParams = new URLSearchParams(window.location.search);
+const isDailyMode = urlParams.get('daily') === '1';
+const requestedDailyTargetKey = urlParams.get('dailyTarget');
 
 function shuffledTokens(words) {
   const tokens = words.map((word, index) => ({ id: `${index}-${word}`, word }));
@@ -24,8 +33,18 @@ function shuffledTokens(words) {
   return tokens;
 }
 
+function findDailySentenceIndex(targetKey) {
+  if (!targetKey) return -1;
+  return BASIC_SENTENCES.findIndex((sentence) => `SENT_${sentence.id}` === targetKey);
+}
+
+function getInitialSentenceIndex() {
+  const requestedIndex = isDailyMode ? findDailySentenceIndex(requestedDailyTargetKey) : -1;
+  return requestedIndex >= 0 ? requestedIndex : Math.floor(Math.random() * BASIC_SENTENCES.length);
+}
+
 export default function PlaySentences() {
-  const [index, setIndex] = useState(() => Math.floor(Math.random() * BASIC_SENTENCES.length));
+  const [index, setIndex] = useState(getInitialSentenceIndex);
   const [tokens, setTokens] = useState(() => shuffledTokens(BASIC_SENTENCES[index].words));
   const [selectedIds, setSelectedIds] = useState([]);
   const [phase, setPhase] = useState('build');
@@ -33,6 +52,7 @@ export default function PlaySentences() {
   const [mascotMessage, setMascotMessage] = useState('Monte a frase!');
   const [streak, setStreak] = useState(0);
   const [totalStars, setTotalStars] = useState(0);
+  const [lastStarMultiplier, setLastStarMultiplier] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
   const initialQuest = createSessionQuest({ stage: JOURNEY_STAGES.SENTENCES, worldId: 'sentences' });
   const [sessionQuest, setSessionQuest] = useState(initialQuest);
@@ -63,6 +83,10 @@ export default function PlaySentences() {
     mutationFn: async ({ isCorrect, encounterId }) => {
       const entityKey = `SENT_${current.id}`;
       const existing = allProgress.find((record) => record.letter === entityKey);
+      const challenge = getDailyChallenge(allProgress);
+      const effectiveMultiplier = isCorrect
+        ? getChallengeStarMultiplier(challenge, entityKey)
+        : 1;
       const data = {
         child_name: 'Jogador',
         letter: entityKey,
@@ -81,10 +105,21 @@ export default function PlaySentences() {
 
       if (existing) await lexiaPlatform.progress.update(existing.id, data);
       else await lexiaPlatform.progress.create(data);
-      return { isCorrect, starsEarned: isCorrect ? 1 : 0, encounterId };
+      return {
+        isCorrect,
+        starsEarned: isCorrect ? effectiveMultiplier : 0,
+        effectiveMultiplier,
+        entityKey,
+        encounterId,
+      };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['childProgress'] });
+      setLastStarMultiplier(result.effectiveMultiplier || 1);
+      if (result.isCorrect && result.effectiveMultiplier > 1) {
+        setTotalStars((stars) => stars + (result.effectiveMultiplier - 1));
+        setMascotMessage(`⭐×${result.effectiveMultiplier} Desafio diário!`);
+      }
       if (!result.isCorrect || !sessionQuestRef.current?.enabled) return;
       const previousQuest = sessionQuestRef.current;
       const nextQuest = advanceSessionQuest(previousQuest, result);
@@ -105,6 +140,7 @@ export default function PlaySentences() {
     setTokens(shuffledTokens(current.words));
     setSelectedIds([]);
     setPhase('build');
+    setLastStarMultiplier(1);
     setMascotExpression('happy');
     setMascotMessage('Monte a frase!');
     setTimeout(() => speak(`${current.hint} Monte a frase com as palavras.`), 350);
@@ -162,10 +198,25 @@ export default function PlaySentences() {
   const nextItem = useCallback(() => {
     playClickSound();
     setShowCelebration(false);
+
+    if (isDailyMode) {
+      const challenge = getDailyChallenge(allProgress);
+      const nextTarget = getNextChallengeTarget(challenge);
+      const nextDailyIndex = findDailySentenceIndex(nextTarget?.key);
+      if (nextDailyIndex >= 0 && nextDailyIndex !== index) {
+        setIndex(nextDailyIndex);
+        return;
+      }
+      if (challenge?.completed) {
+        setMascotExpression('excited');
+        setMascotMessage('Desafio diário completo! 🏆');
+      }
+    }
+
     let next;
     do { next = Math.floor(Math.random() * BASIC_SENTENCES.length); } while (next === index && BASIC_SENTENCES.length > 1);
     setIndex(next);
-  }, [index]);
+  }, [index, allProgress]);
 
   const handleContinueAfterQuest = useCallback(() => {
     setShowQuestComplete(false);
@@ -194,6 +245,14 @@ export default function PlaySentences() {
           <span className="font-body font-bold text-sm text-amber-700">{totalStars}</span>
         </div>
       </header>
+
+      {isDailyMode && (
+        <div className="px-3 py-1.5 border-b border-amber-200 bg-amber-50 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
+          <span aria-hidden="true">🏆</span>
+          <span className="font-bold text-amber-800">Desafio diário</span>
+          <span className="text-amber-700">alvo novo vale ⭐×2</span>
+        </div>
+      )}
 
       <SessionQuestBar quest={sessionQuest} />
 
@@ -267,15 +326,15 @@ export default function PlaySentences() {
               <motion.div key="correct" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                 className="w-full rounded-2xl border-2 border-green-400 bg-green-50 p-4 text-center">
                 <p className="font-display text-xl text-green-700">{current.sentence}</p>
-                <p className="font-body text-sm text-green-600 mt-1">Frase completa! +1 ⭐</p>
-                <Button onClick={nextItem} className="mt-3 rounded-2xl gap-2 font-display">
+                <p className="font-body text-sm text-green-600 mt-1">Frase completa! +{lastStarMultiplier} ⭐</p>
+                <Button onClick={nextItem} disabled={saveMutation.isPending} className="mt-3 rounded-2xl gap-2 font-display">
                   Próxima história <ChevronRight className="w-4 h-4" />
                 </Button>
               </motion.div>
             )}
 
             {phase === 'wrong' && (
-              <motion.div key="wrong" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              <motion.div key="wrong" initial={{ opacity: 0, scale: 0.9 }} animate={{ scale: 1, opacity: 1 }}
                 className="w-full rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-center">
                 <p className="font-body text-sm text-amber-800">As palavras estão certas, mas a ordem ainda pode mudar.</p>
                 <Button onClick={resetBuild} className="mt-3 rounded-2xl gap-2 font-display">
