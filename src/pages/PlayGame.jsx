@@ -15,11 +15,14 @@ import LetterSelector from '@/components/game/LetterSelector';
 import AiResultBadge from '@/components/game/AiResultBadge';
 import AchievementToast from '@/components/game/AchievementToast';
 import DailyChallengeCard from '@/components/game/DailyChallengeCard';
+import SessionQuestBar from '@/components/game/SessionQuestBar';
+import SessionQuestComplete from '@/components/game/SessionQuestComplete';
 
 import { ALPHABET, getLetterData } from '@/lib/alphabetData';
 import { createNewCard, reviewCard, calculateMastery, pickNextLetter } from '@/lib/fsrs';
 import { getInitialLearningLetter } from '@/learning/engine';
 import { getJourneyState, JOURNEY_STAGES } from '@/game/journeyEngine';
+import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
 import { buildStats, getEarnedAchievements } from '@/lib/achievements';
 import { getDailyChallenge, updateChallengeProgress } from '@/lib/dailyChallenge';
 import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
@@ -42,8 +45,14 @@ export default function PlayGame() {
   const [showDailyChallenge, setShowDailyChallenge] = useState(false);
   const [dailyChallenge, setDailyChallenge] = useState(null);
   const [starMultiplier, setStarMultiplier] = useState(1);
+  const [sessionQuest, setSessionQuest] = useState(null);
+  const [showQuestComplete, setShowQuestComplete] = useState(false);
   const prevStatsRef = useRef(null);
   const journeySyncRef = useRef(false);
+  const sessionQuestInitializedRef = useRef(false);
+  const sessionQuestRef = useRef(null);
+  const encounterSequenceRef = useRef(0);
+  const activeEncounterRef = useRef(null);
 
   const queryClient = useQueryClient();
 
@@ -72,6 +81,14 @@ export default function PlayGame() {
   }, [hasLoadedProgress, journey.stage, journey.target]);
 
   useEffect(() => {
+    if (sessionQuestInitializedRef.current || !hasLoadedProgress) return;
+    const initialQuest = createSessionQuest(journey, { enabled: isGuidedMission });
+    sessionQuestRef.current = initialQuest;
+    setSessionQuest(initialQuest);
+    sessionQuestInitializedRef.current = true;
+  }, [hasLoadedProgress, isGuidedMission, journey.stage, journey.worldId]);
+
+  useEffect(() => {
     if (allProgress.length >= 0) {
       const challenge = getDailyChallenge(allProgress);
       setDailyChallenge(challenge);
@@ -85,7 +102,7 @@ export default function PlayGame() {
   }, [allProgress]);
 
   const saveMutation = useMutation({
-    mutationFn: async ({ letter, gradeValue }) => {
+    mutationFn: async ({ letter, gradeValue, encounterId }) => {
       const existing = progressMap[letter];
       const isCorrect = gradeValue >= 3;
       const challenge = getDailyChallenge(allProgress);
@@ -133,11 +150,29 @@ export default function PlayGame() {
         setDailyChallenge(updatedChallenge);
       }
 
-      return { isCorrect, newStreak, letter, starsEarned, effectiveMultiplier };
+      return { isCorrect, newStreak, letter, starsEarned, effectiveMultiplier, encounterId };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['childProgress'] });
       setStarMultiplier(result.effectiveMultiplier);
+
+      let questJustCompleted = false;
+      if (!isPracticeMode && result.isCorrect && result.encounterId && sessionQuestRef.current?.enabled) {
+        const previousQuest = sessionQuestRef.current;
+        const nextQuest = advanceSessionQuest(previousQuest, result);
+        if (nextQuest !== previousQuest) {
+          sessionQuestRef.current = nextQuest;
+          setSessionQuest(nextQuest);
+          questJustCompleted = !previousQuest.completed && nextQuest.completed;
+          if (questJustCompleted) {
+            setShowCelebration(false);
+            setShowQuestComplete(true);
+            setMascotExpression('excited');
+            setMascotMessage('Expedição concluída!');
+            setTimeout(() => speak(nextQuest.completionMessage), 500);
+          }
+        }
+      }
 
       setTimeout(() => {
         const fresh = queryClient.getQueryData(['childProgress']) || allProgress;
@@ -149,17 +184,19 @@ export default function PlayGame() {
         prevStatsRef.current = currentStats;
       }, 600);
 
-      if (result.isCorrect && result.newStreak >= 3 && result.newStreak % 3 === 0) {
+      if (!questJustCompleted && result.isCorrect && result.newStreak >= 3 && result.newStreak % 3 === 0) {
         setCelebrationData({ stars: 3, message: `Combo ${result.newStreak}x! 🔥` });
         setShowCelebration(true);
         setTimeout(() => speak(getStreakPhrase()), 1500);
-      } else if (result.isCorrect && result.effectiveMultiplier > 1) {
+      } else if (!questJustCompleted && result.isCorrect && result.effectiveMultiplier > 1) {
         setMascotMessage(`⭐×${result.effectiveMultiplier} Desafio!`);
       }
     },
   });
 
   const handleEvaluate = useCallback(async (imageDataUrl) => {
+    const encounterId = `letter-${currentLetter}-${++encounterSequenceRef.current}`;
+    activeEncounterRef.current = encounterId;
     setMascotExpression('thinking');
     setMascotMessage('Deixa eu ver...');
 
@@ -219,19 +256,21 @@ Look carefully at the image. Return JSON:
       setMascotMessage(result.feedback || (isCorrect ? 'Muito bem! ⭐' : 'Vamos tentar de novo!'));
       if (isCorrect) playCorrectSound(); else playWrongSound();
       setTimeout(() => speak(speech), 400);
-      if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: grade });
+      if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: grade, encounterId });
     } catch (err) {
       console.error('AI evaluation failed:', err);
       const fallback = { grade: 2, score: 50, feedback: 'Boa tentativa! Continue!', recognized_as: currentLetter };
       setAiResult(fallback);
       setPhase('result');
-      if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: 2 });
+      if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: 2, encounterId });
     }
   }, [currentLetter, saveMutation]);
 
   const handleManualOverride = useCallback((isCorrect) => {
     playClickSound();
     const correctedGrade = isCorrect ? 4 : 1;
+    const encounterId = activeEncounterRef.current || `manual-${currentLetter}-${++encounterSequenceRef.current}`;
+    activeEncounterRef.current = encounterId;
     setAiResult(prev => prev ? {
       ...prev, grade: correctedGrade,
       score: isCorrect ? 95 : 5,
@@ -243,7 +282,7 @@ Look carefully at the image. Return JSON:
     setMascotMessage(isCorrect ? 'Muito bem! ⭐' : 'Vamos tentar de novo!');
     if (isCorrect) playCorrectSound(); else playWrongSound();
     setTimeout(() => speak(speech), 400);
-    if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: correctedGrade });
+    if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: correctedGrade, encounterId });
   }, [currentLetter, saveMutation]);
 
   useEffect(() => {
@@ -253,6 +292,7 @@ Look carefully at the image. Return JSON:
       setMascotMessage(`Desenhe a letra ${currentLetter}!`);
       setTimeout(() => speak(`${currentLetter} de ${data.word}! Desenhe a letra ${currentLetter}!`), 300);
     }
+    activeEncounterRef.current = null;
     setPhase('draw');
     setAiResult(null);
     setStarMultiplier(1);
@@ -261,25 +301,36 @@ Look carefully at the image. Return JSON:
   const goToNextLetter = useCallback(() => {
     playClickSound();
     setShowCelebration(false);
+    activeEncounterRef.current = null;
     const nextLetter = pickNextLetter(allProgress, currentLetter, ALPHABET);
     setCurrentLetter(nextLetter);
   }, [currentLetter, allProgress]);
 
   const retryLetter = useCallback(() => {
     playClickSound();
+    activeEncounterRef.current = null;
     setPhase('draw');
     setAiResult(null);
   }, []);
 
   const handleLetterSelect = useCallback((letter) => {
+    activeEncounterRef.current = null;
     setCurrentLetter(letter);
     setShowSelector(false);
   }, []);
 
   const handleStartChallenge = useCallback((letter) => {
     setShowDailyChallenge(false);
-    if (letter) setCurrentLetter(letter);
+    if (letter) {
+      activeEncounterRef.current = null;
+      setCurrentLetter(letter);
+    }
   }, []);
+
+  const handleContinueAfterQuest = useCallback(() => {
+    setShowQuestComplete(false);
+    goToNextLetter();
+  }, [goToNextLetter]);
 
   const isWorking = saveMutation.isPending;
 
@@ -296,6 +347,11 @@ Look carefully at the image. Return JSON:
           />
         )}
       </AnimatePresence>
+
+      <SessionQuestComplete
+        quest={showQuestComplete ? sessionQuest : null}
+        onContinue={handleContinueAfterQuest}
+      />
 
       <div className="flex items-center justify-between px-3 py-2 pt-[env(safe-area-inset-top)] border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
         <Link to="/">
@@ -338,6 +394,8 @@ Look carefully at the image. Return JSON:
           <Link to="/world" className="ml-1 text-primary font-bold hover:underline">Mapa</Link>
         </div>
       )}
+
+      <SessionQuestBar quest={sessionQuest} />
 
       <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4 py-2 max-w-lg mx-auto w-full">
         <MascotAvatar expression={mascotExpression} size="sm" message={mascotMessage} />
