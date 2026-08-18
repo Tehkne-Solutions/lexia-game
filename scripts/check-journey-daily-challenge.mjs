@@ -222,7 +222,14 @@ assert.ok(welcomeSource.includes('Desafio diário · {dailyChallenge.typeLabel}'
 
 const playGameSource = await readFile(new URL('../src/pages/PlayGame.jsx', import.meta.url), 'utf8');
 assert.ok(playGameSource.includes("const isDailyMode = urlParams.get('daily') === '1'"));
-assert.ok(playGameSource.includes('requestedDailyLetter || getInitialLearningLetter(ALPHABET)'));
+assert.ok(
+  playGameSource.includes('requestedDailyLetter || requestedReviewLetter || getInitialLearningLetter(ALPHABET)'),
+  'Daily target must keep first precedence while Review becomes the secondary explicit handoff',
+);
+assert.ok(
+  playGameSource.indexOf('requestedDailyLetter || requestedReviewLetter') >= 0,
+  'Daily target must remain ahead of Review target in letter initialization',
+);
 assert.ok(playGameSource.includes("dailyChallenge?.type === 'letters'"), 'letter-only inline launcher must hide incompatible daily types');
 assert.ok(!playGameSource.includes('challenge?.letters?.includes'), 'PlayGame must retire the v1 letter-array challenge contract');
 
