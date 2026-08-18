@@ -221,7 +221,7 @@ export default function SpeedChallenge() {
 
             <div className="w-full flex items-center justify-between gap-2 px-1">
               <span className="font-body text-[10px] uppercase tracking-[0.12em] font-bold text-primary">
-                {currentItem.kind.replaceAll('-', ' ')}
+                {currentItem.kindLabel}
               </span>
               <span className="font-body text-[10px] text-muted-foreground truncate">{currentItem.source}</span>
             </div>
