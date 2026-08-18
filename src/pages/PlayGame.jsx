@@ -335,7 +335,7 @@ Look carefully at the image. Return JSON:
   const isWorking = saveMutation.isPending;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background overflow-hidden">
+    <div className="game-viewport flex flex-col bg-background">
       <AchievementToast achievement={newAchievement} onDismiss={() => setNewAchievement(null)} />
 
       <AnimatePresence>
@@ -353,7 +353,7 @@ Look carefully at the image. Return JSON:
         onContinue={handleContinueAfterQuest}
       />
 
-      <div className="flex items-center justify-between px-3 py-2 pt-[env(safe-area-inset-top)] border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
+      <div className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
         <Link to="/">
           <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
             <Home className="w-4 h-4" />
@@ -385,7 +385,7 @@ Look carefully at the image. Return JSON:
       </div>
 
       {!isPracticeMode && (
-        <div className="px-3 py-1.5 border-b border-border/60 bg-card/70 flex items-center justify-center gap-2 text-xs font-body">
+        <div className="px-3 py-1.5 border-b border-border/60 bg-card/70 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
           <Compass className="w-3.5 h-3.5 text-primary" />
           <span className="font-bold text-primary">
             {isCurrentMissionTarget ? 'Missão atual' : 'Missão recomendada'}
@@ -397,8 +397,8 @@ Look carefully at the image. Return JSON:
 
       <SessionQuestBar quest={sessionQuest} />
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4 py-2 max-w-lg mx-auto w-full">
-        <MascotAvatar expression={mascotExpression} size="sm" message={mascotMessage} />
+      <div className="game-scroll-y game-safe-bottom flex-1 flex flex-col items-center justify-center game-compact-gap gap-2 px-4 py-2 max-w-lg mx-auto w-full">
+        <MascotAvatar className="game-compact-mascot" expression={mascotExpression} size="sm" message={mascotMessage} />
 
         <div className="flex items-center gap-3">
           <LetterDisplay letter={currentLetter} showAnchor={true} />
