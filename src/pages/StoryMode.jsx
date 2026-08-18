@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, Lock, ChevronRight, ChevronLeft, Volume2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import { STORY_CHAPTERS, getUnlockedChapters } from '@/lib/stories';
@@ -16,7 +16,7 @@ export default function StoryMode() {
 
   const { data: allProgress = [] } = useQuery({
     queryKey: ['childProgress'],
-    queryFn: () => base44.entities.ChildProgress.list(),
+    queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
   });
 

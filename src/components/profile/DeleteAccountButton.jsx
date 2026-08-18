@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { lexiaPlatform } from '@/platform';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -21,16 +21,10 @@ export default function DeleteAccountButton() {
   async function handleDelete() {
     setDeleting(true);
     try {
-      // Delete all the user's ChildProgress records
-      const records = await base44.entities.ChildProgress.list();
-      for (const r of records) {
-        await base44.entities.ChildProgress.delete(r.id);
-      }
-      // Clear local storage
+      await lexiaPlatform.progress.clearAll();
       localStorage.removeItem('lexia_profile');
       localStorage.removeItem('lexia_daily_challenge');
-      // Logout and redirect to login
-      await base44.auth.logout('/');
+      await lexiaPlatform.auth.logout('/');
     } catch (err) {
       console.error('Account deletion failed:', err);
       setDeleting(false);

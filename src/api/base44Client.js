@@ -1,14 +1,3 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
-
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-//Create a client with authentication required
-export const base44 = createClient({
-  appId,
-  token,
-  functionsVersion,
-  serverUrl: '',
-  requiresAuth: false,
-  appBaseUrl
-});
+// Compatibility shim for the original Base44 export.
+// New application code should import `lexiaPlatform` from '@/platform'.
+export { base44Client as base44 } from '@/platform';
