@@ -36,3 +36,20 @@ jobs:
           LEXIA_LIVE_TEST_PASSWORD: ${{ secrets.LEXIA_LIVE_TEST_PASSWORD }}
           LEXIA_LIVE_TEST_RECOVERY: ${{ inputs.recovery }}
         run: node scripts/run-live-supabase-auth-smoke.mjs
+
+      - name: Write Auth release evidence
+        if: success()
+        env:
+          LEXIA_RECOVERY_PROVED: ${{ inputs.recovery }}
+        run: |
+          mkdir -p artifacts/m09b
+          node -e "const fs=require('fs'); fs.writeFileSync('artifacts/m09b/evidence.json', JSON.stringify({gate:'M09-B/C',status:'PASS',recovery:process.env.LEXIA_RECOVERY_PROVED==='true',sha:process.env.GITHUB_SHA,run_id:process.env.GITHUB_RUN_ID},null,2))"
+
+      - name: Upload Auth release evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m09b-auth-rest-storage-recovery-${{ inputs.recovery }}
+          path: artifacts/m09b/evidence.json
+          if-no-files-found: error
+          retention-days: 30
