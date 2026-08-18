@@ -31,6 +31,68 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare Chrome browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ldconfig -p | grep -q 'libXtst.so.6'; then
+            sudo apt-get update -y
+            sudo apt-get install -y libxtst6
+          fi
+
+          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "No Chrome/Chromium executable found" >&2
+            exit 1
+          fi
+          echo "CHROME_BIN=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+          PROFILE_DIR="$(mktemp -d)"
+          CHROME_STDOUT="$(mktemp)"
+          CHROME_STDERR="$(mktemp)"
+          "$CHROME_PATH" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --mute-audio \
+            --no-first-run \
+            --no-default-browser-check \
+            --remote-debugging-address=127.0.0.1 \
+            --remote-debugging-port=9333 \
+            --user-data-dir="$PROFILE_DIR" \
+            about:blank >"$CHROME_STDOUT" 2>"$CHROME_STDERR" &
+          CHROME_PID=$!
+          cleanup_chrome() {
+            kill "$CHROME_PID" 2>/dev/null || true
+            wait "$CHROME_PID" 2>/dev/null || true
+            rm -rf "$PROFILE_DIR" "$CHROME_STDOUT" "$CHROME_STDERR" 2>/dev/null || true
+          }
+          trap cleanup_chrome EXIT
+
+          READY=0
+          for _ in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:9333/json/version >/dev/null 2>&1; then
+              READY=1
+              break
+            fi
+            if ! kill -0 "$CHROME_PID" 2>/dev/null; then
+              echo "Chrome exited during CDP preflight" >&2
+              cat "$CHROME_STDERR" >&2 || true
+              exit 1
+            fi
+            sleep 0.25
+          done
+          if [ "$READY" -ne 1 ]; then
+            echo "Chrome did not expose CDP during preflight" >&2
+            cat "$CHROME_STDERR" >&2 || true
+            exit 1
+          fi
+          echo "Chrome CDP preflight: PASS"
+          cleanup_chrome
+          trap - EXIT
+
       - name: Typecheck legacy UI baseline
         continue-on-error: true
         run: npm run typecheck
@@ -76,6 +138,9 @@ jobs:
 
       - name: Journey review insights contract
         run: node scripts/check-journey-review-insights.mjs
+
+      - name: Learner review quest contract
+        run: node scripts/check-learner-review-quest.mjs
 
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
@@ -149,11 +214,14 @@ jobs:
       - name: Review insights browser QA
         run: node scripts/check-review-insights-browser.mjs
 
-      - name: Upload M19 visual evidence
+      - name: Learner review browser QA
+        run: node scripts/check-learner-review-browser.mjs
+
+      - name: Upload M20 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m19-browser-layout
+          name: lexia-m20-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png
@@ -164,5 +232,7 @@ jobs:
             artifacts/m17/*.json
             artifacts/m19/*.png
             artifacts/m19/*.json
+            artifacts/m20/*.png
+            artifacts/m20/*.json
           if-no-files-found: warn
           retention-days: 14

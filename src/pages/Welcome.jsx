@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass, Trophy } from 'lucide-react';
+import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass, Trophy, RotateCcw } from 'lucide-react';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import DailyChallengeCard from '@/components/game/DailyChallengeCard';
 import { speak, playClickSound } from '@/lib/sounds';
@@ -13,6 +13,7 @@ import { lexiaPlatform, activePlatformProvider } from '@/platform';
 import { useAuth } from '@/lib/AuthContext';
 import { getJourneyState } from '@/game/journeyEngine';
 import { getJourneyWorldExperience } from '@/game/worldExperienceEngine';
+import { buildLearnerReviewQuest, getLearnerReviewQuestLabel } from '@/game/learnerReviewQuestEngine';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -38,6 +39,10 @@ export default function Welcome() {
   const activeExperience = useMemo(
     () => getJourneyWorldExperience(journey, stats),
     [journey, stats],
+  );
+  const reviewQuest = useMemo(
+    () => buildLearnerReviewQuest(visibleProgress),
+    [visibleProgress],
   );
   const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
   const dailyCompletedCount = getChallengeCompletedCount(dailyChallenge);
@@ -179,6 +184,39 @@ export default function Welcome() {
                 </span>
               </div>
             </motion.button>
+          )}
+
+          {reviewQuest.hasDueReviews && reviewQuest.nextPath && (
+            <motion.div
+              className="w-full max-w-xs rounded-2xl border border-sky-300 bg-sky-50/90 px-3 py-3 shadow-sm"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.82 }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center flex-none">
+                  <RotateCcw className="w-5 h-5 text-sky-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-body text-[10px] uppercase tracking-[0.12em] font-bold text-sky-700">
+                    Revisão inteligente
+                  </p>
+                  <p className="font-display text-sm text-foreground truncate">
+                    {getLearnerReviewQuestLabel(reviewQuest)} · {reviewQuest.nextChapter?.title}
+                  </p>
+                </div>
+              </div>
+              <Link to={reviewQuest.nextPath} className="block mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => playClickSound()}
+                  className="w-full rounded-xl border-sky-300 text-sky-800 hover:bg-sky-100 font-body font-bold"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Revisar agora
+                </Button>
+              </Link>
+            </motion.div>
           )}
 
           <motion.div
