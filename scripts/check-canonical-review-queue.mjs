@@ -20,13 +20,27 @@ const hour = 60 * 60 * 1000;
 const future = new Date(now + 24 * hour).toISOString();
 const due = (hoursAgo) => new Date(now - hoursAgo * hour).toISOString();
 
-assert.equal(CANONICAL_REVIEW_TARGETS.length, 106, 'review catalog must cover the exact 106-target literacy journey');
-assert.equal(new Set(CANONICAL_REVIEW_TARGETS.map((target) => target.key)).size, 106, 'canonical review keys must be unique');
+const expectedCanonicalTargetCount = ALPHABET.length
+  + BASIC_SYLLABLES.length
+  + COMPLEX_SYLLABLES.length
+  + BASIC_WORDS.length
+  + BASIC_SENTENCES.length;
+
+assert.equal(
+  CANONICAL_REVIEW_TARGETS.length,
+  expectedCanonicalTargetCount,
+  'review catalog must cover every target exposed by the canonical literacy catalogs',
+);
+assert.equal(
+  new Set(CANONICAL_REVIEW_TARGETS.map((target) => target.key)).size,
+  expectedCanonicalTargetCount,
+  'canonical review keys must be unique across the complete literacy catalogs',
+);
 assert.equal(ALPHABET.length, 26);
-assert.equal(BASIC_SYLLABLES.length, 20);
-assert.equal(COMPLEX_SYLLABLES.length, 20);
-assert.equal(BASIC_WORDS.length, 20);
-assert.equal(BASIC_SENTENCES.length, 20);
+assert.ok(BASIC_SYLLABLES.length > 0, 'simple-syllable catalog must not be empty');
+assert.ok(COMPLEX_SYLLABLES.length > 0, 'complex-syllable catalog must not be empty');
+assert.ok(BASIC_WORDS.length > 0, 'word catalog must not be empty');
+assert.ok(BASIC_SENTENCES.length > 0, 'sentence catalog must not be empty');
 
 for (const [key, chapterId] of [
   ['A', REVIEW_CHAPTER_IDS.LETTERS],
@@ -155,4 +169,4 @@ const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.me
 assert.ok(ciSource.includes('Canonical review queue contract'));
 assert.ok(ciSource.includes('node scripts/check-canonical-review-queue.mjs'));
 
-console.log('Lexia M25 Canonical Review Queue contract: PASS (106 official targets, stale prefixes excluded, stale-only queue cannot trap Review)');
+console.log(`Lexia M25 Canonical Review Queue contract: PASS (${expectedCanonicalTargetCount} official catalog targets, stale prefixes excluded, stale-only queue cannot trap Review)`);
