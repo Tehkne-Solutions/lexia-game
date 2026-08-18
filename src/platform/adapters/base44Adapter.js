@@ -35,10 +35,9 @@ async function clearAllProgress() {
 
 export const base44Adapter = {
   provider: 'base44',
-  raw: client,
 
   progress: {
-    list: () => client.entities.ChildProgress.list(),
+    list: (...args) => client.entities.ChildProgress.list(...args),
     create: (data) => client.entities.ChildProgress.create(data),
     update: (id, data) => client.entities.ChildProgress.update(id, data),
     remove: (id) => client.entities.ChildProgress.delete(id),
