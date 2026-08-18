@@ -1,5 +1,9 @@
-// Alphabet curriculum with anchor images and words
-export const ALPHABET = [
+import { getCurriculumMetadata, sortByCurriculum } from '../learning/curriculum.js';
+
+// Full alphabet catalog used by the game UI. Alphabetical order is kept here
+// so selectors and reports remain familiar; LEARNING_SEQUENCE carries the
+// pedagogical order used by the adaptive learning engine.
+const BASE_ALPHABET = [
   { letter: 'A', word: 'Abelha', emoji: '🐝', color: '#FF6B6B' },
   { letter: 'B', word: 'Bola', emoji: '⚽', color: '#4ECDC4' },
   { letter: 'C', word: 'Casa', emoji: '🏠', color: '#45B7D1' },
@@ -28,12 +32,24 @@ export const ALPHABET = [
   { letter: 'Z', word: 'Zebra', emoji: '🦓', color: '#D5D8DC' },
 ];
 
+export const ALPHABET = BASE_ALPHABET.map((item) => {
+  const curriculum = getCurriculumMetadata(item.letter);
+  return {
+    ...item,
+    ...curriculum,
+    anchorWord: curriculum.anchorWord || item.word,
+    anchorEmoji: curriculum.anchorEmoji || item.emoji,
+  };
+});
+
+export const LEARNING_SEQUENCE = Object.freeze(sortByCurriculum(ALPHABET));
+
 export function getLetterData(letter) {
-  return ALPHABET.find(a => a.letter === letter.toUpperCase());
+  return ALPHABET.find((item) => item.letter === String(letter || '').toUpperCase());
 }
 
 export function getNextLetter(currentLetter) {
-  const idx = ALPHABET.findIndex(a => a.letter === currentLetter);
+  const idx = ALPHABET.findIndex((item) => item.letter === currentLetter);
   if (idx === -1 || idx === ALPHABET.length - 1) return ALPHABET[0];
   return ALPHABET[idx + 1];
 }

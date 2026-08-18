@@ -1,10 +1,10 @@
-import { calculateMastery } from './fsrs';
 import { ALPHABET } from './alphabetData';
+import { getDailyChallengeCandidates } from '../learning/engine.js';
 
 const CHALLENGE_KEY = 'lexia_daily_challenge';
 
 function getTodayKey() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return new Date().toISOString().slice(0, 10);
 }
 
 export function getDailyChallenge(allProgress) {
@@ -13,29 +13,18 @@ export function getDailyChallenge(allProgress) {
     try { return JSON.parse(localStorage.getItem(CHALLENGE_KEY)); } catch { return null; }
   })();
 
-  // Return today's saved challenge if it exists
   if (saved && saved.date === today) return saved;
 
-  // Generate new challenge — pick 3 letters the student struggles with most
-  const progressMap = {};
-  allProgress.forEach(p => { progressMap[p.letter] = p; });
-
-  // Score each letter: lower = needs more practice
-  const scored = ALPHABET.map(item => {
-    const p = progressMap[item.letter];
-    if (!p || p.total_attempts === 0) return { letter: item.letter, score: 0 }; // never tried
-    return { letter: item.letter, score: calculateMastery(p) };
-  });
-
-  // Sort by mastery ascending, take worst 8, pick 3 randomly
-  const worst = scored.sort((a, b) => a.score - b.score).slice(0, 8);
-  const shuffled = worst.sort(() => Math.random() - 0.5).slice(0, 3);
-  const letters = shuffled.map(s => s.letter);
+  // Daily challenges now respect the active curriculum instead of introducing
+  // arbitrary late-stage letters before the learner is ready for them.
+  const worst = getDailyChallengeCandidates(allProgress, ALPHABET, 8);
+  const shuffled = [...worst].sort(() => Math.random() - 0.5).slice(0, 3);
+  const letters = shuffled.map((item) => item.letter);
 
   const challenge = {
     date: today,
     letters,
-    progress: {}, // { letter: boolean }
+    progress: {},
     completed: false,
     starsMultiplier: 2,
   };
@@ -54,7 +43,7 @@ export function updateChallengeProgress(letter, success) {
   if (!saved.letters.includes(letter)) return saved;
 
   saved.progress[letter] = saved.progress[letter] || success;
-  const allDone = saved.letters.every(l => saved.progress[l]);
+  const allDone = saved.letters.every((challengeLetter) => saved.progress[challengeLetter]);
   if (allDone) saved.completed = true;
 
   localStorage.setItem(CHALLENGE_KEY, JSON.stringify(saved));
