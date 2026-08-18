@@ -6,6 +6,7 @@ on:
       - main
       - 'integration/**'
       - 'sprint/**'
+      - 'agent/**'
   pull_request:
     branches:
       - main
@@ -157,6 +158,9 @@ jobs:
       - name: Canonical review queue contract
         run: node scripts/check-canonical-review-queue.mjs
 
+      - name: Review queue visibility contract
+        run: node scripts/check-review-queue-visibility.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -241,11 +245,14 @@ jobs:
       - name: Due-only review browser QA
         run: node scripts/check-due-only-review-browser.mjs
 
-      - name: Upload M25 visual evidence
+      - name: Review queue visibility browser QA
+        run: node scripts/check-review-queue-visibility-browser.mjs
+
+      - name: Upload M26 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m25-browser-layout
+          name: lexia-m26-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png
@@ -264,5 +271,6 @@ jobs:
             artifacts/m22/*.json
             artifacts/m23/*.png
             artifacts/m23/*.json
+            artifacts/m26/*.png
           if-no-files-found: warn
           retention-days: 14
