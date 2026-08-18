@@ -165,7 +165,7 @@ export default function Profile() {
           ))}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto sm:overflow-visible pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
             { id: 'avatar', label: '🐾 Avatar' },
             { id: 'mascot', label: '🎨 Corujinha' },
@@ -176,7 +176,7 @@ export default function Profile() {
             <button
               key={t.id}
               onClick={() => { playClickSound(); setTab(t.id); }}
-              className={`flex-none min-w-[92px] py-2 px-3 rounded-xl font-body font-bold text-sm transition-all
+              className={`flex-none min-w-[92px] sm:flex-1 sm:min-w-0 py-2 px-3 rounded-xl font-body font-bold text-sm transition-all
                 ${tab === t.id ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
             >
               {t.label}
