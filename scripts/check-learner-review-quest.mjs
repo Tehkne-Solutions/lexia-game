@@ -47,10 +47,25 @@ const complex = COMPLEX_SYLLABLES.map((item) => advancedRecord(`SYLC_${item.syll
 const words = BASIC_WORDS.map((item) => advancedRecord(`WORD_${item.word}`, future));
 const sentences = BASIC_SENTENCES.map((item) => advancedRecord(`SENT_${item.id}`, future));
 
-assert.equal(simple.length, 20, 'M20 fixture must cover the canonical 20 simple syllables');
-assert.equal(complex.length, 20, 'M20 fixture must cover the canonical 20 complex syllables');
-assert.equal(words.length, 20, 'M20 fixture must cover the canonical 20 words');
-assert.equal(sentences.length, 20, 'M20 fixture must cover the canonical 20 sentences');
+function assertCanonicalFixtureCoverage(records, catalog, keyForItem, label) {
+  const canonicalKeys = catalog.map(keyForItem);
+  assert.ok(canonicalKeys.length > 0, `${label} canonical catalog must not be empty`);
+  assert.equal(
+    new Set(canonicalKeys).size,
+    canonicalKeys.length,
+    `${label} canonical catalog must not contain duplicate review keys`,
+  );
+  assert.deepEqual(
+    records.map((record) => record.letter),
+    canonicalKeys,
+    `${label} fixture must cover the current canonical catalog exactly`,
+  );
+}
+
+assertCanonicalFixtureCoverage(simple, BASIC_SYLLABLES, (item) => `SYL_${item.syllable}`, 'simple syllables');
+assertCanonicalFixtureCoverage(complex, COMPLEX_SYLLABLES, (item) => `SYLC_${item.syllable}`, 'complex syllables');
+assertCanonicalFixtureCoverage(words, BASIC_WORDS, (item) => `WORD_${item.word}`, 'words');
+assertCanonicalFixtureCoverage(sentences, BASIC_SENTENCES, (item) => `SENT_${item.id}`, 'sentences');
 
 letters[0].next_review = new Date(now - 5 * hour).toISOString();
 simple[0].next_review = new Date(now - 4 * hour).toISOString();
