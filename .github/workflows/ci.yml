@@ -40,6 +40,9 @@ jobs:
       - name: Platform boundary contract
         run: node scripts/check-platform-boundary.mjs
 
+      - name: Independent provider contract
+        run: node scripts/check-independent-provider.mjs
+
       - name: Lint
         run: npm run lint
 
