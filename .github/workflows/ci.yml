@@ -50,6 +50,9 @@ jobs:
       - name: World experience contract
         run: node scripts/check-world-experience.mjs
 
+      - name: Game shell contract
+        run: node scripts/check-game-shell.mjs
+
       - name: Platform boundary contract
         run: node scripts/check-platform-boundary.mjs
 
@@ -73,3 +76,15 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Browser layout QA
+        run: node scripts/check-browser-layout.mjs
+
+      - name: Upload M07-G visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m07g-browser-layout
+          path: artifacts/m07g/*.png
+          if-no-files-found: warn
+          retention-days: 14

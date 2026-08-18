@@ -56,8 +56,8 @@ export default function WorldMap() {
   }, [stats]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)] sticky top-0 z-10">
+    <div className="game-viewport flex flex-col bg-background">
+      <div className="game-safe-top bg-card border-b border-border p-4 flex-shrink-0 z-10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <Link to="/">
             <Button variant="ghost" size="icon" className="rounded-xl" onClick={playClickSound}>
@@ -71,8 +71,8 @@ export default function WorldMap() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
+      <div className="game-scroll-y flex-1 relative">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {['☁️', '⭐', '🌈', '☁️', '✨'].map((e, i) => (
             <motion.span
               key={i}
@@ -86,7 +86,7 @@ export default function WorldMap() {
           ))}
         </div>
 
-        <div className="max-w-lg mx-auto p-4 pt-6 space-y-4 relative z-10">
+        <div className="game-safe-bottom max-w-lg mx-auto p-4 pt-6 space-y-4 relative z-10">
           <WorldNarrativePanel experience={activeExperience} journey={journey} />
 
           <div className="relative">
@@ -223,6 +223,7 @@ export default function WorldMap() {
           </div>
         </div>
       </div>
+
       <WorldUnlockCelebration
         show={!!celebrationWorld}
         world={celebrationWorld}

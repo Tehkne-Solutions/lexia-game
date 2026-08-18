@@ -111,8 +111,7 @@ export default function DrawingCanvas({ targetLetter, onEvaluate, disabled }) {
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       <motion.div
-        className="relative w-full rounded-2xl overflow-hidden border-4 border-primary/30 bg-white shadow-xl"
-        style={{ aspectRatio: '1', maxWidth: '260px' }}
+        className="game-drawing-board relative rounded-2xl overflow-hidden border-4 border-primary/30 bg-white shadow-xl flex-shrink-0"
         whileTap={!isEvaluating ? { scale: 0.99 } : {}}
       >
         <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-primary/40 rounded-tl-md z-10" />
@@ -152,8 +151,7 @@ export default function DrawingCanvas({ targetLetter, onEvaluate, disabled }) {
         )}
       </motion.div>
 
-      {/* Action buttons */}
-      <div className="flex gap-2 w-full max-w-[260px]">
+      <div className="game-drawing-actions flex gap-2">
         <Button
           variant="outline" size="sm"
           onClick={clearCanvas}
