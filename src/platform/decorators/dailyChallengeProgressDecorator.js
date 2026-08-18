@@ -22,11 +22,18 @@ function prepareDailyChallengeWrite(data) {
     };
   }
 
+  const boostedStars = Number(data?.stars_earned || 0) + (multiplier - 1);
+  const boostedData = {
+    ...data,
+    stars_earned: boostedStars,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(data || {}, 'level')) {
+    boostedData.level = Math.floor(boostedStars / 5) + 1;
+  }
+
   return {
-    data: {
-      ...data,
-      stars_earned: Number(data?.stars_earned || 0) + (multiplier - 1),
-    },
+    data: boostedData,
     entityKey,
     isCorrect,
     multiplier,
