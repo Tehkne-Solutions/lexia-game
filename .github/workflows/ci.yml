@@ -44,6 +44,9 @@ jobs:
       - name: Journey engine contract
         run: node scripts/check-journey-engine.mjs
 
+      - name: Session quest contract
+        run: node scripts/check-session-quest.mjs
+
       - name: Platform boundary contract
         run: node scripts/check-platform-boundary.mjs
 
