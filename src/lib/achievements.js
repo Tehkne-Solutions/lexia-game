@@ -1,16 +1,11 @@
-import { calculateMastery } from '@/lib/fsrs';
+import {
+  buildJourneyStats,
+  isJourneyProgressMastered,
+} from '../game/journeyStatsEngine.js';
 
-// Check if a progress entry is mastered across letters and non-FSRS curriculum entities.
+// Backward-compatible name consumed by sticker/achievement callers.
 export function isProgressMastered(progress) {
-  if (!progress || progress.total_attempts === 0) return false;
-  const key = progress.letter || '';
-  // Syllables, words and sentences use a simple repeated-success mastery rule.
-  if (key.startsWith('SYL_') || key.startsWith('SYLC_') || key.startsWith('WORD_') || key.startsWith('SENT_')) {
-    return progress.correct_attempts >= 3 &&
-           (progress.correct_attempts / progress.total_attempts) >= 0.6;
-  }
-  // Letters remain FSRS-based.
-  return calculateMastery(progress) >= 80;
+  return isJourneyProgressMastered(progress);
 }
 
 export const ACHIEVEMENTS = [
@@ -136,48 +131,5 @@ export function getNewlyEarned(previousStats, currentStats) {
 }
 
 export function buildStats(allProgress) {
-  const records = Array.isArray(allProgress) ? allProgress : [];
-  const letterProgress = records.filter(p => p.letter && p.letter.length === 1);
-
-  const totalStars = records.reduce((s, p) => s + (p.stars_earned || 0), 0);
-  const totalAttempts = letterProgress.reduce((s, p) => s + (p.total_attempts || 0), 0);
-  const totalCorrect = letterProgress.reduce((s, p) => s + (p.correct_attempts || 0), 0);
-  const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
-  const maxStreak = letterProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
-
-  const lettersMastered = letterProgress.filter(p => isProgressMastered(p)).length;
-  const masteredCount = lettersMastered;
-  const lettersStarted = new Set(letterProgress.filter(p => p.total_attempts > 0).map(p => p.letter)).size;
-
-  const basicSyllables = records.filter(p => p.letter?.startsWith('SYL_'));
-  const complexSyllables = records.filter(p => p.letter?.startsWith('SYLC_'));
-  const words = records.filter(p => p.letter?.startsWith('WORD_'));
-  const sentences = records.filter(p => p.letter?.startsWith('SENT_'));
-
-  const syllablesBasicDone = basicSyllables.filter(p => p.correct_attempts > 0).length;
-  const syllablesBasicMastered = basicSyllables.filter(isProgressMastered).length;
-  const syllablesComplexDone = complexSyllables.filter(p => p.correct_attempts > 0).length;
-  const syllablesComplexMastered = complexSyllables.filter(isProgressMastered).length;
-  const wordsDone = words.filter(p => p.correct_attempts > 0).length;
-  const wordsMastered = words.filter(isProgressMastered).length;
-  const sentencesDone = sentences.filter(p => p.correct_attempts > 0).length;
-  const sentencesMastered = sentences.filter(isProgressMastered).length;
-
-  return {
-    totalStars,
-    totalAttempts,
-    accuracy,
-    maxStreak,
-    masteredCount,
-    lettersMastered,
-    lettersStarted,
-    syllablesBasicDone,
-    syllablesBasicMastered,
-    syllablesComplexDone,
-    syllablesComplexMastered,
-    wordsDone,
-    wordsMastered,
-    sentencesDone,
-    sentencesMastered,
-  };
+  return buildJourneyStats(allProgress);
 }

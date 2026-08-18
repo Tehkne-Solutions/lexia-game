@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const artifactsDir = path.join(root, 'artifacts', 'm12');
+const artifactsDir = path.join(root, 'artifacts', 'm13');
 const previewPort = 4173;
 const debugPort = 9222;
 const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -248,7 +248,7 @@ let cdp;
 try {
   await waitForHttp(baseUrl);
   const chromeBin = findChrome();
-  const profileDir = path.join(root, '.tmp-m12-chrome');
+  const profileDir = path.join(root, '.tmp-m13-chrome');
   await rm(profileDir, { recursive: true, force: true });
   chrome = spawn(chromeBin, [
     '--headless=new',
@@ -314,9 +314,18 @@ try {
     const parentMetrics = await getDocumentMetrics(cdp);
     assertDocumentSurface(parentMetrics, `${viewport.name}/parent`);
     await capture(cdp, `${viewport.name}-parent`);
+
+    await navigate(cdp, `${baseUrl}/profile`, 'body');
+    await waitForText(cdp, 'Meu Perfil');
+    await waitForText(cdp, 'Primeira descoberta');
+    await waitForText(cdp, 'Jornada');
+    await waitForText(cdp, 'relíquias');
+    const profileMetrics = await getDocumentMetrics(cdp);
+    assertDocumentSurface(profileMetrics, `${viewport.name}/profile`);
+    await capture(cdp, `${viewport.name}-profile`);
   }
 
-  console.log('Lexia Browser Layout M12: PASS (Chrome mobile-short/mobile/desktop; 6 journey/parent surfaces × 3 viewports = 18 screenshots)');
+  console.log('Lexia Browser Layout M13: PASS (Chrome mobile-short/mobile/desktop; 7 journey/parent/profile surfaces × 3 viewports = 21 screenshots)');
 } finally {
   cdp?.close();
   chrome?.kill('SIGTERM');
