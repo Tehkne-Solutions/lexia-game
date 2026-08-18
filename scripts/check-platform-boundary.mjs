@@ -37,18 +37,16 @@ for (const fileUrl of files) {
     violations.push(`${path}: imports the concrete Base44 adapter directly`);
   }
 
-  if (content.includes('@/api/base44Client') && path !== 'src/api/base44Client.js') {
+  if (content.includes('@/api/base44Client')) {
     legacyFacadeConsumers.push(path);
   }
 }
 
 assert.deepEqual(violations, [], `Platform boundary violations:\n${violations.join('\n')}`);
+assert.deepEqual(
+  legacyFacadeConsumers,
+  [],
+  `Legacy Base44 facade imports are no longer allowed:\n${legacyFacadeConsumers.join('\n')}`
+);
 
-const facadeContent = await readFile(new URL('../src/api/base44Client.js', import.meta.url), 'utf8');
-assert.ok(facadeContent.includes('lexiaPlatform'), 'legacy Base44 facade must delegate to lexiaPlatform');
-assert.ok(!facadeContent.includes('base44Adapter.raw'), 'legacy facade must not expose the raw Base44 client');
-
-console.log(`Lexia platform boundary: PASS (${legacyFacadeConsumers.length} legacy facade consumer(s) remain)`);
-if (legacyFacadeConsumers.length > 0) {
-  console.log(`Legacy facade consumers: ${legacyFacadeConsumers.sort().join(', ')}`);
-}
+console.log('Lexia platform boundary: PASS (0 legacy facade consumers; vendor SDK isolated in adapter)');
