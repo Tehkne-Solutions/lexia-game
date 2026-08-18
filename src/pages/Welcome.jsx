@@ -1,25 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon } from 'lucide-react';
+import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass } from 'lucide-react';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import { speak, playClickSound } from '@/lib/sounds';
+import { lexiaPlatform, activePlatformProvider } from '@/platform';
+import { useAuth } from '@/lib/AuthContext';
+import { getJourneyState } from '@/game/journeyEngine';
 
 export default function Welcome() {
   const [showMessage, setShowMessage] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const canLoadProgress = activePlatformProvider !== 'supabase' || isAuthenticated;
+
+  const { data: allProgress = [] } = useQuery({
+    queryKey: ['childProgress'],
+    queryFn: () => lexiaPlatform.progress.list(),
+    initialData: [],
+    enabled: canLoadProgress,
+  });
+
+  const journey = useMemo(
+    () => getJourneyState(canLoadProgress ? allProgress : []),
+    [allProgress, canLoadProgress],
+  );
+  const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowMessage(true);
-      speak('Olá! Eu sou a Corujinha! Vamos aprender as letras juntos?');
+      speak(journey.firstRun
+        ? `Olá! Eu sou a Corujinha! Sua primeira missão é descobrir a letra ${journey.target}.`
+        : 'Olá! Eu sou a Corujinha! Vamos continuar nossa jornada?');
     }, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [journey.firstRun, journey.target]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Floating background decorations */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {['🌟', '⭐', '✨', '🌈', '🦋', '🌸', '📚', '✏️'].map((emoji, i) => (
           <motion.span
@@ -46,12 +66,11 @@ export default function Welcome() {
       </div>
 
       <motion.div
-        className="flex flex-col items-center gap-6 z-10"
+        className="flex flex-col items-center gap-6 z-10 w-full"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        {/* Logo / Title */}
         <motion.h1
           className="font-display text-5xl md:text-7xl text-center"
           initial={{ scale: 0 }}
@@ -71,21 +90,41 @@ export default function Welcome() {
           Aprenda o Alfabeto com Magia! ✨
         </motion.p>
 
-        {/* Mascot */}
         <MascotAvatar
           expression={showMessage ? 'excited' : 'happy'}
           size="xl"
-          message={showMessage ? 'Olá! Vamos aprender juntos?' : undefined}
+          message={showMessage ? (journey.firstRun ? `Sua primeira missão: letra ${journey.target}!` : journey.title) : undefined}
         />
 
-        {/* Buttons */}
         <motion.div
-          className="flex flex-col gap-3 w-full max-w-xs mt-4"
+          className="w-full max-w-xs rounded-2xl border-2 border-primary/20 bg-card/90 p-4 shadow-md"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Compass className="w-5 h-5 text-primary" />
+            <span className="font-body text-xs font-bold uppercase tracking-wide text-primary">Missão atual</span>
+          </div>
+          <h2 className="font-display text-lg text-foreground">{journey.title}</h2>
+          <p className="font-body text-sm text-muted-foreground mt-1">{journey.description}</p>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${missionPct}%` }} />
+            </div>
+            <span className="font-body text-xs font-bold text-muted-foreground">
+              {journey.current}/{journey.total}
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="flex flex-col gap-3 w-full max-w-xs"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.85 }}
         >
-          <Link to="/play" className="w-full">
+          <Link to={journey.path} className="w-full">
             <Button
               size="lg"
               onClick={() => playClickSound()}
@@ -94,7 +133,7 @@ export default function Welcome() {
                 shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40"
             >
               <Play className="w-6 h-6" />
-              Jogar!
+              {journey.cta}
             </Button>
           </Link>
 
@@ -146,7 +185,6 @@ export default function Welcome() {
             </Link>
           </div>
 
-          {/* Extra features */}
           <div className="grid grid-cols-3 gap-2 w-full mt-1">
             <Link to="/speed-challenge" className="col-span-1">
               <Button
@@ -184,7 +222,6 @@ export default function Welcome() {
           </div>
         </motion.div>
 
-        {/* Footer note */}
         <motion.p
           className="text-xs text-muted-foreground/60 font-body text-center mt-6"
           initial={{ opacity: 0 }}
