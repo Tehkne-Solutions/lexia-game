@@ -1,4 +1,4 @@
-import { getSupabaseReadiness } from '@/platform/providerConfig';
+import { getSupabaseReadiness } from '../providerConfig.js';
 
 const SESSION_KEY = 'lexia_supabase_session';
 

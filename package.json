@@ -10,6 +10,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "check:supabase-schema": "node scripts/check-supabase-schema.mjs",
+    "check:supabase-adapter": "node scripts/check-supabase-adapter.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

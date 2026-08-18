@@ -55,6 +55,9 @@ jobs:
       - name: Supabase schema contract
         run: npm run check:supabase-schema
 
+      - name: Supabase adapter contract
+        run: npm run check:supabase-adapter
+
       - name: Lint
         run: npm run lint
 
