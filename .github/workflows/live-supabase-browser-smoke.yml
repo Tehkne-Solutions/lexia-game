@@ -1,0 +1,52 @@
+name: Lexia Live Supabase Browser Cutover
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authenticated-browser-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: lexia-live-smoke
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Supabase-provider preview
+        env:
+          VITE_LEXIA_PLATFORM_PROVIDER: supabase
+          VITE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_LEXIA_SUPABASE_AUTH_READY: 'true'
+          VITE_LEXIA_SUPABASE_EDGE_READY: 'true'
+        run: npm run build
+
+      - name: Run authenticated browser cutover proof
+        env:
+          LEXIA_LIVE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY }}
+          LEXIA_LIVE_TEST_EMAIL: ${{ secrets.LEXIA_LIVE_TEST_EMAIL }}
+          LEXIA_LIVE_TEST_PASSWORD: ${{ secrets.LEXIA_LIVE_TEST_PASSWORD }}
+        run: node scripts/run-live-supabase-browser-smoke.mjs
+
+      - name: Upload M09-E browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m09e-supabase-browser-cutover
+          path: artifacts/m09e/*.png
+          if-no-files-found: warn
+          retention-days: 14
