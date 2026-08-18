@@ -73,32 +73,34 @@ export default function ParentDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
+      <div className="bg-card border-b border-border p-3 sm:p-4 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3">
           <Link to="/">
             <Button variant="ghost" size="icon" className="rounded-xl">
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display text-2xl text-foreground">Área dos Pais</h1>
-            <p className="font-body text-sm text-muted-foreground">Acompanhe toda a jornada de alfabetização</p>
+            <h1 className="font-display text-xl sm:text-2xl text-foreground whitespace-nowrap">Área dos Pais</h1>
+            <p className="hidden sm:block font-body text-sm text-muted-foreground">Acompanhe toda a jornada de alfabetização</p>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleSendReport}
             disabled={sendingReport}
-            className="rounded-xl gap-1.5 font-body font-bold text-xs"
+            aria-label={sendingReport ? 'Enviando relatório' : 'Enviar relatório de jornada'}
+            className="h-10 w-10 p-0 sm:h-9 sm:w-auto sm:px-3 rounded-xl gap-1.5 font-body font-bold text-xs"
           >
             {sendingReport ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-            {sendingReport ? 'Enviando...' : 'Relatório'}
+            <span className="hidden sm:inline">{sendingReport ? 'Enviando...' : 'Relatório'}</span>
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleRefresh}
             disabled={isFetching}
+            aria-label="Atualizar progresso"
             className="rounded-xl"
           >
             <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
