@@ -1,4 +1,4 @@
-import { calculateMastery } from '../lib/fsrs.js';
+import { calculateMastery } from './mastery.js';
 import {
   getCurriculumOrder,
   getCurriculumState,

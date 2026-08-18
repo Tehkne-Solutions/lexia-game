@@ -10,7 +10,7 @@ import {
   getInitialLearningLetter,
   pickNextLearningLetter,
 } from '../src/learning/engine.js';
-import { calculateMastery } from '../src/lib/fsrs.js';
+import { calculateMastery } from '../src/learning/mastery.js';
 
 const EXPECTED_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 

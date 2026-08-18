@@ -1,3 +1,6 @@
+import { calculateMastery } from '../learning/mastery.js';
+import { pickNextLearningLetter } from '../learning/engine.js';
+
 // FSRS v4.5 - Free Spaced Repetition Scheduler
 // Simplified implementation for alphabet learning
 
@@ -72,62 +75,10 @@ export function getLettersDueForReview(progressList) {
     .sort((a, b) => new Date(a.next_review || 0) - new Date(b.next_review || 0));
 }
 
-export function calculateMastery(progress) {
-  if (!progress || progress.total_attempts === 0) return 0;
-  const accuracyScore = (progress.correct_attempts / progress.total_attempts) * 40;
-  const stabilityScore = Math.min(progress.stability / 10, 1) * 30;
-  const streakScore = Math.min(progress.streak / 5, 1) * 30;
-  return Math.round(accuracyScore + stabilityScore + streakScore);
-}
+export { calculateMastery };
 
-/**
- * Smart next letter selection using FSRS priorities:
- * 1. Letters due for review (overdue first)
- * 2. New letters not yet started (introduced gradually)
- * 3. Mix some randomness to avoid pure alphabetical order
- */
+// Compatibility API: existing game screens keep calling pickNextLetter while
+// the scheduling decision is now delegated to Learning Engine 2.0.
 export function pickNextLetter(allProgress, currentLetter, alphabet) {
-  const progressMap = {};
-  allProgress.forEach(p => { progressMap[p.letter] = p; });
-
-  const now = new Date();
-
-  // Priority 1: overdue reviews (due more than 0 days ago)
-  const overdue = allProgress
-    .filter(p => p.total_attempts > 0 && new Date(p.next_review || 0) <= now && p.letter !== currentLetter)
-    .sort((a, b) => new Date(a.next_review) - new Date(b.next_review));
-
-  if (overdue.length > 0) {
-    // Pick randomly among top-3 most overdue to add variety
-    const pool = overdue.slice(0, Math.min(3, overdue.length));
-    const picked = pool[Math.floor(Math.random() * pool.length)];
-    return picked.letter;
-  }
-
-  // Priority 2: letters with poor mastery that are due (mastery < 50)
-  const struggling = allProgress.filter(p =>
-    p.total_attempts > 0 &&
-    calculateMastery(p) < 50 &&
-    p.letter !== currentLetter
-  );
-  if (struggling.length > 0) {
-    const picked = struggling[Math.floor(Math.random() * Math.min(3, struggling.length))];
-    return picked.letter;
-  }
-
-  // Priority 3: introduce new letters not yet started
-  // Introduce up to 4 new letters at a time (not necessarily in order)
-  const startedLetters = new Set(allProgress.filter(p => p.total_attempts > 0).map(p => p.letter));
-  const notStarted = alphabet.filter(a => !startedLetters.has(a.letter) && a.letter !== currentLetter);
-
-  if (notStarted.length > 0) {
-    // Introduce next 1-2 new letters with slight randomness
-    const introPool = notStarted.slice(0, Math.min(2, notStarted.length));
-    return introPool[Math.floor(Math.random() * introPool.length)].letter;
-  }
-
-  // Priority 4: all letters started — pick a random one weighted by difficulty
-  const available = allProgress.filter(p => p.letter !== currentLetter);
-  if (available.length === 0) return alphabet[0].letter;
-  return available[Math.floor(Math.random() * available.length)].letter;
+  return pickNextLearningLetter(allProgress, currentLetter, alphabet);
 }
