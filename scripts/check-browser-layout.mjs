@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const artifactsDir = path.join(root, 'artifacts', 'm08');
+const artifactsDir = path.join(root, 'artifacts', 'm12');
 const previewPort = 4173;
 const debugPort = 9222;
 const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -180,6 +180,18 @@ async function getLayoutMetrics(cdp, shellSelector, scrollSelector = null) {
   })()`);
 }
 
+async function getDocumentMetrics(cdp) {
+  return cdp.evaluate(`(() => ({
+    href: location.href,
+    innerWidth,
+    innerHeight,
+    documentScrollWidth: document.documentElement.scrollWidth,
+    bodyScrollWidth: document.body?.scrollWidth || 0,
+    documentScrollHeight: document.documentElement.scrollHeight,
+    bodyScrollHeight: document.body?.scrollHeight || 0,
+  }))()`);
+}
+
 function assertViewportMetrics(metrics, { name, allowShellScroll = false, expectBoard = false }) {
   assert.ok(metrics.shellHeight > 0, `${name}: shell must render`);
   assert.ok(Math.abs(metrics.shellHeight - metrics.innerHeight) <= 2, `${name}: shell height ${metrics.shellHeight} must match viewport ${metrics.innerHeight}`);
@@ -194,6 +206,13 @@ function assertViewportMetrics(metrics, { name, allowShellScroll = false, expect
     assert.ok(metrics.boardWidth <= 262, `${name}: drawing board exceeds desktop cap`);
     assert.ok(metrics.boardWidth <= metrics.innerHeight * 0.42 + 2, `${name}: drawing board exceeds 42dvh cap`);
   }
+}
+
+function assertDocumentSurface(metrics, name) {
+  assert.ok(metrics.documentScrollWidth <= metrics.innerWidth + 1, `${name}: document horizontal overflow detected`);
+  assert.ok(metrics.bodyScrollWidth <= metrics.innerWidth + 1, `${name}: body horizontal overflow detected`);
+  assert.ok(metrics.documentScrollHeight >= metrics.innerHeight, `${name}: document must cover viewport height`);
+  assert.ok(metrics.bodyScrollHeight > 0, `${name}: body must render content`);
 }
 
 async function assertBoundedGameSurface(cdp, viewportName, surfaceName) {
@@ -229,7 +248,7 @@ let cdp;
 try {
   await waitForHttp(baseUrl);
   const chromeBin = findChrome();
-  const profileDir = path.join(root, '.tmp-m08-chrome');
+  const profileDir = path.join(root, '.tmp-m12-chrome');
   await rm(profileDir, { recursive: true, force: true });
   chrome = spawn(chromeBin, [
     '--headless=new',
@@ -286,9 +305,18 @@ try {
     await waitForText(cdp, 'Expedição das Histórias');
     await assertBoundedGameSurface(cdp, viewport.name, 'sentences');
     await capture(cdp, `${viewport.name}-sentences`);
+
+    await navigate(cdp, `${baseUrl}/parent`, 'body');
+    await waitForText(cdp, 'Jornada de Alfabetização');
+    await waitForText(cdp, 'Precisão geral');
+    await waitForText(cdp, 'Sílabas Complexas');
+    await waitForText(cdp, 'Frases Mágicas');
+    const parentMetrics = await getDocumentMetrics(cdp);
+    assertDocumentSurface(parentMetrics, `${viewport.name}/parent`);
+    await capture(cdp, `${viewport.name}-parent`);
   }
 
-  console.log('Lexia Browser Layout M08: PASS (Chrome mobile-short/mobile/desktop; 5 journey surfaces × 3 viewports)');
+  console.log('Lexia Browser Layout M12: PASS (Chrome mobile-short/mobile/desktop; 6 journey/parent surfaces × 3 viewports = 18 screenshots)');
 } finally {
   cdp?.close();
   chrome?.kill('SIGTERM');
