@@ -1,0 +1,58 @@
+name: Lexia Production Candidate Attestation
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_attestation_run_id:
+        description: 'Successful Lexia Supabase Release Attestation run ID'
+        required: true
+        type: string
+      deployed_preview_run_id:
+        description: 'Successful M10-B or M10-C deployed Supabase preview proof run ID'
+        required: true
+        type: string
+      production_origin:
+        description: 'Intended public Lexia production HTTPS root origin'
+        required: true
+        type: string
+      rollback_evidence_url:
+        description: 'HTTPS evidence reference for rollback readiness on this release'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  attest-production-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: lexia-release-approval
+
+    steps:
+      - name: Checkout candidate commit
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify release + deployed-preview evidence chain
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          LEXIA_RELEASE_ATTESTATION_RUN_ID: ${{ inputs.release_attestation_run_id }}
+          LEXIA_DEPLOYED_PREVIEW_RUN_ID: ${{ inputs.deployed_preview_run_id }}
+          LEXIA_PRODUCTION_ORIGIN: ${{ inputs.production_origin }}
+          LEXIA_ROLLBACK_EVIDENCE_URL: ${{ inputs.rollback_evidence_url }}
+        run: node scripts/run-m10d-production-candidate-attestation.mjs
+
+      - name: Upload production-candidate attestation
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m10d-production-candidate-attestation
+          path: artifacts/m10d/production-candidate-attestation.json
+          if-no-files-found: error
+          retention-days: 30
