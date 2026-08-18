@@ -21,11 +21,18 @@ function writeSavedChallenge(challenge) {
   return challenge;
 }
 
-export function getDailyChallenge(allProgress = []) {
+export function getSavedDailyChallenge() {
   const today = getTodayChallengeKey();
   const saved = readSavedChallenge();
-  if (saved?.schema === 'lexia.daily-challenge.v2' && saved.date === today) return saved;
+  if (saved?.schema !== 'lexia.daily-challenge.v2' || saved?.date !== today) return null;
+  return saved;
+}
 
+export function getDailyChallenge(allProgress = []) {
+  const saved = getSavedDailyChallenge();
+  if (saved) return saved;
+
+  const today = getTodayChallengeKey();
   const definition = buildDailyChallengeDefinition(allProgress, today);
   return writeSavedChallenge({
     ...definition,
@@ -35,9 +42,8 @@ export function getDailyChallenge(allProgress = []) {
 }
 
 export function updateChallengeProgress(entityKey, success) {
-  const today = getTodayChallengeKey();
-  const saved = readSavedChallenge();
-  if (!saved || saved.date !== today || saved.schema !== 'lexia.daily-challenge.v2') return null;
+  const saved = getSavedDailyChallenge();
+  if (!saved) return null;
   if (!isDailyChallengeTarget(saved, entityKey)) return saved;
   if (!success) return saved;
 
@@ -63,9 +69,5 @@ export function isChallengeTarget(challenge, entityKey) {
 }
 
 export function isChallengeCompleted() {
-  const today = getTodayChallengeKey();
-  const saved = readSavedChallenge();
-  return saved?.schema === 'lexia.daily-challenge.v2'
-    && saved?.date === today
-    && saved?.completed === true;
+  return getSavedDailyChallenge()?.completed === true;
 }
