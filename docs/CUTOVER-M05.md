@@ -122,13 +122,19 @@ If Supabase cutover causes auth, data, upload, AI, e-mail or gameplay regression
 
 The rollback changes provider selection only; it must not rewrite learner history.
 
-## Merge gate
+## Promotion gates
 
-PR #1 remains draft until:
+PR #1 already promoted M01–M04-F to `main` and did **not** activate Supabase as the runtime provider.
+
+PR #2 contains M05 hardening only (schema/adaptor contracts and this runbook). It may be promoted once its CI and Vercel gates are green because those changes preserve Base44 as the default provider and do not migrate learner data.
+
+A separate future provider-cutover change must remain blocked until:
 
 - destination ownership is explicitly resolved;
 - Supabase Auth redirects and Edge Function upstreams are configured;
 - real authenticated browser E2E passes;
 - first-cohort rollback is demonstrably available.
+
+Merging M05 does not authorize or imply `VITE_LEXIA_PLATFORM_PROVIDER=supabase` in production.
 
 — Tehkné Solutions
