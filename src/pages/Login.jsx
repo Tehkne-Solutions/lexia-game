@@ -52,12 +52,13 @@ export default function Login() {
         const result = await lexiaPlatform.auth.signUp({
           email,
           password,
+          data: { onboarding_version: 'fresh-start-v1' },
           redirectTo: `${window.location.origin}/login`,
         });
         if (lexiaPlatform.auth.hasAccessToken() || result?.access_token || result?.session?.access_token) {
           window.location.assign(returnTo);
         } else {
-          setMessage('Conta criada. Confirme seu e-mail para continuar.');
+          setMessage('Conta criada. Confirme seu e-mail para começar sua nova jornada.');
         }
         return;
       }
@@ -72,6 +73,11 @@ export default function Login() {
   }
 
   const title = mode === 'login' ? 'Entrar no Lexia' : mode === 'signup' ? 'Criar conta' : 'Recuperar acesso';
+  const helperText = mode === 'signup'
+    ? 'Sua jornada começa do zero. O progresso novo ficará salvo nesta conta.'
+    : mode === 'recover'
+      ? 'Recupere o acesso à sua conta para continuar sua jornada.'
+      : 'Entre para continuar sua jornada de aprendizagem.';
   const submitLabel = mode === 'login' ? 'Entrar' : mode === 'signup' ? 'Criar conta' : 'Enviar recuperação';
   const SubmitIcon = mode === 'signup' ? UserPlus : mode === 'recover' ? Mail : KeyRound;
 
@@ -81,9 +87,7 @@ export default function Login() {
         <CardHeader className="text-center space-y-3">
           <div className="text-6xl">🦉</div>
           <CardTitle className="font-display text-2xl">{title}</CardTitle>
-          <p className="font-body text-sm text-muted-foreground">
-            Seu progresso fica vinculado à sua conta de aprendizagem.
-          </p>
+          <p className="font-body text-sm text-muted-foreground">{helperText}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
