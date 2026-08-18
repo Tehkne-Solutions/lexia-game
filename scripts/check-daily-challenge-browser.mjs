@@ -167,8 +167,9 @@ async function getPageTarget() {
 
 async function waitForText(cdp, text, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
+  const normalizedText = String(text).toLocaleLowerCase('pt-BR');
   while (Date.now() < deadline) {
-    const found = await cdp.evaluate(`document.body?.innerText?.includes(${JSON.stringify(text)})`);
+    const found = await cdp.evaluate(`document.body?.innerText?.toLocaleLowerCase('pt-BR').includes(${JSON.stringify(normalizedText)})`);
     if (found) return;
     await sleep(150);
   }
@@ -296,7 +297,7 @@ try {
     try {
       await waitForText(cdp, 'Desafio diário · Letras');
       const clicked = await cdp.evaluate(`(() => {
-        const button = Array.from(document.querySelectorAll('button')).find((node) => node.innerText?.includes('Desafio diário'));
+        const button = Array.from(document.querySelectorAll('button')).find((node) => node.innerText?.toLocaleLowerCase('pt-BR').includes('desafio diário'));
         if (!button) return false;
         button.click();
         return true;
