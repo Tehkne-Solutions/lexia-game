@@ -1,0 +1,62 @@
+name: Lexia CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'integration/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck legacy baseline
+        continue-on-error: true
+        run: npm run typecheck
+
+      - name: Learning engine contract
+        run: node scripts/check-learning-engine.mjs
+
+      - name: Platform boundary contract
+        run: node scripts/check-platform-boundary.mjs
+
+      - name: Independent provider contract
+        run: node scripts/check-independent-provider.mjs
+
+      - name: Edge Functions contract
+        run: node scripts/check-edge-functions.mjs
+
+      - name: Progress migration contract
+        run: node scripts/check-progress-migration.mjs
+
+      - name: Ownership reconciliation contract
+        run: node scripts/check-ownership-reconciliation.mjs
+
+      - name: Supabase schema contract
+        run: npm run check:supabase-schema
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build

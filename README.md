@@ -1,37 +1,39 @@
-# Lexia Game
+**Welcome to your Base44 project** 
 
-Um jogo gamificado para alfabetização em português brasileiro, utilizando repetição espaçada (FSRS), reconhecimento de escrita manual e síntese de voz.
+**About**
 
-## Funcionalidades do MVP
+View and Edit  your app on [Base44.com](http://Base44.com) 
 
-- **Cenário RPG**: O jogador ajuda um guardião a ler um mapa desenhando letras.
-- **Reconhecimento de Escrita**: Desenho de letras no canvas (validação básica no MVP).
-- **Síntese de Voz**: Pronúncia das letras em português brasileiro.
-- **Repetição Espaçada**: Algoritmo FSRS para agendamento de revisões (implementação básica).
+This project contains everything you need to run your app locally.
 
-## Como executar
+**Edit the code in your local development environment**
 
-1. Instale as dependências: `npm install`
-2. Execute o servidor de desenvolvimento: `npm run dev`
-3. Abra o navegador em `http://localhost:5173`
+Any change pushed to the repo will also be reflected in the Base44 Builder.
 
-## Estrutura do Projeto
+**Prerequisites:** 
 
-- `src/App.tsx`: Componente principal do jogo.
-- `src/fsrs.ts`: Implementação básica do algoritmo FSRS.
-- `src/App.css`: Estilos da aplicação.
+1. Clone the repository using the project's Git URL 
+2. Navigate to the project directory
+3. Install dependencies: `npm install`
+4. Create an `.env.local` file and set the right environment variables
 
-## Próximos Passos
+```
+VITE_BASE44_APP_ID=your_app_id
+VITE_BASE44_APP_BASE_URL=your_backend_url
 
-- Implementar reconhecimento de escrita completo usando uma biblioteca HWR.
-- Adicionar mais cenários RPG.
-- Sistema de login para pais.
-- Dashboard de progresso.
+e.g.
+VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
+VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+```
 
-## Tecnologias
+Run the app: `npm run dev`
 
-- React
-- TypeScript
-- Vite
-- Canvas API
-- Web Speech API
+**Publish your changes**
+
+Open [Base44.com](http://Base44.com) and click on Publish.
+
+**Docs & Support**
+
+Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+
+Support: [https://app.base44.com/support](https://app.base44.com/support)

@@ -1,0 +1,11 @@
+# Lexia Supabase function policy
+# Tehkné Solutions
+
+[functions.lexia-upload]
+verify_jwt = true
+
+[functions.lexia-ai]
+verify_jwt = true
+
+[functions.lexia-email]
+verify_jwt = true

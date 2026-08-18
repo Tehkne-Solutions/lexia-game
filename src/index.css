@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Lexend:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 60% 97%;
+    --foreground: 250 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 250 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 250 30% 15%;
+    --primary: 258 65% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 172 60% 48%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 30% 92%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 43 95% 58%;
+    --accent-foreground: 30 60% 15%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 258 65% 58%;
+    --chart-1: 258 65% 58%;
+    --chart-2: 172 60% 48%;
+    --chart-3: 43 95% 58%;
+    --chart-4: 340 75% 55%;
+    --chart-5: 200 80% 55%;
+    --radius: 1rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 258 65% 58%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 258 65% 58%;
+
+    --font-display: 'Fredoka One', cursive;
+    --font-body: 'Nunito', sans-serif;
+  }
+
+  .dark {
+    --background: 250 30% 8%;
+    --foreground: 220 60% 97%;
+    --card: 250 25% 12%;
+    --card-foreground: 220 60% 97%;
+    --popover: 250 25% 12%;
+    --popover-foreground: 220 60% 97%;
+    --primary: 258 65% 62%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 172 55% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 250 20% 18%;
+    --muted-foreground: 220 15% 60%;
+    --accent: 43 90% 55%;
+    --accent-foreground: 30 60% 10%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 15% 20%;
+    --input: 250 15% 20%;
+    --ring: 258 65% 62%;
+    --chart-1: 258 65% 62%;
+    --chart-2: 172 55% 42%;
+    --chart-3: 43 90% 55%;
+    --chart-4: 340 70% 50%;
+    --chart-5: 200 75% 50%;
+    --sidebar-background: 250 30% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 258 65% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 250 20% 15%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 250 15% 20%;
+    --sidebar-ring: 258 65% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+}
+
+/* Disable viewport overscroll on mobile */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* Prevent text selection on interactive elements (mobile UX) */
+button, a, [role="button"], nav, [role="navigation"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Custom scrollbar for kid-friendly feel — desktop only, hidden on iOS */
+@supports not (-webkit-touch-callout: none) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.4);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
+  }
+}
+
+/* ===== Accessibility ===== */
+
+/* Dyslexia-friendly font (Lexend with system fallbacks) */
+.dyslexia-font {
+  --font-body: 'Lexend', 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
+  --font-display: 'Lexend', 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
+  letter-spacing: 0.05em;
+  word-spacing: 0.1em;
+  line-height: 1.6;
+}
+
+/* High contrast mode */
+.high-contrast {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --border: 0 0% 0%;
+  --primary: 240 100% 30%;
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 20%;
+  --input: 0 0% 0%;
+}
+
+.high-contrast.dark {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+  --primary: 60 100% 50%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 80%;
+  --input: 0 0% 100%;
+}
+
+/* Text size scaling */
+[data-text-size="sm"] { font-size: 14px; }
+[data-text-size="md"] { font-size: 16px; }
+[data-text-size="lg"] { font-size: 19px; }
