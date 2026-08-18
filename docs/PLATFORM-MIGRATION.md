@@ -24,6 +24,10 @@ The current contract exposes:
 
 `src/api/base44Client.js` remains temporarily as a compatibility shim so the original export can be migrated page-by-page without a risky big-bang rewrite.
 
+## CI baseline
+
+The Base44 export currently contains pre-existing JavaScript type-inference errors in generated UI/component code. M01 keeps `npm run typecheck` visible as an advisory step so this debt cannot disappear silently, while `npm run lint` and `npm run build` remain blocking release gates. Typecheck becomes blocking after the legacy baseline is repaired in the consolidation track.
+
 ## Migration sequence
 
 1. M01 — provider contract + Base44 adapter + CI.

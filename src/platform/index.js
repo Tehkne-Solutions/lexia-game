@@ -5,16 +5,12 @@ const providers = {
   base44: base44Adapter,
 };
 
-const requestedProvider = import.meta.env.VITE_LEXIA_PLATFORM_PROVIDER || 'base44';
+// M01 intentionally keeps Base44 as the only active runtime provider.
+// A provider switch will be introduced only when a second adapter is ready and validated.
+const requestedProvider = 'base44';
 const selectedProvider = providers[requestedProvider];
 
-if (!selectedProvider) {
-  console.warn(
-    `[Lexia] Unknown platform provider "${requestedProvider}". Falling back to Base44 until another adapter is configured.`
-  );
-}
-
-export const lexiaPlatform = assertPlatformContract(selectedProvider || base44Adapter);
+export const lexiaPlatform = assertPlatformContract(selectedProvider);
 export const activePlatformProvider = lexiaPlatform.provider;
 export { platformContract };
 
