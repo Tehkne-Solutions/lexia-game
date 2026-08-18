@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { isChallengeCompleted } from '@/lib/dailyChallenge';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Star, Trophy, Flame, Target } from 'lucide-react';
@@ -31,7 +31,7 @@ export default function Profile() {
 
   const { data: allProgress = [] } = useQuery({
     queryKey: ['childProgress'],
-    queryFn: () => base44.entities.ChildProgress.list(),
+    queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
   });
 
