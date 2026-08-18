@@ -24,16 +24,25 @@ import { getInitialLearningLetter } from '@/learning/engine';
 import { getJourneyState, JOURNEY_STAGES } from '@/game/journeyEngine';
 import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
 import { buildStats, getEarnedAchievements } from '@/lib/achievements';
-import { getDailyChallenge, updateChallengeProgress } from '@/lib/dailyChallenge';
+import {
+  getChallengeStarMultiplier,
+  getDailyChallenge,
+  getNextChallengeTarget,
+} from '@/lib/dailyChallenge';
 import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 
 const urlParams = new URLSearchParams(window.location.search);
 const isPracticeMode = urlParams.get('mode') === 'practice';
+const isDailyMode = urlParams.get('daily') === '1';
+const requestedDailyTargetKey = urlParams.get('dailyTarget');
+const requestedDailyLetter = ALPHABET.some((item) => item.letter === requestedDailyTargetKey)
+  ? requestedDailyTargetKey
+  : null;
 
 export default function PlayGame() {
-  const [currentLetter, setCurrentLetter] = useState(() => getInitialLearningLetter(ALPHABET));
+  const [currentLetter, setCurrentLetter] = useState(() => requestedDailyLetter || getInitialLearningLetter(ALPHABET));
   const [phase, setPhase] = useState('draw');
   const [aiResult, setAiResult] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -48,7 +57,7 @@ export default function PlayGame() {
   const [sessionQuest, setSessionQuest] = useState(null);
   const [showQuestComplete, setShowQuestComplete] = useState(false);
   const prevStatsRef = useRef(null);
-  const journeySyncRef = useRef(false);
+  const journeySyncRef = useRef(Boolean(isDailyMode && requestedDailyLetter));
   const sessionQuestInitializedRef = useRef(false);
   const sessionQuestRef = useRef(null);
   const encounterSequenceRef = useRef(0);
@@ -89,11 +98,9 @@ export default function PlayGame() {
   }, [hasLoadedProgress, isGuidedMission, journey.stage, journey.worldId]);
 
   useEffect(() => {
-    if (allProgress.length >= 0) {
-      const challenge = getDailyChallenge(allProgress);
-      setDailyChallenge(challenge);
-    }
-  }, [allProgress.length]);
+    if (!hasLoadedProgress) return;
+    setDailyChallenge(getDailyChallenge(allProgress));
+  }, [hasLoadedProgress, allProgress]);
 
   useEffect(() => {
     if (allProgress.length > 0 && !prevStatsRef.current) {
@@ -106,8 +113,9 @@ export default function PlayGame() {
       const existing = progressMap[letter];
       const isCorrect = gradeValue >= 3;
       const challenge = getDailyChallenge(allProgress);
-      const isChallengeLetter = challenge?.letters?.includes(letter) && !challenge?.completed;
-      const effectiveMultiplier = isChallengeLetter ? (challenge.starsMultiplier || 2) : 1;
+      const effectiveMultiplier = isCorrect
+        ? getChallengeStarMultiplier(challenge, letter)
+        : 1;
 
       const card = existing ? {
         stability: existing.stability || 0,
@@ -120,7 +128,7 @@ export default function PlayGame() {
 
       const reviewed = reviewCard(card, gradeValue);
       const newStreak = isCorrect ? (existing?.streak || 0) + 1 : 0;
-      const starsEarned = isCorrect ? effectiveMultiplier : 0;
+      const starsEarned = isCorrect ? 1 : 0;
       const newStars = (existing?.stars_earned || 0) + starsEarned;
 
       const data = {
@@ -145,15 +153,18 @@ export default function PlayGame() {
         await lexiaPlatform.progress.create(data);
       }
 
-      if (isCorrect && isChallengeLetter) {
-        const updatedChallenge = updateChallengeProgress(letter, true);
-        setDailyChallenge(updatedChallenge);
-      }
-
-      return { isCorrect, newStreak, letter, starsEarned, effectiveMultiplier, encounterId };
+      return {
+        isCorrect,
+        newStreak,
+        letter,
+        starsEarned: isCorrect ? effectiveMultiplier : 0,
+        effectiveMultiplier,
+        encounterId,
+      };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['childProgress'] });
+      setDailyChallenge(getDailyChallenge(allProgress));
       setStarMultiplier(result.effectiveMultiplier);
 
       let questJustCompleted = false;
@@ -189,7 +200,7 @@ export default function PlayGame() {
         setShowCelebration(true);
         setTimeout(() => speak(getStreakPhrase()), 1500);
       } else if (!questJustCompleted && result.isCorrect && result.effectiveMultiplier > 1) {
-        setMascotMessage(`⭐×${result.effectiveMultiplier} Desafio!`);
+        setMascotMessage(`⭐×${result.effectiveMultiplier} Desafio diário!`);
       }
     },
   });
@@ -302,6 +313,21 @@ Look carefully at the image. Return JSON:
     playClickSound();
     setShowCelebration(false);
     activeEncounterRef.current = null;
+
+    if (isDailyMode) {
+      const challenge = getDailyChallenge(allProgress);
+      const nextTarget = getNextChallengeTarget(challenge);
+      const nextDailyLetter = nextTarget?.key;
+      if (typeof nextDailyLetter === 'string' && nextDailyLetter.length === 1 && nextDailyLetter !== currentLetter) {
+        setCurrentLetter(nextDailyLetter);
+        return;
+      }
+      if (challenge?.completed) {
+        setMascotExpression('excited');
+        setMascotMessage('Desafio diário completo! 🏆');
+      }
+    }
+
     const nextLetter = pickNextLetter(allProgress, currentLetter, ALPHABET);
     setCurrentLetter(nextLetter);
   }, [currentLetter, allProgress]);
@@ -321,7 +347,7 @@ Look carefully at the image. Return JSON:
 
   const handleStartChallenge = useCallback((letter) => {
     setShowDailyChallenge(false);
-    if (letter) {
+    if (typeof letter === 'string' && letter.length === 1) {
       activeEncounterRef.current = null;
       setCurrentLetter(letter);
     }
@@ -339,7 +365,7 @@ Look carefully at the image. Return JSON:
       <AchievementToast achievement={newAchievement} onDismiss={() => setNewAchievement(null)} />
 
       <AnimatePresence>
-        {showDailyChallenge && (
+        {showDailyChallenge && dailyChallenge?.type === 'letters' && (
           <DailyChallengeCard
             challenge={dailyChallenge}
             onStart={handleStartChallenge}
@@ -370,7 +396,7 @@ Look carefully at the image. Return JSON:
         </div>
 
         <div className="flex gap-1">
-          {dailyChallenge && !dailyChallenge.completed && (
+          {dailyChallenge?.type === 'letters' && !dailyChallenge.completed && (
             <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8 relative"
               onClick={() => { playClickSound(); setShowDailyChallenge(true); }}>
               <Zap className="w-4 h-4 text-amber-500" />
@@ -392,6 +418,14 @@ Look carefully at the image. Return JSON:
           </span>
           <span className="text-muted-foreground">{journey.title}</span>
           <Link to="/world" className="ml-1 text-primary font-bold hover:underline">Mapa</Link>
+        </div>
+      )}
+
+      {isDailyMode && (
+        <div className="px-3 py-1.5 border-b border-amber-200 bg-amber-50 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
+          <span aria-hidden="true">🏆</span>
+          <span className="font-bold text-amber-800">Desafio diário</span>
+          <span className="text-amber-700">alvo novo vale ⭐×2</span>
         </div>
       )}
 
