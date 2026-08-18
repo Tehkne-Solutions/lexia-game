@@ -64,7 +64,12 @@ jobs:
             --user-data-dir="$PROFILE_DIR" \
             about:blank >"$CHROME_STDOUT" 2>"$CHROME_STDERR" &
           CHROME_PID=$!
-          trap 'kill "$CHROME_PID" 2>/dev/null || true; rm -rf "$PROFILE_DIR" "$CHROME_STDOUT" "$CHROME_STDERR"' EXIT
+          cleanup_chrome() {
+            kill "$CHROME_PID" 2>/dev/null || true
+            wait "$CHROME_PID" 2>/dev/null || true
+            rm -rf "$PROFILE_DIR" "$CHROME_STDOUT" "$CHROME_STDERR" 2>/dev/null || true
+          }
+          trap cleanup_chrome EXIT
 
           READY=0
           for _ in $(seq 1 60); do
@@ -85,6 +90,8 @@ jobs:
             exit 1
           fi
           echo "Chrome CDP preflight: PASS"
+          cleanup_chrome
+          trap - EXIT
 
       - name: Typecheck legacy UI baseline
         continue-on-error: true
