@@ -20,21 +20,38 @@ export function createNewCard() {
   };
 }
 
+export function isDueOnlyReviewScheduling(search = globalThis?.location?.search || '') {
+  if (!search) return false;
+  try {
+    const params = new URLSearchParams(search);
+    return params.get('review') === '1' && params.get('daily') !== '1';
+  } catch {
+    return false;
+  }
+}
+
+export function getSchedulingGrade(grade, search = globalThis?.location?.search || '') {
+  const normalized = Math.max(1, Math.min(4, Math.round(Number(grade) || 1)));
+  if (isDueOnlyReviewScheduling(search) && normalized < 3) return 1;
+  return normalized;
+}
+
 // Grade: 1=Again, 2=Hard, 3=Good, 4=Easy
 export function reviewCard(card, grade) {
+  const schedulingGrade = getSchedulingGrade(grade);
   const now = new Date();
   const w = DEFAULT_PARAMS.w;
 
   let newStability, newDifficulty, newInterval;
 
   if (card.repetitions === 0) {
-    newStability = w[grade - 1];
-    newDifficulty = w[4] - (grade - 3) * w[5];
+    newStability = w[schedulingGrade - 1];
+    newDifficulty = w[4] - (schedulingGrade - 3) * w[5];
     newDifficulty = Math.max(1, Math.min(10, newDifficulty));
 
-    if (grade === 1) newInterval = 0;
-    else if (grade === 2) newInterval = 1;
-    else if (grade === 3) newInterval = 3;
+    if (schedulingGrade === 1) newInterval = 0;
+    else if (schedulingGrade === 2) newInterval = 1;
+    else if (schedulingGrade === 3) newInterval = 3;
     else newInterval = 5;
   } else {
     const nextReviewAt = Date.parse(card.nextReview || '');
@@ -44,15 +61,15 @@ export function reviewCard(card, grade) {
     );
     const retrievability = Math.pow(1 + elapsedDays / (9 * card.stability), -1);
 
-    newDifficulty = card.difficulty - w[6] * (grade - 3);
+    newDifficulty = card.difficulty - w[6] * (schedulingGrade - 3);
     newDifficulty = Math.max(1, Math.min(10, newDifficulty));
 
-    if (grade === 1) {
+    if (schedulingGrade === 1) {
       newStability = w[11] * Math.pow(card.stability, -w[12]) * (Math.pow(card.difficulty + 1, w[13]) - 1) * Math.exp(w[14] * (1 - retrievability));
       newStability = Math.max(0.1, newStability);
       newInterval = 0;
     } else {
-      const multiplier = grade === 2 ? w[15] : grade === 3 ? 1 : w[16];
+      const multiplier = schedulingGrade === 2 ? w[15] : schedulingGrade === 3 ? 1 : w[16];
       newStability = card.stability * (1 + Math.exp(w[8]) * (11 - newDifficulty) * Math.pow(card.stability, -w[9]) * (Math.exp((1 - retrievability) * w[10]) - 1) * multiplier);
       newStability = Math.max(0.1, newStability);
       newInterval = Math.round(9 * newStability * (1 / DEFAULT_PARAMS.requestRetention - 1));
@@ -68,7 +85,7 @@ export function reviewCard(card, grade) {
     interval: newInterval,
     repetitions: card.repetitions + 1,
     nextReview: nextReview.toISOString(),
-    lastGrade: grade,
+    lastGrade: schedulingGrade,
   };
 }
 

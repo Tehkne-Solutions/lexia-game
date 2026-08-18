@@ -151,6 +151,9 @@ jobs:
       - name: Due-only review session contract
         run: node scripts/check-due-only-review-session.mjs
 
+      - name: Review retry integrity contract
+        run: node scripts/check-review-retry-integrity.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -235,11 +238,11 @@ jobs:
       - name: Due-only review browser QA
         run: node scripts/check-due-only-review-browser.mjs
 
-      - name: Upload M23 visual evidence
+      - name: Upload M24 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m23-browser-layout
+          name: lexia-m24-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png
