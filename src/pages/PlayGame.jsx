@@ -23,6 +23,7 @@ import { createNewCard, reviewCard, calculateMastery, pickNextLetter } from '@/l
 import { getInitialLearningLetter } from '@/learning/engine';
 import { getJourneyState, JOURNEY_STAGES } from '@/game/journeyEngine';
 import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
+import { loadLearnerReviewContinuation, navigateLearnerReviewContinuation } from '@/game/learnerReviewRuntime';
 import { buildStats, getEarnedAchievements } from '@/lib/achievements';
 import {
   getChallengeStarMultiplier,
@@ -316,7 +317,21 @@ Look carefully at the image. Return JSON:
     setStarMultiplier(1);
   }, [currentLetter]);
 
-  const goToNextLetter = useCallback(() => {
+  const continueReviewSession = useCallback(async () => {
+    setMascotExpression('thinking');
+    setMascotMessage('Atualizando suas revisões...');
+    try {
+      const { allProgress: freshProgress, continuation } = await loadLearnerReviewContinuation(lexiaPlatform.progress);
+      queryClient.setQueryData(['childProgress'], freshProgress);
+      navigateLearnerReviewContinuation(continuation);
+    } catch (error) {
+      console.error('Learner review continuation failed:', error);
+      setMascotExpression('encouraging');
+      setMascotMessage('Não consegui atualizar a revisão. Tente novamente.');
+    }
+  }, [queryClient]);
+
+  const goToNextLetter = useCallback(async () => {
     playClickSound();
     setShowCelebration(false);
     activeEncounterRef.current = null;
@@ -335,9 +350,14 @@ Look carefully at the image. Return JSON:
       }
     }
 
+    if (isReviewMode && !isDailyMode) {
+      await continueReviewSession();
+      return;
+    }
+
     const nextLetter = pickNextLetter(allProgress, currentLetter, ALPHABET);
     setCurrentLetter(nextLetter);
-  }, [currentLetter, allProgress]);
+  }, [currentLetter, allProgress, continueReviewSession]);
 
   const retryLetter = useCallback(() => {
     playClickSound();
@@ -403,17 +423,19 @@ Look carefully at the image. Return JSON:
         </div>
 
         <div className="flex gap-1">
-          {dailyChallenge?.type === 'letters' && !dailyChallenge.completed && (
+          {!isReviewMode && dailyChallenge?.type === 'letters' && !dailyChallenge.completed && (
             <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8 relative"
               onClick={() => { playClickSound(); setShowDailyChallenge(true); }}>
               <Zap className="w-4 h-4 text-amber-500" />
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-500 rounded-full" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8"
-            onClick={() => { playClickSound(); setShowSelector(true); }}>
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
+          {!isReviewMode && (
+            <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8"
+              onClick={() => { playClickSound(); setShowSelector(true); }}>
+              <Grid3X3 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
 

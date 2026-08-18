@@ -112,7 +112,10 @@ assert.equal(
   2,
   'sentence practice must gate both correct and incorrect persistence paths',
 );
-assert.ok(sentencesSource.includes("to={isPracticeMode ? '/practice' : '/world'}"), 'sentence practice must return to Practice Hub');
+assert.ok(
+  sentencesSource.includes("to={isPracticeMode ? '/practice' : isReviewMode ? '/' : '/world'}"),
+  'sentence practice must keep first-precedence return to Practice Hub while Review returns home and Campaign returns to World',
+);
 assert.ok(sentencesSource.includes("isPracticeMode ? 'Frase completa! Treino livre.'"), 'practice success must not advertise persistent star rewards');
 
 const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');

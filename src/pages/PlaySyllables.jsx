@@ -13,6 +13,7 @@ import OnScreenKeyboard from '@/components/game/OnScreenKeyboard';
 import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '@/lib/syllablesData';
 import { JOURNEY_STAGES } from '@/game/journeyEngine';
 import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
+import { loadLearnerReviewContinuation, navigateLearnerReviewContinuation } from '@/game/learnerReviewRuntime';
 import { pickNextJourneyItemIndex, reviewJourneyProgress } from '@/learning/journeyReviewEngine';
 import {
   getChallengeStarMultiplier,
@@ -244,7 +245,21 @@ export default function PlaySyllables() {
     }
   }, [typed, target, streak, saveMutation]);
 
-  const nextItem = useCallback(() => {
+  const continueReviewSession = useCallback(async () => {
+    setMascotExpression('thinking');
+    setMascotMessage('Atualizando suas revisões...');
+    try {
+      const { allProgress: freshProgress, continuation } = await loadLearnerReviewContinuation(lexiaPlatform.progress);
+      queryClient.setQueryData(['childProgress'], freshProgress);
+      navigateLearnerReviewContinuation(continuation);
+    } catch (error) {
+      console.error('Learner review continuation failed:', error);
+      setMascotExpression('encouraging');
+      setMascotMessage('Não consegui atualizar a revisão. Tente novamente.');
+    }
+  }, [queryClient]);
+
+  const nextItem = useCallback(async () => {
     playClickSound();
     setShowCelebration(false);
 
@@ -262,6 +277,11 @@ export default function PlaySyllables() {
       }
     }
 
+    if (isReviewMode && !isDailyMode) {
+      await continueReviewSession();
+      return;
+    }
+
     const next = pickNextJourneyItemIndex({
       items: ITEMS,
       allProgress,
@@ -270,7 +290,7 @@ export default function PlaySyllables() {
       currentIndex: index,
     });
     setIndex(next);
-  }, [index, allProgress]);
+  }, [index, allProgress, continueReviewSession]);
 
   const handleContinueAfterQuest = useCallback(() => {
     setShowQuestComplete(false);
@@ -291,7 +311,7 @@ export default function PlaySyllables() {
       />
 
       <div className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 flex-shrink-0">
-        <Link to="/world">
+        <Link to={isReviewMode ? '/' : '/world'}>
           <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
             <Home className="w-4 h-4" />
           </Button>
@@ -414,7 +434,7 @@ export default function PlaySyllables() {
                   <p className="font-body text-sm text-green-600">✅ Correto! +{lastStarMultiplier} ⭐</p>
                 </div>
                 <Button onClick={nextItem} disabled={saveMutation.isPending} className="rounded-2xl gap-2 font-display">
-                  Próximo <ChevronRight className="w-4 h-4" />
+                  {isReviewMode ? 'Próxima revisão' : 'Próximo'} <ChevronRight className="w-4 h-4" />
                 </Button>
               </motion.div>
             )}
@@ -431,8 +451,8 @@ export default function PlaySyllables() {
                     className="rounded-2xl gap-1">
                     Tentar Novamente
                   </Button>
-                  <Button onClick={nextItem} className="rounded-2xl gap-2 font-display">
-                    Próximo <ChevronRight className="w-4 h-4" />
+                  <Button onClick={nextItem} disabled={saveMutation.isPending} className="rounded-2xl gap-2 font-display">
+                    {isReviewMode ? 'Próxima revisão' : 'Próximo'} <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               </motion.div>
