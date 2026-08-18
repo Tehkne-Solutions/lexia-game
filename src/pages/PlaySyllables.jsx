@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Home, Volume2, ChevronRight, Delete, CheckCircle, Sparkles } from 'lucide-react';
+import { Home, Volume2, ChevronRight, CheckCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import CelebrationOverlay from '@/components/game/CelebrationOverlay';
 import { BASIC_SYLLABLES, BASIC_WORDS } from '@/lib/syllablesData';
-import { speak, playCorrectSound, playWrongSound, playClickSound, playStarSound } from '@/lib/sounds';
+import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 import { getTypingFeedback, getTypingMascotMessage } from '@/lib/typingFeedback';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 
@@ -23,7 +23,7 @@ const ENTITY_PREFIX = MODE === 'words' ? 'WORD_' : 'SYL_';
 export default function PlaySyllables() {
   const [index, setIndex] = useState(() => Math.floor(Math.random() * ITEMS.length));
   const [typed, setTyped] = useState('');
-  const [phase, setPhase] = useState('type'); // type | correct | wrong
+  const [phase, setPhase] = useState('type');
   const [mascotExpression, setMascotExpression] = useState('happy');
   const [mascotMessage, setMascotMessage] = useState('');
   const [showCelebration, setShowCelebration] = useState(false);
@@ -72,7 +72,7 @@ export default function PlaySyllables() {
       }
       return { isCorrect };
     },
-    onSuccess: ({ isCorrect }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['childProgress'] });
     },
   });
@@ -104,7 +104,6 @@ export default function PlaySyllables() {
       const specificHint = getTypingFeedback(typed, target, true);
       const successSpeech = getSpokenFeedback(true, specificHint, { motivationalChance: 0.6 });
       setTimeout(() => speak(successSpeech), 400);
-      // Streak milestone phrase
       if (newStreak > 0 && newStreak % 5 === 0) {
         setTimeout(() => speak(getStreakPhrase()), 1600);
       }
@@ -124,13 +123,11 @@ export default function PlaySyllables() {
   const nextItem = useCallback(() => {
     playClickSound();
     setShowCelebration(false);
-    // Pick next random different item
     let next;
     do { next = Math.floor(Math.random() * ITEMS.length); } while (next === index && ITEMS.length > 1);
     setIndex(next);
   }, [index]);
 
-  // Keyboard: Enter to submit, Backspace etc handled by input
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && phase === 'type' && typed.length > 0) {
       checkAnswer();
@@ -141,7 +138,6 @@ export default function PlaySyllables() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Top bar */}
       <div className="flex items-center justify-between px-3 py-2 pt-[env(safe-area-inset-top)] border-b border-border bg-card/50 flex-shrink-0">
         <Link to="/world">
           <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
@@ -170,11 +166,8 @@ export default function PlaySyllables() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 py-4 max-w-md mx-auto w-full">
-
-        {/* Mascot */}
         <MascotAvatar expression={mascotExpression} size="sm" message={mascotMessage} />
 
-        {/* Item card */}
         <motion.div
           key={index}
           initial={{ opacity: 0, y: 20 }}
@@ -199,12 +192,10 @@ export default function PlaySyllables() {
             Ouvir
           </Button>
 
-          {/* Typing area */}
           <AnimatePresence mode="wait">
             {phase === 'type' && (
               <motion.div key="type" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="w-full flex flex-col items-center gap-3">
-                {/* Visual letter tiles */}
                 <div className="flex gap-2 justify-center">
                   {target.split('').map((_, i) => (
                     <div key={i}
@@ -216,7 +207,6 @@ export default function PlaySyllables() {
                   ))}
                 </div>
 
-                {/* Hidden real input for keyboard */}
                 <input
                   ref={inputRef}
                   type="text"
@@ -229,7 +219,6 @@ export default function PlaySyllables() {
                   autoCapitalize="characters"
                 />
 
-                {/* On-screen keyboard for touch */}
                 <OnScreenKeyboard
                   onKey={(k) => setTyped(p => (p + k).slice(0, target.length))}
                   onDelete={() => setTyped(p => p.slice(0, -1))}
