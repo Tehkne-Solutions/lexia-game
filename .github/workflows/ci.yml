@@ -145,6 +145,9 @@ jobs:
       - name: Exact review handoff contract
         run: node scripts/check-exact-review-handoff.mjs
 
+      - name: Advanced exact review handoff contract
+        run: node scripts/check-exact-review-handoff-advanced.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -223,11 +226,14 @@ jobs:
       - name: Exact review browser QA
         run: node scripts/check-exact-review-browser.mjs
 
-      - name: Upload M21 visual evidence
+      - name: Advanced exact review browser QA
+        run: node scripts/check-exact-review-advanced-browser.mjs
+
+      - name: Upload M22 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m21-browser-layout
+          name: lexia-m22-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png
@@ -242,5 +248,7 @@ jobs:
             artifacts/m20/*.json
             artifacts/m21/*.png
             artifacts/m21/*.json
+            artifacts/m22/*.png
+            artifacts/m22/*.json
           if-no-files-found: warn
           retention-days: 14
