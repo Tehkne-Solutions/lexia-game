@@ -32,8 +32,20 @@ const syllables = Array.from({ length: 20 }, (_, index) => ({
   correct_attempts: 3,
   stars_earned: 1,
 }));
+const complexSyllables = Array.from({ length: 20 }, (_, index) => ({
+  letter: `SYLC_${index}`,
+  total_attempts: 3,
+  correct_attempts: 3,
+  stars_earned: 1,
+}));
 const words = Array.from({ length: 20 }, (_, index) => ({
   letter: `WORD_${index}`,
+  total_attempts: 3,
+  correct_attempts: 3,
+  stars_earned: 1,
+}));
+const sentences = Array.from({ length: 20 }, (_, index) => ({
+  letter: `SENT_${String(index + 1).padStart(2, '0')}`,
   total_attempts: 3,
   correct_attempts: 3,
   stars_earned: 1,
@@ -45,20 +57,33 @@ assert.equal(afterLetters.worldId, 'syllables_basic');
 assert.equal(afterLetters.path, '/play-syllables');
 
 const afterSyllables = getJourneyState([...masteredLetters, ...syllables]);
-assert.equal(afterSyllables.stage, JOURNEY_STAGES.WORDS);
-assert.equal(afterSyllables.worldId, 'words_basic');
-assert.equal(afterSyllables.path, '/play-syllables?mode=words');
+assert.equal(afterSyllables.stage, JOURNEY_STAGES.COMPLEX_SYLLABLES);
+assert.equal(afterSyllables.worldId, 'syllables_complex');
+assert.equal(afterSyllables.path, '/play-syllables?mode=complex');
 
-const complete = getJourneyState([...masteredLetters, ...syllables, ...words]);
+const afterComplex = getJourneyState([...masteredLetters, ...syllables, ...complexSyllables]);
+assert.equal(afterComplex.stage, JOURNEY_STAGES.WORDS);
+assert.equal(afterComplex.worldId, 'words_basic');
+assert.equal(afterComplex.path, '/play-syllables?mode=words');
+
+const afterWords = getJourneyState([...masteredLetters, ...syllables, ...complexSyllables, ...words]);
+assert.equal(afterWords.stage, JOURNEY_STAGES.SENTENCES);
+assert.equal(afterWords.worldId, 'sentences');
+assert.equal(afterWords.path, '/play-sentences');
+
+const completeRecords = [...masteredLetters, ...syllables, ...complexSyllables, ...words, ...sentences];
+const complete = getJourneyState(completeRecords);
 assert.equal(complete.stage, JOURNEY_STAGES.MASTERY);
 assert.equal(complete.completed, true);
 assert.equal(complete.path, '/play?mode=practice');
 
-const summary = summarizeJourneyProgress([...masteredLetters, ...syllables, ...words]);
+const summary = summarizeJourneyProgress(completeRecords);
 assert.equal(summary.lettersMastered, 26);
 assert.equal(summary.syllablesMastered, 20);
+assert.equal(summary.complexSyllablesMastered, 20);
 assert.equal(summary.wordsMastered, 20);
-assert.equal(summary.totalStars, 92);
+assert.equal(summary.sentencesMastered, 20);
+assert.equal(summary.totalStars, 132);
 
 const welcome = await readFile(new URL('../src/pages/Welcome.jsx', import.meta.url), 'utf8');
 assert.ok(welcome.includes('getJourneyState'));
@@ -81,4 +106,4 @@ assert.ok(
   'practice fallback must not persist progress'
 );
 
-console.log('Lexia Journey Engine M07 contract: PASS (engine + Welcome + World Map + PlayGame handoff aligned)');
+console.log('Lexia Journey Engine M08 contract: PASS (letters → simple → complex → words → sentences → mastery)');

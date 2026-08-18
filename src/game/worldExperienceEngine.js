@@ -33,7 +33,7 @@ export const WORLD_EXPERIENCES = Object.freeze({
       name: 'Bússola dos Encontros',
       description: 'Marca caminhos entre combinações sonoras complexas.',
     }),
-    isRelicUnlocked: (stats) => Number(stats?.syllablesComplexDone || 0) >= 20,
+    isRelicUnlocked: (stats) => Number(stats?.syllablesComplexMastered || 0) >= 20,
   }),
   words_basic: Object.freeze({
     chapter: 'Capítulo IV',
@@ -57,7 +57,7 @@ export const WORLD_EXPERIENCES = Object.freeze({
       name: 'Semente das Histórias',
       description: 'Representa a passagem das palavras para ideias completas.',
     }),
-    isRelicUnlocked: (stats) => Number(stats?.sentencesDone || 0) >= 20,
+    isRelicUnlocked: (stats) => Number(stats?.sentencesMastered || 0) >= 20,
   }),
   mastery: Object.freeze({
     chapter: 'Epílogo',
@@ -67,11 +67,13 @@ export const WORLD_EXPERIENCES = Object.freeze({
     relic: Object.freeze({
       id: 'relic-mastery-lantern',
       name: 'Lanterna da Maestria',
-      description: 'Brilha quando letras, sílabas e primeiras palavras foram dominadas.',
+      description: 'Brilha quando todos os cinco capítulos do currículo principal foram dominados.',
     }),
     isRelicUnlocked: (stats) => Number(stats?.lettersMastered || 0) >= 26
       && Number(stats?.syllablesBasicMastered || 0) >= 20
-      && Number(stats?.wordsMastered || 0) >= 20,
+      && Number(stats?.syllablesComplexMastered || 0) >= 20
+      && Number(stats?.wordsMastered || 0) >= 20
+      && Number(stats?.sentencesMastered || 0) >= 20,
   }),
 });
 

@@ -1,20 +1,18 @@
 import { calculateMastery } from '@/lib/fsrs';
 
-// Check if a progress entry is "mastered" — works for letters, syllables, and words
+// Check if a progress entry is mastered across letters and non-FSRS curriculum entities.
 export function isProgressMastered(progress) {
   if (!progress || progress.total_attempts === 0) return false;
   const key = progress.letter || '';
-  // Syllables/words: simpler mastery — 3+ correct attempts with decent accuracy
-  // (they don't use FSRS stability, so calculateMastery caps at 70 for them)
-  if (key.startsWith('SYL_') || key.startsWith('WORD_')) {
+  // Syllables, words and sentences use a simple repeated-success mastery rule.
+  if (key.startsWith('SYL_') || key.startsWith('SYLC_') || key.startsWith('WORD_') || key.startsWith('SENT_')) {
     return progress.correct_attempts >= 3 &&
            (progress.correct_attempts / progress.total_attempts) >= 0.6;
   }
-  // Letters: FSRS-based mastery score
+  // Letters remain FSRS-based.
   return calculateMastery(progress) >= 80;
 }
 
-// Achievement/Badge definitions
 export const ACHIEVEMENTS = [
   {
     id: 'first_letter',
@@ -138,26 +136,48 @@ export function getNewlyEarned(previousStats, currentStats) {
 }
 
 export function buildStats(allProgress) {
-  // Only count actual alphabet letters (not syllable/word progress keys like "SYL_BA")
-  const letterProgress = allProgress.filter(p => p.letter && p.letter.length === 1);
+  const records = Array.isArray(allProgress) ? allProgress : [];
+  const letterProgress = records.filter(p => p.letter && p.letter.length === 1);
 
-  const totalStars = allProgress.reduce((s, p) => s + (p.stars_earned || 0), 0);
+  const totalStars = records.reduce((s, p) => s + (p.stars_earned || 0), 0);
   const totalAttempts = letterProgress.reduce((s, p) => s + (p.total_attempts || 0), 0);
   const totalCorrect = letterProgress.reduce((s, p) => s + (p.correct_attempts || 0), 0);
   const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
   const maxStreak = letterProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
 
-  // Mastery — uses isProgressMastered for consistency across letters/syllables/words
   const lettersMastered = letterProgress.filter(p => isProgressMastered(p)).length;
-  const masteredCount = lettersMastered; // alias for achievement checks
-
+  const masteredCount = lettersMastered;
   const lettersStarted = new Set(letterProgress.filter(p => p.total_attempts > 0).map(p => p.letter)).size;
 
-  // Syllable/Word progress (keys like SYL_BA, WORD_BOLA)
-  const syllablesBasicDone = allProgress.filter(p => p.letter?.startsWith('SYL_') && p.correct_attempts > 0).length;
-  const wordsDone = allProgress.filter(p => p.letter?.startsWith('WORD_') && p.correct_attempts > 0).length;
-  const syllablesBasicMastered = allProgress.filter(p => p.letter?.startsWith('SYL_') && isProgressMastered(p)).length;
-  const wordsMastered = allProgress.filter(p => p.letter?.startsWith('WORD_') && isProgressMastered(p)).length;
+  const basicSyllables = records.filter(p => p.letter?.startsWith('SYL_'));
+  const complexSyllables = records.filter(p => p.letter?.startsWith('SYLC_'));
+  const words = records.filter(p => p.letter?.startsWith('WORD_'));
+  const sentences = records.filter(p => p.letter?.startsWith('SENT_'));
 
-  return { totalStars, totalAttempts, accuracy, maxStreak, masteredCount, lettersMastered, lettersStarted, syllablesBasicDone, syllablesBasicMastered, wordsDone, wordsMastered };
+  const syllablesBasicDone = basicSyllables.filter(p => p.correct_attempts > 0).length;
+  const syllablesBasicMastered = basicSyllables.filter(isProgressMastered).length;
+  const syllablesComplexDone = complexSyllables.filter(p => p.correct_attempts > 0).length;
+  const syllablesComplexMastered = complexSyllables.filter(isProgressMastered).length;
+  const wordsDone = words.filter(p => p.correct_attempts > 0).length;
+  const wordsMastered = words.filter(isProgressMastered).length;
+  const sentencesDone = sentences.filter(p => p.correct_attempts > 0).length;
+  const sentencesMastered = sentences.filter(isProgressMastered).length;
+
+  return {
+    totalStars,
+    totalAttempts,
+    accuracy,
+    maxStreak,
+    masteredCount,
+    lettersMastered,
+    lettersStarted,
+    syllablesBasicDone,
+    syllablesBasicMastered,
+    syllablesComplexDone,
+    syllablesComplexMastered,
+    wordsDone,
+    wordsMastered,
+    sentencesDone,
+    sentencesMastered,
+  };
 }

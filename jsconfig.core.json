@@ -11,6 +11,9 @@
     "src/platform/contracts.js",
     "src/learning/**/*.js",
     "src/game/**/*.js",
+    "src/lib/syllablesData.js",
+    "src/lib/sentencesData.js",
+    "src/lib/worldMap.js",
     "src/vite-env.d.ts"
   ],
   "exclude": ["node_modules", "dist"]

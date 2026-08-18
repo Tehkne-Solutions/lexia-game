@@ -1,4 +1,4 @@
-// Basic syllables data for typing mode
+// Syllable and first-word catalogs for the curriculum worlds.
 export const BASIC_SYLLABLES = [
   { syllable: 'BA', word: 'Bala', emoji: '🍬' },
   { syllable: 'BE', word: 'Bebê', emoji: '👶' },
@@ -55,6 +55,31 @@ export const BASIC_SYLLABLES = [
   { syllable: 'VO', word: 'Voto', emoji: '🗳️' },
 ];
 
+// Advanced consonant clusters and digraphs. Exactly 20 canonical mastery targets
+// match the World Map chapter total and use their own persistence prefix (SYLC_).
+export const COMPLEX_SYLLABLES = [
+  { syllable: 'BRA', word: 'Braço', emoji: '💪' },
+  { syllable: 'BRE', word: 'Brejo', emoji: '🌿' },
+  { syllable: 'BRI', word: 'Brilho', emoji: '✨' },
+  { syllable: 'BRO', word: 'Broto', emoji: '🌱' },
+  { syllable: 'CRA', word: 'Cravo', emoji: '🌺' },
+  { syllable: 'CRE', word: 'Creme', emoji: '🧴' },
+  { syllable: 'CRI', word: 'Criança', emoji: '🧒' },
+  { syllable: 'CRO', word: 'Crosta', emoji: '🍞' },
+  { syllable: 'DRA', word: 'Dragão', emoji: '🐉' },
+  { syllable: 'FRA', word: 'Fraco', emoji: '🪶' },
+  { syllable: 'FRE', word: 'Freio', emoji: '🚲' },
+  { syllable: 'FRI', word: 'Frio', emoji: '❄️' },
+  { syllable: 'GRA', word: 'Grama', emoji: '🌱' },
+  { syllable: 'GRE', word: 'Grelha', emoji: '♨️' },
+  { syllable: 'GRI', word: 'Grilo', emoji: '🦗' },
+  { syllable: 'PRA', word: 'Prato', emoji: '🍽️' },
+  { syllable: 'PRE', word: 'Prego', emoji: '🔩' },
+  { syllable: 'TRA', word: 'Trator', emoji: '🚜' },
+  { syllable: 'TRE', word: 'Trevo', emoji: '☘️' },
+  { syllable: 'TRI', word: 'Trilho', emoji: '🛤️' },
+];
+
 export const BASIC_WORDS = [
   { word: 'BOLA', emoji: '⚽', hint: 'usada para jogar' },
   { word: 'CASA', emoji: '🏠', hint: 'onde moramos' },
@@ -70,10 +95,10 @@ export const BASIC_WORDS = [
   { word: 'DEDO', emoji: '👆', hint: 'parte da mão' },
   { word: 'FOGO', emoji: '🔥', hint: 'quente e laranja' },
   { word: 'MEDO', emoji: '😱', hint: 'quando temos susto' },
-  { word: 'NIDO', emoji: '🐣', hint: 'onde as aves vivem' },
+  { word: 'NINHO', emoji: '🐣', hint: 'onde as aves vivem' },
   { word: 'RATO', emoji: '🐭', hint: 'pequeno e bigodudo' },
   { word: 'SINO', emoji: '🔔', hint: 'faz bim-bom' },
   { word: 'TELA', emoji: '🖥️', hint: 'onde você assiste' },
-  { word: 'UVAS', emoji: '🍇', hint: 'fruta roxa' },
+  { word: 'UVAS', emoji: '🍇', hint: 'fruta que cresce em cachos' },
   { word: 'VACA', emoji: '🐄', hint: 'animal do leite' },
 ];

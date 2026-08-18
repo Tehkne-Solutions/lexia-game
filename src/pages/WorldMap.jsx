@@ -18,6 +18,16 @@ import WorldUnlockCelebration from '@/components/game/WorldUnlockCelebration';
 import WorldNarrativePanel from '@/components/game/WorldNarrativePanel';
 import WorldRelicBadge from '@/components/game/WorldRelicBadge';
 
+function getUnlockHint(world) {
+  if (world.unlockType === 'stars_or_mastery') {
+    return `🔒 ${world.unlockRequirement}⭐ ou ${Math.round(world.unlockMasteryPct * 100)}% das letras`;
+  }
+  if (world.unlockType === 'previous_or_stars') {
+    return `🔒 Conclua o mundo anterior ou alcance ${world.unlockRequirement}⭐`;
+  }
+  return '🔒 Continue sua jornada para desbloquear';
+}
+
 export default function WorldMap() {
   const { data: allProgress = [] } = useQuery({
     queryKey: ['childProgress'],
@@ -147,7 +157,7 @@ export default function WorldMap() {
                         {unlocked && (
                           <div className="mt-2">
                             <div className="flex justify-between items-center mb-1">
-                              <span className="text-xs opacity-80">{completed}/{total} completos</span>
+                              <span className="text-xs opacity-80">{completed}/{total} dominados</span>
                               <span className="text-xs font-bold">{pct}%</span>
                             </div>
                             <div className="w-full h-2 bg-white/30 rounded-full overflow-hidden">
@@ -164,11 +174,7 @@ export default function WorldMap() {
                         </div>
 
                         {!unlocked && (
-                          <p className="text-xs opacity-80 mt-1">
-                            {world.unlockType === 'stars_or_mastery'
-                              ? `🔒 ${world.unlockRequirement}⭐ ou ${Math.round(world.unlockMasteryPct * 100)}% das letras`
-                              : `🔒 Domine ${world.unlockRequirement} letras`}
-                          </p>
+                          <p className="text-xs opacity-80 mt-1">{getUnlockHint(world)}</p>
                         )}
                       </div>
 
@@ -179,19 +185,12 @@ export default function WorldMap() {
                             onClick={playClickSound}
                             className="bg-white text-primary hover:bg-white/90 rounded-xl font-body font-bold gap-1 shadow-md"
                           >
-                            {world.id === 'alphabet' ? <Play className="w-4 h-4" /> : <Keyboard className="w-4 h-4" />}
+                            {world.id === 'alphabet' || world.id === 'sentences'
+                              ? <Play className="w-4 h-4" />
+                              : <Keyboard className="w-4 h-4" />}
                             {isRecommended ? 'Continuar' : 'Jogar'}
                           </Button>
                         </Link>
-                      )}
-                      {unlocked && !world.playPath && (
-                        <Button
-                          size="sm"
-                          disabled
-                          className="bg-white/20 text-white rounded-xl font-body font-bold text-xs"
-                        >
-                          Em breve
-                        </Button>
                       )}
                     </div>
 
@@ -217,8 +216,9 @@ export default function WorldMap() {
             <p className="font-body text-sm text-muted-foreground">
               🦉 Continue aprendendo para desbloquear novos mundos e relíquias!
             </p>
-            <p className="font-body text-xs text-muted-foreground mt-1">
-              Letras: <strong>{stats.lettersMastered || 0}/26</strong> · Sílabas: <strong>{stats.syllablesBasicMastered || 0}/20</strong> · Palavras: <strong>{stats.wordsMastered || 0}/20</strong> · Relíquias: <strong>{relicProgress.unlocked}/{relicProgress.total}</strong>
+            <p className="font-body text-xs text-muted-foreground mt-1 leading-relaxed">
+              Letras <strong>{stats.lettersMastered || 0}/26</strong> · Simples <strong>{stats.syllablesBasicMastered || 0}/20</strong> · Complexas <strong>{stats.syllablesComplexMastered || 0}/20</strong><br />
+              Palavras <strong>{stats.wordsMastered || 0}/20</strong> · Frases <strong>{stats.sentencesMastered || 0}/20</strong> · Relíquias <strong>{relicProgress.unlocked}/{relicProgress.total}</strong>
             </p>
           </div>
         </div>

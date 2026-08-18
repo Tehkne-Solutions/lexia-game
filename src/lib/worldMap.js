@@ -1,4 +1,4 @@
-// Learning world map progression
+// Learning world map progression.
 export const WORLDS = [
   {
     id: 'alphabet',
@@ -20,7 +20,7 @@ export const WORLDS = [
     color: '#0891b2',
     bgColor: 'from-cyan-400 to-blue-600',
     description: 'BA, CA, DA… as sílabas básicas',
-    unlockRequirement: 100,   // 100 stars OR 70% mastery
+    unlockRequirement: 100,
     unlockMasteryPct: 0.70,
     unlockType: 'stars_or_mastery',
     totalLessons: 20,
@@ -35,11 +35,10 @@ export const WORLDS = [
     bgColor: 'from-emerald-400 to-green-600',
     description: 'BRA, CRA, TRA… combinações avançadas',
     unlockRequirement: 200,
-    unlockMasteryPct: 1.0,
-    unlockType: 'stars_or_mastery',
+    unlockType: 'previous_or_stars',
     totalLessons: 20,
-    getLessonsCompleted: (stats) => Math.min(stats.syllablesComplexDone || 0, 20),
-    playPath: null,
+    getLessonsCompleted: (stats) => Math.min(stats.syllablesComplexMastered || 0, 20),
+    playPath: '/play-syllables?mode=complex',
   },
   {
     id: 'words_basic',
@@ -49,8 +48,7 @@ export const WORLDS = [
     bgColor: 'from-amber-400 to-orange-600',
     description: 'BOLA, CASA, GATO… palavras do dia a dia',
     unlockRequirement: 150,
-    unlockMasteryPct: 1.0,
-    unlockType: 'stars_or_mastery',
+    unlockType: 'previous_or_stars',
     totalLessons: 20,
     getLessonsCompleted: (stats) => Math.min(stats.wordsMastered || 0, 20),
     playPath: '/play-syllables?mode=words',
@@ -61,32 +59,36 @@ export const WORLDS = [
     emoji: '✨',
     color: '#db2777',
     bgColor: 'from-pink-400 to-rose-600',
-    description: 'Monte frases completas!',
+    description: 'Organize palavras e monte frases completas!',
     unlockRequirement: 300,
-    unlockMasteryPct: 1.0,
-    unlockType: 'stars_or_mastery',
+    unlockType: 'previous_or_stars',
     totalLessons: 20,
-    getLessonsCompleted: (stats) => Math.min(stats.sentencesDone || 0, 20),
-    playPath: null,
+    getLessonsCompleted: (stats) => Math.min(stats.sentencesMastered || 0, 20),
+    playPath: '/play-sentences',
   },
 ];
+
+function isPreviousWorldComplete(world, stats) {
+  const worldIndex = WORLDS.findIndex((candidate) => candidate.id === world.id);
+  if (worldIndex <= 0) return false;
+  const previousWorld = WORLDS[worldIndex - 1];
+  return previousWorld.getLessonsCompleted(stats) >= previousWorld.totalLessons;
+}
 
 export function isWorldUnlocked(world, stats) {
   if (world.unlockType === 'always') return true;
 
   if (world.unlockType === 'stars_or_mastery') {
-    // Stars condition
     if (stats.totalStars >= world.unlockRequirement) return true;
-    // Letter mastery condition (letters mastered contribute to unlocking)
     const masteryPct = (stats.lettersMastered || 0) / 26;
     if (masteryPct >= world.unlockMasteryPct) return true;
-    // Also unlock if the previous world is fully completed (syllable mastery counts!)
-    const worldIndex = WORLDS.findIndex(w => w.id === world.id);
-    if (worldIndex > 0) {
-      const prevWorld = WORLDS[worldIndex - 1];
-      const prevCompleted = prevWorld.getLessonsCompleted(stats);
-      if (prevCompleted >= prevWorld.totalLessons) return true;
-    }
+    return isPreviousWorldComplete(world, stats);
   }
+
+  if (world.unlockType === 'previous_or_stars') {
+    if (stats.totalStars >= world.unlockRequirement) return true;
+    return isPreviousWorldComplete(world, stats);
+  }
+
   return false;
 }

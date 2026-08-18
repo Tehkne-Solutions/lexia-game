@@ -12,6 +12,7 @@ import Welcome from './pages/Welcome';
 import Login from './pages/Login';
 import PlayGame from './pages/PlayGame';
 import PlaySyllables from './pages/PlaySyllables';
+import PlaySentences from './pages/PlaySentences';
 import ParentDashboard from './pages/ParentDashboard';
 import Profile from './pages/Profile';
 import WorldMap from './pages/WorldMap';
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<Welcome />} />
       <Route path="/play" element={<PlayGame />} />
       <Route path="/play-syllables" element={<PlaySyllables />} />
+      <Route path="/play-sentences" element={<PlaySentences />} />
       <Route path="/parent" element={<ParentDashboard />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/world" element={<WorldMap />} />
