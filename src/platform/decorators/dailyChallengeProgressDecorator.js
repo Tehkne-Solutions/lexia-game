@@ -2,7 +2,7 @@ import {
   getChallengeStarMultiplier,
   getSavedDailyChallenge,
   updateChallengeProgress,
-} from '@/lib/dailyChallenge';
+} from '../../lib/dailyChallenge.js';
 
 function prepareDailyChallengeWrite(data) {
   const entityKey = data?.letter;
