@@ -132,7 +132,8 @@ async function navigate(cdp, url, selector) {
     await sleep(100);
   }
   await waitForSelector(cdp, selector);
-  await sleep(250);
+  // Capture the stable visual state, not Framer Motion's initial opacity/position frames.
+  await sleep(1500);
 }
 
 async function capture(cdp, name) {
