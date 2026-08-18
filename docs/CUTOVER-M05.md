@@ -1,140 +1,142 @@
-# Lexia M05 — Supabase Cutover & Rollback Runbook
+# Lexia — Supabase Cutover & Rollback Runbook
 
 **Tehkné Solutions**
 
+> Historical note: this document originated in M05. Its old ownership/import procedure was superseded by **M06 Fresh Start**. No Base44 learner history and no previous Supabase learner history may be migrated into the current Lexia runtime.
+
 ## Purpose
 
-This runbook is the operational gate for moving Lexia from the Base44 provider to the independent Supabase provider. It is intentionally fail-closed: Base44 remains the default until every required cutover condition is proven.
+This runbook defines the operational gate for moving Lexia from the safe default provider to the independent Supabase provider. It is intentionally fail-closed: the existing provider remains the default until every live proof required by M09/M10 is green on the same release commit.
 
-## Current safe state
+## Canonical Fresh Start rule
 
-- Base44 is the default runtime provider.
-- The live Supabase project is healthy.
-- The canonical progress schema and RLS are deployed.
-- The private drawing bucket is deployed.
-- `lexia-upload`, `lexia-ai`, and `lexia-email` are deployed with JWT verification.
-- Supabase currently has no destination learner identity and no imported learner progress.
-- Base44 source audit has 70 progress records: 26 letters, 44 syllables, 0 persisted words.
-- Source ownership is split between 52 `anonymous` records and 18 registered-account records.
+The destination Supabase runtime starts new learner identities from zero.
 
-No ownership assumption is allowed during cutover.
+Forbidden during cutover:
 
-## Required public client configuration
+- importing Base44 progress;
+- attaching anonymous history to a new account;
+- importing previous Supabase learner history;
+- reconciling historical provider identities into a destination learner;
+- changing the Fresh Start rule merely to preserve old progress.
 
-The Vite application expects the following variables when Supabase is tested:
+The only destination data allowed before release validation is disposable smoke-test data that is cleaned up by the live proof harnesses.
+
+## Safe default
+
+`resolvePlatformProvider({})` must continue to resolve to the existing provider. Supabase is selected only through explicit release configuration.
+
+Required public Supabase build variables are:
 
 ```text
+VITE_LEXIA_PLATFORM_PROVIDER=supabase
 VITE_SUPABASE_URL=<live project URL>
 VITE_SUPABASE_PUBLISHABLE_KEY=<publishable client key>
 VITE_LEXIA_SUPABASE_AUTH_READY=true
 VITE_LEXIA_SUPABASE_EDGE_READY=true
 ```
 
-Function names are optional because the defaults already match the deployed functions:
+Only public URL/key and readiness flags belong in the Vite build. Service-role, AI upstream and e-mail upstream credentials must never enter `VITE_*` variables.
 
-```text
-VITE_LEXIA_SUPABASE_AI_FUNCTION=lexia-ai
-VITE_LEXIA_SUPABASE_EMAIL_FUNCTION=lexia-email
-VITE_LEXIA_SUPABASE_UPLOAD_FUNCTION=lexia-upload
-```
+## Live proof gates
 
-Do **not** set the production provider to Supabase yet.
+M09 provides three independent manual workflows under the protected GitHub Environment `lexia-live-smoke`.
 
-## Required server-side configuration
+### 1. Auth / REST / Storage
 
-Configure only in Supabase Edge Function secrets/server configuration:
+Run `Lexia Live Supabase Auth Smoke` with recovery enabled. It must prove:
 
-```text
-LEXIA_AI_UPSTREAM_URL=<Tehkné-controlled AI endpoint>
-LEXIA_AI_UPSTREAM_KEY=<optional server credential>
-LEXIA_EMAIL_UPSTREAM_URL=<Tehkné-controlled email endpoint>
-LEXIA_EMAIL_UPSTREAM_KEY=<optional server credential>
-```
+- real disposable GoTrue identities;
+- password sign-in;
+- authenticated `/user`;
+- Fresh Start zero progress;
+- REST CRUD;
+- real JWT/RLS cross-user isolation;
+- refresh continuity;
+- password recovery request;
+- logout refresh-token revocation;
+- private drawing upload;
+- user-scoped Storage path;
+- 300-second signed URL;
+- mandatory cleanup.
 
-Never place these secrets in `VITE_*` variables or the repository.
+### 2. Private services
 
-## Auth gate
+Run `Lexia Live Supabase Services Smoke` with scope `both`. It must prove:
 
-Before enabling Supabase for any cohort:
+- authenticated upload -> signed URL -> AI evaluation;
+- normalized AI response contract;
+- third-party e-mail relay rejection;
+- authenticated self-report e-mail through the configured real upstream;
+- mandatory Auth/Storage cleanup.
 
-1. Configure the Supabase Auth site URL for the intended Lexia origin.
-2. Allow the exact login / recovery redirect origins used by preview and production.
-3. Validate sign-up, e-mail confirmation where enabled, password sign-in, refresh and password recovery.
-4. Confirm cross-origin `returnTo` values remain rejected by the Lexia login implementation.
+### 3. Supabase browser runtime
 
-## Ownership and progress migration gate
+Run `Lexia Live Supabase Browser Cutover`. It builds the actual Vite application with the Supabase provider and proves in Chrome:
 
-The Base44 source contains two ownership buckets. The destination mapping must be explicitly recorded before any import.
+- public Welcome;
+- protected-route redirect to Login with same-origin `returnTo`;
+- real rendered password login;
+- Fresh Start guided mission;
+- persisted session;
+- reload persistence;
+- World Map, Profile, Parent Dashboard and Settings while authenticated;
+- real UI logout and local session removal;
+- screenshot evidence;
+- disposable Auth cleanup.
 
-For each destination learner:
+## Manual configuration gate
 
-1. Create or confirm the destination Supabase Auth identity.
-2. Explicitly select which Base44 ownership bucket(s) belong to that learner.
-3. Generate the provider-neutral progress snapshot.
-4. Reconcile duplicate keys using the existing conservative stronger-history rule.
-5. Import through the destination provider.
-6. Compare source and destination counts by key family:
-   - letters;
-   - `SYL_*`;
-   - `WORD_*`.
-7. Keep the source snapshot as rollback evidence; never write provider IDs into it.
+The exact Supabase Auth site URL and redirect allow-list remain a configuration-level proof. Before any deployed preview or production switch, record evidence that:
 
-Do not attach `anonymous` history to a registered learner by inference.
+- the intended Lexia production origin is configured;
+- the controlled preview origin is allowed when preview recovery/redirect behavior is tested;
+- recovery redirects return only to approved Lexia origins.
 
-## Browser E2E gate
+This confirmation cannot be inferred from SQL RLS or from a local Vite preview.
 
-The Supabase provider is not release-ready until a real authenticated browser session proves:
+## M10 release attestation
 
-1. login and session refresh;
-2. progress list/create/update/delete under RLS;
-3. guided letter progression and FSRS scheduling;
-4. syllable and word progress isolation from letter scheduling;
-5. private drawing upload and signed URL lifecycle;
-6. handwriting AI request/response normalization;
-7. parent report e-mail restricted to the authenticated user;
-8. logout and session removal;
-9. refresh/reload persistence;
-10. no regression in World Map, Profile, Story, Speed Challenge, Parent Dashboard or Settings.
+The M10 attestation consumes the workflow-run IDs for the three M09 live proofs. It must reject release evidence unless:
 
-## Cutover sequence
+- every run concluded `success`;
+- every run is `workflow_dispatch`;
+- every run executed from `main`;
+- every run used the same commit as the M10 attestation;
+- Auth evidence confirms recovery was enabled;
+- private-services evidence confirms scope `both`;
+- browser evidence artifact exists;
+- manual Auth redirect configuration evidence is supplied.
 
-Only after all gates above are green:
+A successful M10 attestation produces a release-evidence artifact. It **does not deploy** and does not silently change provider configuration.
 
-1. Set public Supabase URL/key in the target Vercel environment.
-2. Set `VITE_LEXIA_SUPABASE_AUTH_READY=true`.
-3. Set `VITE_LEXIA_SUPABASE_EDGE_READY=true`.
-4. Deploy and validate while **still using Base44** as provider.
-5. Set `VITE_LEXIA_PLATFORM_PROVIDER=supabase` for a controlled preview/cohort.
-6. Run the full browser E2E again on that deployment.
-7. Reconcile live destination counts and logs.
-8. Expand the cohort only after stability is proven.
+## Controlled provider switch
+
+Only after the M10 attestation is green:
+
+1. configure the target preview/deployment with the public Supabase variables;
+2. keep all service-role/upstream credentials server-side;
+3. deploy the exact attested commit;
+4. confirm the deployment is actually built with `VITE_LEXIA_PLATFORM_PROVIDER=supabase`;
+5. execute the browser release gate against that controlled deployment;
+6. inspect Auth/API/Edge logs and Fresh Start destination counts;
+7. expand beyond the controlled preview only after the deployed proof is green.
 
 ## Immediate rollback
 
-If Supabase cutover causes auth, data, upload, AI, e-mail or gameplay regressions:
+If the Supabase provider causes auth, progress, upload, AI, e-mail or gameplay regression:
 
 1. set `VITE_LEXIA_PLATFORM_PROVIDER=base44`;
-2. redeploy the same application commit;
-3. do not delete the Supabase data produced during the failed cohort;
-4. capture the failing deployment/log evidence;
-5. repair on the integration branch;
-6. repeat the cutover gates before retrying.
+2. redeploy the **same application commit**;
+3. capture failing deployment/log evidence;
+4. preserve any legitimate new Supabase learner data created after launch;
+5. repair on a non-production branch;
+6. rerun all release proofs before retrying.
 
-The rollback changes provider selection only; it must not rewrite learner history.
+Rollback changes provider selection only. It must never trigger historical data import or rewrite learner history.
 
-## Promotion gates
+## Release rule
 
-PR #1 already promoted M01–M04-F to `main` and did **not** activate Supabase as the runtime provider.
-
-PR #2 contains M05 hardening only (schema/adaptor contracts and this runbook). It may be promoted once its CI and Vercel gates are green because those changes preserve Base44 as the default provider and do not migrate learner data.
-
-A separate future provider-cutover change must remain blocked until:
-
-- destination ownership is explicitly resolved;
-- Supabase Auth redirects and Edge Function upstreams are configured;
-- real authenticated browser E2E passes;
-- first-cohort rollback is demonstrably available.
-
-Merging M05 does not authorize or imply `VITE_LEXIA_PLATFORM_PROVIDER=supabase` in production.
+No merge, workflow name, prepared harness, SQL test or local preview by itself authorizes production cutover. Production promotion requires the explicit live evidence chain and controlled deployed-provider proof above.
 
 — Tehkné Solutions
