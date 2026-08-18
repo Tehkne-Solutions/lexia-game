@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Lock, Star, Play, Keyboard } from 'lucide-react';
@@ -13,15 +13,13 @@ import WorldUnlockCelebration from '@/components/game/WorldUnlockCelebration';
 export default function WorldMap() {
   const { data: allProgress = [] } = useQuery({
     queryKey: ['childProgress'],
-    queryFn: () => base44.entities.ChildProgress.list(),
+    queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
     staleTime: 0,
     refetchOnMount: 'always',
   });
 
   const stats = buildStats(allProgress);
-
-  // Track newly completed worlds for celebration
   const prevCompletedRef = useRef(new Set());
   const [celebrationWorld, setCelebrationWorld] = useState(null);
 
@@ -32,7 +30,6 @@ export default function WorldMap() {
         completedSet.add(world.id);
       }
     });
-    // Only trigger if this isn't the initial load
     if (prevCompletedRef.current.size > 0) {
       for (const id of completedSet) {
         if (!prevCompletedRef.current.has(id)) {
@@ -49,7 +46,6 @@ export default function WorldMap() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)] sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <Link to="/">
@@ -64,7 +60,6 @@ export default function WorldMap() {
         </div>
       </div>
 
-      {/* Decorative background */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           {['☁️', '⭐', '🌈', '☁️', '✨'].map((e, i) => (
@@ -81,7 +76,6 @@ export default function WorldMap() {
         </div>
 
         <div className="max-w-lg mx-auto p-4 pt-6 space-y-4 relative z-10">
-          {/* Path connecting worlds */}
           <div className="relative">
             {WORLDS.map((world, index) => {
               const completed = Math.min(world.getLessonsCompleted(stats), world.totalLessons);
@@ -99,7 +93,6 @@ export default function WorldMap() {
                   transition={{ delay: index * 0.12 }}
                   className="relative mb-4"
                 >
-                  {/* Connecting path line */}
                   {index < WORLDS.length - 1 && (
                     <div className="absolute left-1/2 -translate-x-1/2 top-full w-1 h-4 bg-border rounded-full z-0" />
                   )}
@@ -109,7 +102,6 @@ export default function WorldMap() {
                       ${!unlocked ? 'border-border opacity-60' : isDone ? 'border-yellow-400' : 'border-primary/50'}
                     `}
                   >
-                    {/* Gradient background */}
                     <div className={`bg-gradient-to-r ${world.bgColor} p-4 flex items-center gap-4`}>
                       <motion.div
                         className="text-5xl"
@@ -151,7 +143,6 @@ export default function WorldMap() {
                         )}
                       </div>
 
-                      {/* Action button */}
                       {unlocked && world.playPath && (
                         <Link to={world.playPath}>
                           <Button
@@ -175,7 +166,6 @@ export default function WorldMap() {
                       )}
                     </div>
 
-                    {/* Stars earned indicator */}
                     {isDone && (
                       <div className="bg-yellow-50 border-t border-yellow-200 px-4 py-2 flex items-center gap-1">
                         {[1, 2, 3].map(s => (
@@ -190,7 +180,6 @@ export default function WorldMap() {
             })}
           </div>
 
-          {/* Motivational footer */}
           <div className="text-center py-4">
             <p className="font-body text-sm text-muted-foreground">
               🦉 Continue aprendendo para desbloquear novos mundos!
