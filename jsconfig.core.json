@@ -10,6 +10,7 @@
     "src/platform/providerConfig.js",
     "src/platform/contracts.js",
     "src/learning/**/*.js",
+    "src/game/**/*.js",
     "src/vite-env.d.ts"
   ],
   "exclude": ["node_modules", "dist"]
