@@ -38,8 +38,8 @@ export function getUnlockedStoryChapters(stats = {}) {
   return getStoryLibrary(stats).filter((chapter) => chapter.unlocked);
 }
 
-function toSpeedItem({ display, emoji, kind, source }) {
-  return Object.freeze({ display, emoji, kind, source });
+function toSpeedItem({ display, emoji, kind, kindLabel, source }) {
+  return Object.freeze({ display, emoji, kind, kindLabel, source });
 }
 
 const SPEED_TIERS = Object.freeze([
@@ -52,6 +52,7 @@ const SPEED_TIERS = Object.freeze([
       display: item.letter,
       emoji: item.emoji,
       kind: 'letter',
+      kindLabel: 'Letra',
       source: item.word,
     }))),
   }),
@@ -64,6 +65,7 @@ const SPEED_TIERS = Object.freeze([
       display: item.syllable,
       emoji: item.emoji,
       kind: 'simple-syllable',
+      kindLabel: 'Sílaba simples',
       source: item.word,
     }))),
   }),
@@ -76,6 +78,7 @@ const SPEED_TIERS = Object.freeze([
       display: item.syllable,
       emoji: item.emoji,
       kind: 'complex-syllable',
+      kindLabel: 'Sílaba complexa',
       source: item.word,
     }))),
   }),
@@ -88,6 +91,7 @@ const SPEED_TIERS = Object.freeze([
       display: item.word,
       emoji: item.emoji,
       kind: 'word',
+      kindLabel: 'Palavra',
       source: item.hint,
     }))),
   }),
