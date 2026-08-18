@@ -140,10 +140,16 @@ export function buildStats(allProgress) {
   const letterProgress = records.filter(p => p.letter && p.letter.length === 1);
 
   const totalStars = records.reduce((s, p) => s + (p.stars_earned || 0), 0);
-  const totalAttempts = letterProgress.reduce((s, p) => s + (p.total_attempts || 0), 0);
-  const totalCorrect = letterProgress.reduce((s, p) => s + (p.correct_attempts || 0), 0);
+  const totalAttempts = records.reduce((s, p) => s + (p.total_attempts || 0), 0);
+  const totalCorrect = records.reduce((s, p) => s + (p.correct_attempts || 0), 0);
   const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
-  const maxStreak = letterProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
+  const maxStreak = records.reduce((max, p) => Math.max(max, p.streak || 0), 0);
+
+  // Keep letter-specific diagnostics available for screens that intentionally focus on the alphabet chapter.
+  const letterAttempts = letterProgress.reduce((s, p) => s + (p.total_attempts || 0), 0);
+  const letterCorrect = letterProgress.reduce((s, p) => s + (p.correct_attempts || 0), 0);
+  const letterAccuracy = letterAttempts > 0 ? Math.round((letterCorrect / letterAttempts) * 100) : 0;
+  const letterMaxStreak = letterProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
 
   const lettersMastered = letterProgress.filter(p => isProgressMastered(p)).length;
   const masteredCount = lettersMastered;
@@ -166,8 +172,13 @@ export function buildStats(allProgress) {
   return {
     totalStars,
     totalAttempts,
+    totalCorrect,
     accuracy,
     maxStreak,
+    letterAttempts,
+    letterCorrect,
+    letterAccuracy,
+    letterMaxStreak,
     masteredCount,
     lettersMastered,
     lettersStarted,
