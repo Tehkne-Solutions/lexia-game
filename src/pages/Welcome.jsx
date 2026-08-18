@@ -114,7 +114,7 @@ export default function Welcome() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            Aprenda o Alfabeto com Magia! ✨
+            Aprenda a ler com magia! ✨
           </motion.p>
 
           <MascotAvatar
@@ -200,7 +200,7 @@ export default function Welcome() {
               </Button>
             </Link>
 
-            <Link to="/play?mode=practice" className="w-full">
+            <Link to="/practice" className="w-full">
               <Button
                 variant="outline"
                 onClick={() => playClickSound()}
