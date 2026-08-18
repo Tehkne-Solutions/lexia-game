@@ -10,7 +10,7 @@ const requiredEnv = [
 
 const missing = requiredEnv.filter((name) => !process.env[name]);
 if (missing.length > 0) {
-  throw new Error(`M09-B live smoke is fail-closed; missing secret environment: ${missing.join(', ')}`);
+  throw new Error(`M09 live smoke is fail-closed; missing secret environment: ${missing.join(', ')}`);
 }
 
 const baseUrl = process.env.LEXIA_LIVE_SUPABASE_URL.replace(/\/$/, '');
@@ -19,6 +19,8 @@ const serviceRoleKey = process.env.LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY;
 const baseEmail = process.env.LEXIA_LIVE_TEST_EMAIL.trim().toLowerCase();
 const password = process.env.LEXIA_LIVE_TEST_PASSWORD;
 const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const users = [];
+const storagePaths = [];
 
 function taggedEmail(tag) {
   const at = baseEmail.lastIndexOf('@');
@@ -26,7 +28,9 @@ function taggedEmail(tag) {
   return `${baseEmail.slice(0, at)}+lexia-${tag}-${runId}${baseEmail.slice(at)}`;
 }
 
-const users = [];
+function encodedStoragePath(path) {
+  return path.split('/').map(encodeURIComponent).join('/');
+}
 
 async function request(path, { method = 'GET', key = publishableKey, token, json, headers = {} } = {}) {
   const requestHeaders = new Headers(headers);
@@ -67,6 +71,18 @@ async function adminDeleteUser(id) {
   }
 }
 
+async function adminDeleteStorageObject(path) {
+  if (!path) return;
+  const { response } = await request(`/storage/v1/object/lexia-drawings/${encodedStoragePath(path)}`, {
+    method: 'DELETE',
+    key: serviceRoleKey,
+    token: serviceRoleKey,
+  });
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`cleanup failed for disposable Storage object ${path}: HTTP ${response.status}`);
+  }
+}
+
 async function adminConfirmUser(id) {
   await requireOk(`/auth/v1/admin/users/${encodeURIComponent(id)}`, {
     method: 'PUT',
@@ -82,7 +98,7 @@ async function signUp(email, tag) {
     json: {
       email,
       password,
-      data: { lexia_test: 'm09b-live-auth-smoke', run_id: runId, tag },
+      data: { lexia_test: 'm09-live-smoke', run_id: runId, tag },
     },
   }, `GoTrue signup (${tag})`);
 
@@ -176,6 +192,44 @@ async function optionalRecovery(email) {
   return 'requested';
 }
 
+async function uploadDrawing(accessToken, expectedUserId) {
+  const unauthenticated = await fetch(`${baseUrl}/functions/v1/lexia-upload`, {
+    method: 'POST',
+    headers: { apikey: publishableKey },
+    body: new FormData(),
+  });
+  assert.ok([401, 403].includes(unauthenticated.status), 'lexia-upload must reject missing user JWT');
+
+  const pngBytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const form = new FormData();
+  form.append('file', new Blob([pngBytes], { type: 'image/png' }), 'm09-smoke.png');
+
+  const response = await fetch(`${baseUrl}/functions/v1/lexia-upload`, {
+    method: 'POST',
+    headers: {
+      apikey: publishableKey,
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: form,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(`authenticated lexia-upload failed with HTTP ${response.status}: ${JSON.stringify(payload)}`);
+  }
+
+  assert.equal(payload?.expires_in, 300, 'drawing signed URL must expire in 300 seconds');
+  assert.ok(typeof payload?.path === 'string' && payload.path.startsWith(`${expectedUserId}/`), 'drawing path must be scoped under authenticated user id');
+  assert.ok(typeof payload?.file_url === 'string' && payload.file_url.startsWith('http'), 'upload must return a signed URL');
+  storagePaths.push(payload.path);
+
+  const signedRead = await fetch(payload.file_url, { cache: 'no-store' });
+  assert.equal(signedRead.status, 200, 'signed drawing URL must be readable without client credentials');
+  const signedBytes = new Uint8Array(await signedRead.arrayBuffer());
+  assert.ok(signedBytes.length > 0, 'signed drawing URL must return the uploaded bytes');
+
+  return { path: payload.path, expiresIn: payload.expires_in };
+}
+
 const emailA = taggedEmail('a');
 const emailB = taggedEmail('b');
 
@@ -214,6 +268,9 @@ try {
   const ownDelete = await deleteProgress(sessionA.access_token, rowA.id);
   assert.equal(ownDelete?.[0]?.id, rowA.id, 'A must delete own progress');
 
+  const drawing = await uploadDrawing(sessionA.access_token, userA.id);
+  assert.equal(drawing.expiresIn, 300);
+
   sessionA = await refresh(sessionA.refresh_token);
   assert.equal((await me(sessionA.access_token)).id, userA.id, 'refreshed session must retain learner identity');
 
@@ -231,20 +288,26 @@ try {
   );
 
   console.log(JSON.stringify({
-    gate: 'M09-B',
+    gate: 'M09-C',
     status: 'PASS',
     signup: true,
     signIn: true,
     freshStartZeroProgress: true,
     restCrud: true,
     realJwtRlsIsolation: true,
+    privateUpload: true,
+    signedUrlSeconds: drawing.expiresIn,
     refresh: true,
     logoutRefreshRevocation: true,
     recovery,
     secretsPrinted: false,
   }));
 } finally {
-  // Auth user deletion cascades any remaining progress rows. Cleanup is mandatory even after a failed assertion.
+  // Storage is not owned by auth FK, so remove objects before deleting disposable users.
+  for (const path of [...storagePaths].reverse()) {
+    await adminDeleteStorageObject(path);
+  }
+  // Auth deletion cascades any remaining progress rows.
   for (const id of [...users].reverse()) {
     await adminDeleteUser(id);
   }
