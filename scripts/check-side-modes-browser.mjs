@@ -101,7 +101,9 @@ async function waitForText(cdp, text, timeoutMs = 10000) {
     if (found) return;
     await sleep(150);
   }
-  throw new Error(`Timed out waiting for text ${JSON.stringify(text)} at ${await cdp.evaluate('location.href')}`);
+  const href = await cdp.evaluate('location.href');
+  const body = await cdp.evaluate('document.body?.innerText?.slice(0, 1800) || ""');
+  throw new Error(`Timed out waiting for text ${JSON.stringify(text)} at ${href}. Visible body: ${JSON.stringify(body)}`);
 }
 
 async function navigate(cdp, url) {
@@ -125,6 +127,7 @@ async function capture(cdp, name) {
 
 async function metrics(cdp) {
   return cdp.evaluate(`(() => ({
+    href: location.href,
     innerWidth,
     innerHeight,
     documentScrollWidth: document.documentElement.scrollWidth,
@@ -134,10 +137,28 @@ async function metrics(cdp) {
   }))()`);
 }
 
+async function captureFailureEvidence(cdp, name, error) {
+  try {
+    await capture(cdp, `${name}-debug`);
+    const diagnostic = {
+      error: error?.message || String(error),
+      metrics: await metrics(cdp),
+      bodyText: await cdp.evaluate('document.body?.innerText?.slice(0, 5000) || ""'),
+      bodyHtml: await cdp.evaluate('document.body?.innerHTML?.slice(0, 8000) || ""'),
+    };
+    await writeFile(
+      path.join(artifactsDir, `${name}-debug.json`),
+      `${JSON.stringify(diagnostic, null, 2)}\n`,
+    );
+  } catch (diagnosticError) {
+    console.error(`Unable to capture ${name} diagnostic evidence:`, diagnosticError);
+  }
+}
+
 function assertSurface(value, name) {
-  assert.ok(value.documentScrollWidth <= value.innerWidth + 1, `${name}: document horizontal overflow`);
-  assert.ok(value.bodyScrollWidth <= value.innerWidth + 1, `${name}: body horizontal overflow`);
-  assert.ok(value.documentScrollHeight >= value.innerHeight, `${name}: document must cover viewport`);
+  assert.ok(value.documentScrollWidth <= value.innerWidth + 1, `${name}: document horizontal overflow (${value.documentScrollWidth} > ${value.innerWidth})`);
+  assert.ok(value.bodyScrollWidth <= value.innerWidth + 1, `${name}: body horizontal overflow (${value.bodyScrollWidth} > ${value.innerWidth})`);
+  assert.ok(value.documentScrollHeight >= value.innerHeight, `${name}: document must cover viewport (${value.documentScrollHeight} < ${value.innerHeight})`);
   assert.ok(value.bodyScrollHeight > 0, `${name}: body must render`);
 }
 
@@ -183,21 +204,31 @@ try {
     });
 
     await navigate(cdp, `${baseUrl}/story`);
-    await waitForText(cdp, 'Biblioteca da Jornada');
-    await waitForText(cdp, 'Histórias que acompanham seus mundos');
-    await waitForText(cdp, '1/6 livros');
-    await waitForText(cdp, 'Pena das 26 Vozes');
-    assertSurface(await metrics(cdp), `${viewport.name}/story`);
-    await capture(cdp, `${viewport.name}-story`);
+    try {
+      await waitForText(cdp, 'Biblioteca da Jornada');
+      await waitForText(cdp, 'Histórias que acompanham seus mundos');
+      await waitForText(cdp, '1/6 livros');
+      await waitForText(cdp, 'Pena das 26 Vozes');
+      assertSurface(await metrics(cdp), `${viewport.name}/story`);
+      await capture(cdp, `${viewport.name}-story`);
+    } catch (error) {
+      await captureFailureEvidence(cdp, `${viewport.name}-story`, error);
+      throw error;
+    }
 
     await navigate(cdp, `${baseUrl}/speed-challenge`);
-    await waitForText(cdp, 'Desafio Relâmpago!');
-    await waitForText(cdp, 'Treino atual');
-    await waitForText(cdp, 'Até Letras');
-    await waitForText(cdp, '1/4');
-    await waitForText(cdp, 'Frases continuam no modo próprio de composição');
-    assertSurface(await metrics(cdp), `${viewport.name}/speed`);
-    await capture(cdp, `${viewport.name}-speed`);
+    try {
+      await waitForText(cdp, 'Desafio Relâmpago!');
+      await waitForText(cdp, 'Treino atual');
+      await waitForText(cdp, 'Até Letras');
+      await waitForText(cdp, '1/4');
+      await waitForText(cdp, 'Frases continuam no modo próprio de composição');
+      assertSurface(await metrics(cdp), `${viewport.name}/speed`);
+      await capture(cdp, `${viewport.name}-speed`);
+    } catch (error) {
+      await captureFailureEvidence(cdp, `${viewport.name}-speed`, error);
+      throw error;
+    }
   }
 
   console.log('Lexia Side Modes Browser M15: PASS (Story + Speed × mobile-short/mobile/desktop = 6 screenshots; combined release evidence = 30)');
