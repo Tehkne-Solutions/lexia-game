@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CheckCircle, ChevronRight, Home, RotateCcw, Volume2 } from 'lucide-react';
@@ -6,8 +6,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import CelebrationOverlay from '@/components/game/CelebrationOverlay';
+import SessionQuestBar from '@/components/game/SessionQuestBar';
+import SessionQuestComplete from '@/components/game/SessionQuestComplete';
 import { lexiaPlatform } from '@/platform';
 import { BASIC_SENTENCES } from '@/lib/sentencesData';
+import { JOURNEY_STAGES } from '@/game/journeyEngine';
+import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
 import { playClickSound, playCorrectSound, playWrongSound, speak } from '@/lib/sounds';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 
@@ -30,6 +34,11 @@ export default function PlaySentences() {
   const [streak, setStreak] = useState(0);
   const [totalStars, setTotalStars] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+  const initialQuest = createSessionQuest({ stage: JOURNEY_STAGES.SENTENCES, worldId: 'sentences' });
+  const [sessionQuest, setSessionQuest] = useState(initialQuest);
+  const [showQuestComplete, setShowQuestComplete] = useState(false);
+  const sessionQuestRef = useRef(initialQuest);
+  const encounterSequenceRef = useRef(0);
   const queryClient = useQueryClient();
 
   const current = BASIC_SENTENCES[index];
@@ -51,7 +60,7 @@ export default function PlaySentences() {
   }, [allProgress]);
 
   const saveMutation = useMutation({
-    mutationFn: async ({ isCorrect }) => {
+    mutationFn: async ({ isCorrect, encounterId }) => {
       const entityKey = `SENT_${current.id}`;
       const existing = allProgress.find((record) => record.letter === entityKey);
       const data = {
@@ -72,9 +81,24 @@ export default function PlaySentences() {
 
       if (existing) await lexiaPlatform.progress.update(existing.id, data);
       else await lexiaPlatform.progress.create(data);
-      return { isCorrect };
+      return { isCorrect, starsEarned: isCorrect ? 1 : 0, encounterId };
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['childProgress'] }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['childProgress'] });
+      if (!result.isCorrect || !sessionQuestRef.current?.enabled) return;
+      const previousQuest = sessionQuestRef.current;
+      const nextQuest = advanceSessionQuest(previousQuest, result);
+      if (nextQuest === previousQuest) return;
+      sessionQuestRef.current = nextQuest;
+      setSessionQuest(nextQuest);
+      if (!previousQuest.completed && nextQuest.completed) {
+        setShowCelebration(false);
+        setShowQuestComplete(true);
+        setMascotExpression('excited');
+        setMascotMessage('Expedição concluída!');
+        setTimeout(() => speak(nextQuest.completionMessage), 450);
+      }
+    },
   });
 
   useEffect(() => {
@@ -108,6 +132,7 @@ export default function PlaySentences() {
 
   const checkAnswer = useCallback(() => {
     const isCorrect = selectedSentence === current.sentence;
+    const encounterId = `SENT_${current.id}-${++encounterSequenceRef.current}`;
     if (isCorrect) {
       playCorrectSound();
       const nextStreak = streak + 1;
@@ -116,9 +141,9 @@ export default function PlaySentences() {
       setPhase('correct');
       setMascotExpression('excited');
       setMascotMessage('A frase ganhou vida!');
-      saveMutation.mutate({ isCorrect: true });
+      saveMutation.mutate({ isCorrect: true, encounterId });
       setTimeout(() => speak(getSpokenFeedback(true, `Você montou: ${current.sentence}.`, { motivationalChance: 0.55 })), 350);
-      if (nextStreak > 0 && nextStreak % 5 === 0) {
+      if (nextStreak > 0 && nextStreak % 5 === 0 && !sessionQuestRef.current?.completed) {
         setShowCelebration(true);
         setTimeout(() => speak(getStreakPhrase()), 1500);
       }
@@ -130,7 +155,7 @@ export default function PlaySentences() {
     setPhase('wrong');
     setMascotExpression('encouraging');
     setMascotMessage('A ordem pode mudar!');
-    saveMutation.mutate({ isCorrect: false });
+    saveMutation.mutate({ isCorrect: false, encounterId });
     setTimeout(() => speak(getSpokenFeedback(false, current.hint, { motivationalChance: 0.3 })), 400);
   }, [current, selectedSentence, streak, saveMutation]);
 
@@ -142,8 +167,18 @@ export default function PlaySentences() {
     setIndex(next);
   }, [index]);
 
+  const handleContinueAfterQuest = useCallback(() => {
+    setShowQuestComplete(false);
+    nextItem();
+  }, [nextItem]);
+
   return (
     <div className="game-viewport flex flex-col bg-background">
+      <SessionQuestComplete
+        quest={showQuestComplete ? sessionQuest : null}
+        onContinue={handleContinueAfterQuest}
+      />
+
       <header className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 flex-shrink-0">
         <Link to="/world">
           <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
@@ -159,6 +194,8 @@ export default function PlaySentences() {
           <span className="font-body font-bold text-sm text-amber-700">{totalStars}</span>
         </div>
       </header>
+
+      <SessionQuestBar quest={sessionQuest} />
 
       <div className="game-scroll-y game-safe-bottom flex-1 flex flex-col items-center justify-center gap-3 px-4 py-3 max-w-lg mx-auto w-full">
         <MascotAvatar className="game-compact-mascot" expression={mascotExpression} size="sm" message={mascotMessage} />
