@@ -115,7 +115,8 @@ assert.ok(dashboardSource.includes('Ritmo de Revisão'));
 assert.ok(dashboardSource.includes('Prontas agora'));
 assert.ok(dashboardSource.includes('Estabilidade média'));
 assert.ok(dashboardSource.includes('formatNextReview(insights.nextReviewAt)'));
-assert.ok(dashboardSource.includes('o FSRS organiza revisões adaptativas em letras, sílabas, palavras e frases'));
+assert.ok(dashboardSource.includes('o FSRS organiza revisões adaptativas em toda a jornada'));
+assert.ok(dashboardSource.includes('Sílabas, palavras e frases também entram no ritmo de revisão'));
 assert.ok(dashboardSource.includes('Os critérios de domínio curricular continuam preservados'));
 assert.ok(!dashboardSource.includes('letras usam o algoritmo de repetição espaçada FSRS'), 'outdated letters-only FSRS explanation must be removed');
 
