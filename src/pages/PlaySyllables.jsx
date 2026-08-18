@@ -13,6 +13,11 @@ import OnScreenKeyboard from '@/components/game/OnScreenKeyboard';
 import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '@/lib/syllablesData';
 import { JOURNEY_STAGES } from '@/game/journeyEngine';
 import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
+import {
+  getChallengeStarMultiplier,
+  getDailyChallenge,
+  getNextChallengeTarget,
+} from '@/lib/dailyChallenge';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 import { getTypingFeedback, getTypingMascotMessage } from '@/lib/typingFeedback';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
@@ -21,6 +26,8 @@ const urlParams = new URLSearchParams(window.location.search);
 const rawMode = urlParams.get('mode');
 const MODE = rawMode === 'words' ? 'words' : rawMode === 'complex' ? 'complex' : 'syllables';
 const isPracticeMode = rawMode === 'practice' || urlParams.get('practice') === 'true';
+const isDailyMode = urlParams.get('daily') === '1';
+const requestedDailyTargetKey = urlParams.get('dailyTarget');
 
 const MODE_CONFIG = Object.freeze({
   syllables: {
@@ -60,8 +67,18 @@ const ITEMS = CONFIG.items;
 const TARGET_KEY = CONFIG.targetKey;
 const ENTITY_PREFIX = CONFIG.entityPrefix;
 
+function findDailyItemIndex(targetKey) {
+  if (!targetKey) return -1;
+  return ITEMS.findIndex((item) => `${ENTITY_PREFIX}${item[TARGET_KEY]}` === targetKey);
+}
+
+function getInitialIndex() {
+  const requestedIndex = isDailyMode ? findDailyItemIndex(requestedDailyTargetKey) : -1;
+  return requestedIndex >= 0 ? requestedIndex : Math.floor(Math.random() * ITEMS.length);
+}
+
 export default function PlaySyllables() {
-  const [index, setIndex] = useState(() => Math.floor(Math.random() * ITEMS.length));
+  const [index, setIndex] = useState(getInitialIndex);
   const [typed, setTyped] = useState('');
   const [phase, setPhase] = useState('type');
   const [mascotExpression, setMascotExpression] = useState('happy');
@@ -69,6 +86,7 @@ export default function PlaySyllables() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [streak, setStreak] = useState(0);
   const [totalStars, setTotalStars] = useState(0);
+  const [lastStarMultiplier, setLastStarMultiplier] = useState(1);
   const initialQuest = createSessionQuest(
     { stage: CONFIG.stage, worldId: CONFIG.worldId },
     { enabled: !isPracticeMode },
@@ -98,6 +116,10 @@ export default function PlaySyllables() {
     mutationFn: async ({ isCorrect, encounterId }) => {
       const entityKey = ENTITY_PREFIX + target;
       const existing = allProgress.find(p => p.letter === entityKey);
+      const challenge = getDailyChallenge(allProgress);
+      const effectiveMultiplier = isCorrect
+        ? getChallengeStarMultiplier(challenge, entityKey)
+        : 1;
       const data = {
         child_name: 'Jogador',
         letter: entityKey,
@@ -118,10 +140,21 @@ export default function PlaySyllables() {
       } else {
         await lexiaPlatform.progress.create(data);
       }
-      return { isCorrect, starsEarned: isCorrect ? 1 : 0, encounterId };
+      return {
+        isCorrect,
+        starsEarned: isCorrect ? effectiveMultiplier : 0,
+        effectiveMultiplier,
+        entityKey,
+        encounterId,
+      };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['childProgress'] });
+      setLastStarMultiplier(result.effectiveMultiplier || 1);
+      if (result.isCorrect && result.effectiveMultiplier > 1) {
+        setTotalStars((stars) => stars + (result.effectiveMultiplier - 1));
+        setMascotMessage(`⭐×${result.effectiveMultiplier} Desafio diário!`);
+      }
       if (!result.isCorrect || !sessionQuestRef.current?.enabled) return;
       const previousQuest = sessionQuestRef.current;
       const nextQuest = advanceSessionQuest(previousQuest, result);
@@ -141,6 +174,7 @@ export default function PlaySyllables() {
   useEffect(() => {
     setTyped('');
     setPhase('type');
+    setLastStarMultiplier(1);
     setMascotExpression('happy');
     setMascotMessage(`Digite: ${target}`);
     const context = MODE === 'words' ? current.hint : current.word;
@@ -186,10 +220,25 @@ export default function PlaySyllables() {
   const nextItem = useCallback(() => {
     playClickSound();
     setShowCelebration(false);
+
+    if (isDailyMode) {
+      const challenge = getDailyChallenge(allProgress);
+      const nextTarget = getNextChallengeTarget(challenge);
+      const nextDailyIndex = findDailyItemIndex(nextTarget?.key);
+      if (nextDailyIndex >= 0 && nextDailyIndex !== index) {
+        setIndex(nextDailyIndex);
+        return;
+      }
+      if (challenge?.completed) {
+        setMascotExpression('excited');
+        setMascotMessage('Desafio diário completo! 🏆');
+      }
+    }
+
     let next;
     do { next = Math.floor(Math.random() * ITEMS.length); } while (next === index && ITEMS.length > 1);
     setIndex(next);
-  }, [index]);
+  }, [index, allProgress]);
 
   const handleContinueAfterQuest = useCallback(() => {
     setShowQuestComplete(false);
@@ -241,6 +290,14 @@ export default function PlaySyllables() {
           <Compass className="w-3.5 h-3.5 text-primary" />
           <span className="font-bold text-primary">Capítulo</span>
           <span className="text-muted-foreground truncate">{CONFIG.missionLabel}</span>
+        </div>
+      )}
+
+      {isDailyMode && (
+        <div className="px-3 py-1.5 border-b border-amber-200 bg-amber-50 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
+          <span aria-hidden="true">🏆</span>
+          <span className="font-bold text-amber-800">Desafio diário</span>
+          <span className="text-amber-700">alvo novo vale ⭐×2</span>
         </div>
       )}
 
@@ -322,9 +379,9 @@ export default function PlaySyllables() {
                 className="flex flex-col items-center gap-3">
                 <div className="bg-green-100 border-2 border-green-400 rounded-2xl px-6 py-3 text-center">
                   <p className="font-display text-3xl text-green-700">{target}</p>
-                  <p className="font-body text-sm text-green-600">✅ Correto! +1 ⭐</p>
+                  <p className="font-body text-sm text-green-600">✅ Correto! +{lastStarMultiplier} ⭐</p>
                 </div>
-                <Button onClick={nextItem} className="rounded-2xl gap-2 font-display">
+                <Button onClick={nextItem} disabled={saveMutation.isPending} className="rounded-2xl gap-2 font-display">
                   Próximo <ChevronRight className="w-4 h-4" />
                 </Button>
               </motion.div>
