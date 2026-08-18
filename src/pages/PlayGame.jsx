@@ -22,7 +22,7 @@ import { buildStats, getEarnedAchievements } from '@/lib/achievements';
 import { getDailyChallenge, updateChallengeProgress } from '@/lib/dailyChallenge';
 import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
-import { speak, playCorrectSound, playWrongSound, playStarSound, playClickSound } from '@/lib/sounds';
+import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 
 const urlParams = new URLSearchParams(window.location.search);
 const isPracticeMode = urlParams.get('mode') === 'practice';
@@ -60,7 +60,6 @@ export default function PlayGame() {
   const totalStreak = allProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
   const masteredCount = allProgress.filter(p => calculateMastery(p) >= 80).length;
 
-  // Load daily challenge once progress is available
   useEffect(() => {
     if (allProgress.length >= 0) {
       const challenge = getDailyChallenge(allProgress);
@@ -68,7 +67,6 @@ export default function PlayGame() {
     }
   }, [allProgress.length]);
 
-  // Track previous stats for achievements
   useEffect(() => {
     if (allProgress.length > 0 && !prevStatsRef.current) {
       prevStatsRef.current = buildStats(allProgress);
@@ -79,8 +77,6 @@ export default function PlayGame() {
     mutationFn: async ({ letter, gradeValue }) => {
       const existing = progressMap[letter];
       const isCorrect = gradeValue >= 3;
-
-      // Check if this letter is part of daily challenge
       const challenge = getDailyChallenge(allProgress);
       const isChallengeLetter = challenge?.letters?.includes(letter) && !challenge?.completed;
       const effectiveMultiplier = isChallengeLetter ? (challenge.starsMultiplier || 2) : 1;
@@ -121,7 +117,6 @@ export default function PlayGame() {
         await base44.entities.ChildProgress.create(data);
       }
 
-      // Update daily challenge progress
       if (isCorrect && isChallengeLetter) {
         const updatedChallenge = updateChallengeProgress(letter, true);
         setDailyChallenge(updatedChallenge);
@@ -133,7 +128,6 @@ export default function PlayGame() {
       queryClient.invalidateQueries({ queryKey: ['childProgress'] });
       setStarMultiplier(result.effectiveMultiplier);
 
-      // Check for new achievements
       setTimeout(() => {
         const fresh = queryClient.getQueryData(['childProgress']) || allProgress;
         const currentStats = buildStats(fresh);
@@ -144,11 +138,9 @@ export default function PlayGame() {
         prevStatsRef.current = currentStats;
       }, 600);
 
-      // Sounds & mascot already set in handleEvaluate — only handle celebration/streak here
       if (result.isCorrect && result.newStreak >= 3 && result.newStreak % 3 === 0) {
         setCelebrationData({ stars: 3, message: `Combo ${result.newStreak}x! 🔥` });
         setShowCelebration(true);
-        // Speak a streak milestone phrase
         setTimeout(() => speak(getStreakPhrase()), 1500);
       } else if (result.isCorrect && result.effectiveMultiplier > 1) {
         setMascotMessage(`⭐×${result.effectiveMultiplier} Desafio!`);
@@ -156,7 +148,6 @@ export default function PlayGame() {
     },
   });
 
-  // Called when user clicks "Verificar"
   const handleEvaluate = useCallback(async (imageDataUrl) => {
     setMascotExpression('thinking');
     setMascotMessage('Deixa eu ver...');
@@ -212,12 +203,9 @@ Look carefully at the image. Return JSON:
       setPhase('result');
       const isCorrect = grade >= 3;
       const specificHint = getLetterFeedbackSpeech(currentLetter, isCorrect, grade);
-      // Alternate between educational hints and motivational phrases for variety
       const speech = getSpokenFeedback(isCorrect, specificHint, { motivationalChance: isCorrect ? 0.6 : 0.35 });
-      // Sync mascot message + expression with the spoken hint
       setMascotExpression(isCorrect ? 'excited' : 'encouraging');
       setMascotMessage(result.feedback || (isCorrect ? 'Muito bem! ⭐' : 'Vamos tentar de novo!'));
-      // Play sound immediately, then speak the specific, encouraging hint
       if (isCorrect) playCorrectSound(); else playWrongSound();
       setTimeout(() => speak(speech), 400);
       if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: grade });
@@ -286,10 +274,8 @@ Look carefully at the image. Return JSON:
 
   return (
     <div className="min-h-screen flex flex-col bg-background overflow-hidden">
-      {/* Achievement toast */}
       <AchievementToast achievement={newAchievement} onDismiss={() => setNewAchievement(null)} />
 
-      {/* Daily challenge modal */}
       <AnimatePresence>
         {showDailyChallenge && (
           <DailyChallengeCard
@@ -300,7 +286,6 @@ Look carefully at the image. Return JSON:
         )}
       </AnimatePresence>
 
-      {/* Top bar */}
       <div className="flex items-center justify-between px-3 py-2 pt-[env(safe-area-inset-top)] border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
         <Link to="/">
           <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
@@ -332,13 +317,9 @@ Look carefully at the image. Return JSON:
         </div>
       </div>
 
-      {/* Main game area — compact, no scroll */}
       <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4 py-2 max-w-lg mx-auto w-full">
-
-        {/* Mascot — smaller */}
         <MascotAvatar expression={mascotExpression} size="sm" message={mascotMessage} />
 
-        {/* Letter + speak in one row */}
         <div className="flex items-center gap-3">
           <LetterDisplay letter={currentLetter} showAnchor={true} />
           <Button
@@ -351,7 +332,6 @@ Look carefully at the image. Return JSON:
           </Button>
         </div>
 
-        {/* Star multiplier badge when active */}
         {starMultiplier > 1 && (
           <motion.div
             initial={{ scale: 0 }} animate={{ scale: 1 }}
@@ -362,7 +342,6 @@ Look carefully at the image. Return JSON:
           </motion.div>
         )}
 
-        {/* Canvas or Result */}
         <AnimatePresence mode="wait">
           {phase === 'draw' && (
             <motion.div
@@ -396,7 +375,6 @@ Look carefully at the image. Return JSON:
                 targetLetter={currentLetter}
               />
 
-              {/* Manual override */}
               <div className="w-full max-w-[260px]">
                 <p className="text-xs font-body text-muted-foreground text-center mb-1.5">
                   A corujinha errou? Corrija:
@@ -415,7 +393,6 @@ Look carefully at the image. Return JSON:
                 </div>
               </div>
 
-              {/* Navigation */}
               <div className="flex gap-2 w-full max-w-[260px]">
                 <Button variant="outline" size="sm" onClick={retryLetter} disabled={isWorking}
                   className="flex-1 rounded-xl font-body font-bold text-xs">
@@ -431,11 +408,9 @@ Look carefully at the image. Return JSON:
         </AnimatePresence>
       </div>
 
-      {/* Celebration overlay */}
       <CelebrationOverlay show={showCelebration} stars={celebrationData.stars}
         message={celebrationData.message} onDone={goToNextLetter} />
 
-      {/* Letter selector */}
       <LetterSelector open={showSelector} onSelect={handleLetterSelect}
         onClose={() => setShowSelector(false)} progressMap={progressMap} />
     </div>
