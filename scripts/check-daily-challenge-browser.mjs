@@ -305,6 +305,7 @@ try {
       assert.equal(clicked, true, `${viewport.name}/card: daily launcher must be clickable`);
       await waitForText(cdp, lettersDefinition.title);
       await waitForText(cdp, '0/3');
+      await sleep(500);
       assertSurface(await metrics(cdp), `${viewport.name}/daily-card`);
       await capture(cdp, `${viewport.name}-daily-card`);
     } catch (error) {
