@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { isChallengeCompleted } from '@/lib/dailyChallenge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Star, Trophy, Flame, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,7 @@ function saveProfile(data) {
 
 export default function Profile() {
   const [profile, setProfile] = useState(loadProfile);
-  const [tab, setTab] = useState('avatar'); // avatar | letters | badges
+  const [tab, setTab] = useState('avatar');
 
   const { data: allProgress = [] } = useQuery({
     queryKey: ['childProgress'],
@@ -57,7 +57,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)] sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <Link to="/">
@@ -70,7 +69,6 @@ export default function Profile() {
       </div>
 
       <div className="max-w-lg mx-auto p-4 space-y-4">
-        {/* Profile card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -102,7 +100,6 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* Quick stats */}
         <div className="grid grid-cols-4 gap-2">
           {[
             { icon: Star, label: 'Estrelas', value: totalStars, color: 'text-yellow-500' },
@@ -120,7 +117,6 @@ export default function Profile() {
           ))}
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2">
           {[
             { id: 'avatar', label: '🐾 Avatar' },
@@ -140,7 +136,6 @@ export default function Profile() {
           ))}
         </div>
 
-        {/* Tab content */}
         <AnimatePresence mode="wait">
           {tab === 'avatar' && (
             <motion.div key="avatar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
@@ -303,7 +298,6 @@ export default function Profile() {
           )}
         </AnimatePresence>
 
-        {/* Settings / Account section */}
         <div className="pt-2">
           <DeleteAccountButton />
         </div>
