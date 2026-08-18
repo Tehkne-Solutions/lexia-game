@@ -84,10 +84,16 @@ assert.ok(sentencePage.includes('<SessionQuestBar quest={sessionQuest} />'));
 const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
 assert.ok(app.includes("<Route path=\"/play-sentences\" element={<PlaySentences />} />"));
 
-const statsSource = await readFile(new URL('../src/lib/achievements.js', import.meta.url), 'utf8');
+// M13 moved curriculum statistics into a pure core engine. M08 keeps asserting
+// the same persistence families and mastery outputs at their canonical owner.
+const statsSource = await readFile(new URL('../src/game/journeyStatsEngine.js', import.meta.url), 'utf8');
 assert.ok(statsSource.includes("startsWith('SYLC_')"));
 assert.ok(statsSource.includes("startsWith('SENT_')"));
 assert.ok(statsSource.includes('syllablesComplexMastered'));
 assert.ok(statsSource.includes('sentencesMastered'));
+
+const achievementFacade = await readFile(new URL('../src/lib/achievements.js', import.meta.url), 'utf8');
+assert.ok(achievementFacade.includes('buildJourneyStats'));
+assert.ok(achievementFacade.includes('return buildJourneyStats(allProgress)'));
 
 console.log('Lexia Curriculum Worlds M08 contract: PASS (complex syllables + sentence assembly + sequential journey/unlocks)');
