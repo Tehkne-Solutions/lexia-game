@@ -42,7 +42,7 @@ assert.equal(disabled.enabled, false);
 assert.equal(disabled.goal, 0);
 
 const playGame = await readFile(new URL('../src/pages/PlayGame.jsx', import.meta.url), 'utf8');
-assert.ok(playGame.includes("createSessionQuest(journey, { enabled: !isPracticeMode })"));
+assert.ok(playGame.includes('createSessionQuest(journey, { enabled: isGuidedMission })'));
 assert.ok(playGame.includes('encounterSequenceRef'));
 assert.ok(playGame.includes('activeEncounterRef'));
 assert.ok(playGame.includes('advanceSessionQuest'));
