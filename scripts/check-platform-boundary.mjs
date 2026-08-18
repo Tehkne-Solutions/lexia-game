@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { extname, join, relative } from 'node:path';
+import { extname, relative } from 'node:path';
 
 const ROOT = new URL('../', import.meta.url);
 const SOURCE_ROOT = new URL('../src/', import.meta.url);
@@ -49,3 +49,6 @@ assert.ok(facadeContent.includes('lexiaPlatform'), 'legacy Base44 facade must de
 assert.ok(!facadeContent.includes('base44Adapter.raw'), 'legacy facade must not expose the raw Base44 client');
 
 console.log(`Lexia platform boundary: PASS (${legacyFacadeConsumers.length} legacy facade consumer(s) remain)`);
+if (legacyFacadeConsumers.length > 0) {
+  console.log(`Legacy facade consumers: ${legacyFacadeConsumers.sort().join(', ')}`);
+}
