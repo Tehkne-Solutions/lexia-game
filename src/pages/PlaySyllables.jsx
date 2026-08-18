@@ -7,8 +7,12 @@ import { lexiaPlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import CelebrationOverlay from '@/components/game/CelebrationOverlay';
+import SessionQuestBar from '@/components/game/SessionQuestBar';
+import SessionQuestComplete from '@/components/game/SessionQuestComplete';
 import OnScreenKeyboard from '@/components/game/OnScreenKeyboard';
 import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '@/lib/syllablesData';
+import { JOURNEY_STAGES } from '@/game/journeyEngine';
+import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 import { getTypingFeedback, getTypingMascotMessage } from '@/lib/typingFeedback';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
@@ -26,6 +30,8 @@ const MODE_CONFIG = Object.freeze({
     title: 'Sílabas Simples',
     spokenLabel: 'Sílaba',
     missionLabel: 'As Pontes do Som',
+    stage: JOURNEY_STAGES.SYLLABLES,
+    worldId: 'syllables_basic',
   },
   complex: {
     items: COMPLEX_SYLLABLES,
@@ -34,6 +40,8 @@ const MODE_CONFIG = Object.freeze({
     title: 'Sílabas Complexas',
     spokenLabel: 'Sílaba complexa',
     missionLabel: 'O Labirinto dos Encontros',
+    stage: JOURNEY_STAGES.COMPLEX_SYLLABLES,
+    worldId: 'syllables_complex',
   },
   words: {
     items: BASIC_WORDS,
@@ -42,6 +50,8 @@ const MODE_CONFIG = Object.freeze({
     title: 'Primeiras Palavras',
     spokenLabel: 'Palavra',
     missionLabel: 'A Biblioteca Desperta',
+    stage: JOURNEY_STAGES.WORDS,
+    worldId: 'words_basic',
   },
 });
 
@@ -59,6 +69,14 @@ export default function PlaySyllables() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [streak, setStreak] = useState(0);
   const [totalStars, setTotalStars] = useState(0);
+  const initialQuest = createSessionQuest(
+    { stage: CONFIG.stage, worldId: CONFIG.worldId },
+    { enabled: !isPracticeMode },
+  );
+  const [sessionQuest, setSessionQuest] = useState(initialQuest);
+  const [showQuestComplete, setShowQuestComplete] = useState(false);
+  const sessionQuestRef = useRef(initialQuest);
+  const encounterSequenceRef = useRef(0);
   const inputRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -77,7 +95,7 @@ export default function PlaySyllables() {
   }, [allProgress]);
 
   const saveMutation = useMutation({
-    mutationFn: async ({ isCorrect }) => {
+    mutationFn: async ({ isCorrect, encounterId }) => {
       const entityKey = ENTITY_PREFIX + target;
       const existing = allProgress.find(p => p.letter === entityKey);
       const data = {
@@ -100,10 +118,23 @@ export default function PlaySyllables() {
       } else {
         await lexiaPlatform.progress.create(data);
       }
-      return { isCorrect };
+      return { isCorrect, starsEarned: isCorrect ? 1 : 0, encounterId };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['childProgress'] });
+      if (!result.isCorrect || !sessionQuestRef.current?.enabled) return;
+      const previousQuest = sessionQuestRef.current;
+      const nextQuest = advanceSessionQuest(previousQuest, result);
+      if (nextQuest === previousQuest) return;
+      sessionQuestRef.current = nextQuest;
+      setSessionQuest(nextQuest);
+      if (!previousQuest.completed && nextQuest.completed) {
+        setShowCelebration(false);
+        setShowQuestComplete(true);
+        setMascotExpression('excited');
+        setMascotMessage('Expedição concluída!');
+        setTimeout(() => speak(nextQuest.completionMessage), 450);
+      }
     },
   });
 
@@ -120,6 +151,7 @@ export default function PlaySyllables() {
   const checkAnswer = useCallback(() => {
     const answer = typed.trim().toUpperCase();
     const correct = answer === target;
+    const encounterId = `${ENTITY_PREFIX}${target}-${++encounterSequenceRef.current}`;
     if (correct) {
       playCorrectSound();
       setPhase('correct');
@@ -128,14 +160,14 @@ export default function PlaySyllables() {
       const newStreak = streak + 1;
       setStreak(newStreak);
       setTotalStars(s => s + 1);
-      if (!isPracticeMode) saveMutation.mutate({ isCorrect: true });
-      if (newStreak > 0 && newStreak % 5 === 0) {
+      if (!isPracticeMode) saveMutation.mutate({ isCorrect: true, encounterId });
+      if (newStreak > 0 && newStreak % 5 === 0 && !sessionQuestRef.current?.completed) {
         setShowCelebration(true);
       }
       const specificHint = getTypingFeedback(typed, target, true);
       const successSpeech = getSpokenFeedback(true, specificHint, { motivationalChance: 0.6 });
       setTimeout(() => speak(successSpeech), 400);
-      if (newStreak > 0 && newStreak % 5 === 0) {
+      if (newStreak > 0 && newStreak % 5 === 0 && !sessionQuestRef.current?.completed) {
         setTimeout(() => speak(getStreakPhrase()), 1600);
       }
     } else {
@@ -144,7 +176,7 @@ export default function PlaySyllables() {
       setMascotExpression('encouraging');
       setMascotMessage(getTypingMascotMessage(typed, target, false));
       setStreak(0);
-      if (!isPracticeMode) saveMutation.mutate({ isCorrect: false });
+      if (!isPracticeMode) saveMutation.mutate({ isCorrect: false, encounterId });
       const specificHint = getTypingFeedback(typed, target, false);
       const hintSpeech = getSpokenFeedback(false, specificHint, { motivationalChance: 0.35 });
       setTimeout(() => speak(hintSpeech), 500);
@@ -159,6 +191,11 @@ export default function PlaySyllables() {
     setIndex(next);
   }, [index]);
 
+  const handleContinueAfterQuest = useCallback(() => {
+    setShowQuestComplete(false);
+    nextItem();
+  }, [nextItem]);
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && phase === 'type' && typed.length > 0) {
       checkAnswer();
@@ -167,6 +204,11 @@ export default function PlaySyllables() {
 
   return (
     <div className="game-viewport flex flex-col bg-background">
+      <SessionQuestComplete
+        quest={showQuestComplete ? sessionQuest : null}
+        onContinue={handleContinueAfterQuest}
+      />
+
       <div className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 flex-shrink-0">
         <Link to="/world">
           <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
@@ -201,6 +243,8 @@ export default function PlaySyllables() {
           <span className="text-muted-foreground truncate">{CONFIG.missionLabel}</span>
         </div>
       )}
+
+      <SessionQuestBar quest={sessionQuest} />
 
       <div className="game-scroll-y game-safe-bottom flex-1 flex flex-col items-center justify-center gap-3 px-4 py-3 max-w-md mx-auto w-full">
         <MascotAvatar className="game-compact-mascot" expression={mascotExpression} size="sm" message={mascotMessage} />
