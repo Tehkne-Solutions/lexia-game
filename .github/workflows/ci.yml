@@ -52,6 +52,9 @@ jobs:
       - name: Ownership reconciliation contract
         run: node scripts/check-ownership-reconciliation.mjs
 
+      - name: Supabase schema contract
+        run: npm run check:supabase-schema
+
       - name: Lint
         run: npm run lint
 
