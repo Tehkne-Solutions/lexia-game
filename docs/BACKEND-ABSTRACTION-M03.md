@@ -6,25 +6,25 @@
 
 Remove Base44 SDK lock-in from application code before replacing the active backend provider.
 
-## Boundary
+## Final boundary
 
 Only `src/platform/adapters/base44Adapter.js` may import `@base44/sdk`.
 
-Application code talks to `lexiaPlatform`. Screens that still use the original generated `base44.*` shape go through `src/api/base44Client.js`, which is now a compatibility facade over `lexiaPlatform` rather than an export of the raw vendor client.
+All application modules now depend directly on `lexiaPlatform` from `src/platform`. The temporary `src/api/base44Client.js` compatibility facade used during M03 was retired after its consumer count reached zero.
 
-This means changing the active provider no longer requires generated screens to know the Base44 SDK implementation.
+The active provider is still Base44, but Base44 is now an implementation detail behind the platform contract rather than an application-level dependency.
 
-## Legacy facade surface
+## Provider-neutral capabilities
 
-The compatibility facade intentionally supports only the capabilities already used by Lexia:
+The application contract currently exposes:
 
-- `entities.ChildProgress.list/create/update/delete`
-- `auth.me/logout/redirectToLogin`
-- `integrations.Core.UploadFile`
-- `integrations.Core.InvokeLLM`
-- `integrations.Core.SendEmail`
+- `progress.list/create/update/remove/clearAll`
+- `auth.me/logout/redirectToLogin/getPublicSettings/hasAccessToken`
+- `storage.uploadFile`
+- `ai.invoke`
+- `email.send`
 
-No generic SDK escape hatch is exposed.
+These capabilities cover the current Lexia product flows including guided letter gameplay, syllables and words, profile, world map, story mode, parent reports, authentication and account-progress deletion.
 
 ## Enforcement
 
@@ -32,8 +32,25 @@ No generic SDK escape hatch is exposed.
 
 - `@base44/sdk` is imported outside the Base44 adapter;
 - a concrete Base44 adapter is imported outside the platform registry;
-- the legacy facade stops delegating to `lexiaPlatform` or exposes the raw client.
+- any module imports the retired `@/api/base44Client` facade.
 
-The script also reports how many legacy facade consumers remain. Those call sites can now be migrated incrementally without blocking the provider transition.
+The release gate now requires **zero legacy facade consumers**.
+
+## Migration status
+
+M03 completed the six final legacy call sites:
+
+1. `src/lib/PageNotFound.jsx`
+2. `src/pages/ParentDashboard.jsx`
+3. `src/pages/PlayGame.jsx`
+4. `src/pages/PlaySyllables.jsx`
+5. `src/pages/Profile.jsx`
+6. `src/pages/WorldMap.jsx`
+
+`SpeedChallenge` and the remaining local-only features already had no Base44 dependency.
+
+## Next step — M04
+
+M04 can now add an independent provider (Supabase for auth/data plus independent storage/AI/email services) behind the same contract without rewriting gameplay screens. Base44 remains active until the replacement adapter is configured, migrated and passes the same release gates.
 
 — Tehkné Solutions
