@@ -219,7 +219,8 @@ try {
     await navigate(cdp, `${baseUrl}/speed-challenge`);
     try {
       await waitForText(cdp, 'Desafio Relâmpago!');
-      await waitForText(cdp, 'Treino atual');
+      // CSS text-transform renders this source label in uppercase; innerText reflects rendered text.
+      await waitForText(cdp, 'TREINO ATUAL');
       await waitForText(cdp, 'Até Letras');
       await waitForText(cdp, '1/4');
       await waitForText(cdp, 'Frases continuam no modo próprio de composição');
