@@ -1,18 +1,45 @@
 import React from 'react';
 import { Compass, Star, RotateCcw } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { lexiaPlatform } from '@/platform';
 import { getSessionQuestPercent, isLearnerReviewRuntime } from '@/game/sessionQuestEngine';
+import { buildLearnerReviewQuest } from '@/game/learnerReviewQuestEngine';
+import { getLearnerReviewRemaining } from '@/game/learnerReviewRuntime';
 
 export default function SessionQuestBar({ quest }) {
+  const { data: reviewProgress = [] } = useQuery({
+    queryKey: ['childProgress'],
+    queryFn: () => lexiaPlatform.progress.list(),
+    initialData: [],
+  });
+
   if (isLearnerReviewRuntime()) {
+    const reviewQuest = buildLearnerReviewQuest(reviewProgress);
+    const canonicalRemaining = reviewQuest.totalDue > 0 ? reviewQuest.totalDue : null;
+    const storedRemaining = getLearnerReviewRemaining();
+    const reviewRemaining = canonicalRemaining ?? storedRemaining;
+    const reviewMessage = reviewRemaining === 1
+      ? 'Última revisão pronta'
+      : reviewRemaining > 1
+        ? `${reviewRemaining} revisões na fila`
+        : 'Reforce sua memória sem avançar a expedição principal.';
+
     return (
       <div className="px-3 py-2 border-b border-sky-200 bg-sky-50">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl border border-sky-300 bg-sky-100 flex items-center justify-center flex-shrink-0">
             <RotateCcw className="w-4 h-4 text-sky-700" />
           </div>
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-sky-700">Revisão inteligente</p>
-            <p className="text-xs font-body text-sky-900">Reforce sua memória sem avançar a expedição principal.</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[10px] uppercase tracking-[0.14em] font-bold text-sky-700">Revisão inteligente</p>
+              {reviewRemaining && (
+                <span className="text-[10px] font-bold text-sky-700 flex-shrink-0">
+                  {reviewRemaining === 1 ? '1 restante' : `${reviewRemaining} restantes`}
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-body text-sky-900">{reviewMessage}</p>
           </div>
         </div>
       </div>
