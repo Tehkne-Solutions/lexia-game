@@ -19,6 +19,15 @@ const QUEST_CONFIG = Object.freeze({
     startMessage: 'Complete quatro combinações para fechar esta expedição.',
     completionMessage: 'Expedição concluída! Novas combinações esperam no mapa.',
   }),
+  [JOURNEY_STAGES.COMPLEX_SYLLABLES]: Object.freeze({
+    id: 'complex-syllables-expedition',
+    title: 'Expedição dos Encontros',
+    shortTitle: '4 encontros',
+    goal: 4,
+    unit: 'encontros',
+    startMessage: 'Atravesse quatro combinações complexas para fechar esta expedição.',
+    completionMessage: 'Expedição concluída! O labirinto dos encontros ficou mais claro.',
+  }),
   [JOURNEY_STAGES.WORDS]: Object.freeze({
     id: 'words-expedition',
     title: 'Expedição das Palavras',
@@ -27,6 +36,15 @@ const QUEST_CONFIG = Object.freeze({
     unit: 'conquistas',
     startMessage: 'Conquiste quatro palavras para fechar esta expedição.',
     completionMessage: 'Expedição concluída! Sua rota de palavras avançou.',
+  }),
+  [JOURNEY_STAGES.SENTENCES]: Object.freeze({
+    id: 'sentences-expedition',
+    title: 'Expedição das Histórias',
+    shortTitle: '4 frases',
+    goal: 4,
+    unit: 'frases',
+    startMessage: 'Monte quatro frases para fechar esta expedição.',
+    completionMessage: 'Expedição concluída! O Jardim das Histórias ganhou novas vozes.',
   }),
   [JOURNEY_STAGES.MASTERY]: Object.freeze({
     id: 'mastery-expedition',
