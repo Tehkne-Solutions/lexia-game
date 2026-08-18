@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Home, Volume2, ChevronRight, CheckCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
+import { lexiaPlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import CelebrationOverlay from '@/components/game/CelebrationOverlay';
@@ -37,7 +37,7 @@ export default function PlaySyllables() {
 
   const { data: allProgress = [] } = useQuery({
     queryKey: ['childProgress'],
-    queryFn: () => base44.entities.ChildProgress.list(),
+    queryFn: () => lexiaPlatform.progress.list(),
     initialData: [],
   });
 
@@ -66,9 +66,9 @@ export default function PlaySyllables() {
         level: 1,
       };
       if (existing) {
-        await base44.entities.ChildProgress.update(existing.id, data);
+        await lexiaPlatform.progress.update(existing.id, data);
       } else {
-        await base44.entities.ChildProgress.create(data);
+        await lexiaPlatform.progress.create(data);
       }
       return { isCorrect };
     },
