@@ -125,11 +125,16 @@ jobs:
       - name: Browser layout QA
         run: node scripts/check-browser-layout.mjs
 
+      - name: Side modes browser QA
+        run: node scripts/check-side-modes-browser.mjs
+
       - name: Upload M15 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lexia-m15-browser-layout
-          path: artifacts/m15/*.png
+          path: |
+            artifacts/m14/*.png
+            artifacts/m15/*.png
           if-no-files-found: warn
           retention-days: 14
