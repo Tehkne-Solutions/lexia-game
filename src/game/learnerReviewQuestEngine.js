@@ -1,4 +1,5 @@
 import { getJourneyState, JOURNEY_STAGES } from './journeyEngine.js';
+import { getCanonicalReviewChapterId } from './reviewTargetCatalog.js';
 
 export const REVIEW_COMPLETE_PATH = '/?reviewComplete=1';
 
@@ -49,13 +50,7 @@ const STAGE_ORDER = Object.freeze([
 ]);
 
 function recordChapterId(record) {
-  const key = String(record?.letter || '');
-  if (/^[A-Z]$/.test(key)) return 'letters';
-  if (key.startsWith('SYLC_')) return 'syllables-complex';
-  if (key.startsWith('SYL_')) return 'syllables-basic';
-  if (key.startsWith('WORD_')) return 'words';
-  if (key.startsWith('SENT_')) return 'sentences';
-  return null;
+  return getCanonicalReviewChapterId(record?.letter);
 }
 
 function safeReviewTime(value) {
@@ -102,6 +97,7 @@ export function buildLearnerReviewQuest(allProgress = [], options = {}) {
       const attempts = Number(record?.total_attempts || 0);
       const chapterIndex = LEARNER_REVIEW_CHAPTERS.findIndex((chapter) => chapter.id === chapterId);
       const due = attempts > 0
+        && chapterId !== null
         && chapterIndex >= 0
         && chapterIndex <= maxUnlockedIndex
         && nextReviewAt !== null

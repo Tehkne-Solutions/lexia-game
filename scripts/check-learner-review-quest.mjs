@@ -10,6 +10,8 @@ import {
   isLearnerReviewRuntime,
 } from '../src/game/sessionQuestEngine.js';
 import { JOURNEY_STAGES } from '../src/game/journeyEngine.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '../src/lib/syllablesData.js';
+import { BASIC_SENTENCES } from '../src/lib/sentencesData.js';
 
 const now = Date.parse('2026-08-18T18:00:00.000Z');
 const hour = 60 * 60 * 1000;
@@ -40,10 +42,15 @@ function advancedRecord(key, nextReview) {
 
 const future = new Date(now + 24 * hour).toISOString();
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => letterRecord(letter, future));
-const simple = Array.from({ length: 20 }, (_, index) => advancedRecord(`SYL_TEST_${index + 1}`, future));
-const complex = Array.from({ length: 20 }, (_, index) => advancedRecord(`SYLC_TEST_${index + 1}`, future));
-const words = Array.from({ length: 20 }, (_, index) => advancedRecord(`WORD_TEST_${index + 1}`, future));
-const sentences = Array.from({ length: 20 }, (_, index) => advancedRecord(`SENT_TEST_${index + 1}`, future));
+const simple = BASIC_SYLLABLES.map((item) => advancedRecord(`SYL_${item.syllable}`, future));
+const complex = COMPLEX_SYLLABLES.map((item) => advancedRecord(`SYLC_${item.syllable}`, future));
+const words = BASIC_WORDS.map((item) => advancedRecord(`WORD_${item.word}`, future));
+const sentences = BASIC_SENTENCES.map((item) => advancedRecord(`SENT_${item.id}`, future));
+
+assert.equal(simple.length, 20, 'M20 fixture must cover the canonical 20 simple syllables');
+assert.equal(complex.length, 20, 'M20 fixture must cover the canonical 20 complex syllables');
+assert.equal(words.length, 20, 'M20 fixture must cover the canonical 20 words');
+assert.equal(sentences.length, 20, 'M20 fixture must cover the canonical 20 sentences');
 
 letters[0].next_review = new Date(now - 5 * hour).toISOString();
 simple[0].next_review = new Date(now - 4 * hour).toISOString();
@@ -76,7 +83,7 @@ assert.equal(getLearnerReviewQuestLabel(mastered), '5 revisões prontas');
 
 const lockedAdvanced = buildLearnerReviewQuest([
   letterRecord('A', new Date(now - hour).toISOString()),
-  advancedRecord('WORD_LOCKED', new Date(now - 10 * hour).toISOString()),
+  advancedRecord('WORD_VACA', new Date(now - 10 * hour).toISOString()),
 ], { now });
 assert.equal(lockedAdvanced.journeyStage, JOURNEY_STAGES.LETTERS);
 assert.equal(lockedAdvanced.totalDue, 1, 'due records from locked chapters must stay hidden');
@@ -124,4 +131,4 @@ assert.ok(practiceSource.includes('Revisões inteligentes atualizam o FSRS sem a
 assert.ok(practiceSource.includes('reviewChapter.reviewPath'));
 assert.ok(practiceSource.includes('Revisar {dueCount} agora'));
 
-console.log('Lexia M20 Learner Review Quest contract: PASS (whole-journey due queue, locked-stage guard, exact FSRS persistence path, Session Quest excluded)');
+console.log('Lexia M20 Learner Review Quest contract: PASS (canonical 5-stage due queue, locked-stage guard, exact FSRS persistence path, Session Quest excluded)');
