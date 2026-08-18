@@ -23,8 +23,10 @@ import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 
 const urlParams = new URLSearchParams(window.location.search);
 const isDailyMode = urlParams.get('daily') === '1';
+const isReviewMode = urlParams.get('review') === '1';
 const isPracticeMode = urlParams.get('practice') === 'true';
 const requestedDailyTargetKey = urlParams.get('dailyTarget');
+const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
 
 function shuffledTokens(words) {
   const tokens = words.map((word, index) => ({ id: `${index}-${word}`, word }));
@@ -40,9 +42,18 @@ function findDailySentenceIndex(targetKey) {
   return BASIC_SENTENCES.findIndex((sentence) => `SENT_${sentence.id}` === targetKey);
 }
 
+function findReviewSentenceIndex(targetKey) {
+  if (!targetKey) return -1;
+  return BASIC_SENTENCES.findIndex((sentence) => `SENT_${sentence.id}` === targetKey);
+}
+
+const requestedDailySentenceIndex = isDailyMode ? findDailySentenceIndex(requestedDailyTargetKey) : -1;
+const requestedReviewSentenceIndex = isReviewMode ? findReviewSentenceIndex(requestedReviewTargetKey) : -1;
+
 function getInitialSentenceIndex() {
-  const requestedIndex = isDailyMode ? findDailySentenceIndex(requestedDailyTargetKey) : -1;
-  return requestedIndex >= 0 ? requestedIndex : 0;
+  if (requestedDailySentenceIndex >= 0) return requestedDailySentenceIndex;
+  if (requestedReviewSentenceIndex >= 0) return requestedReviewSentenceIndex;
+  return 0;
 }
 
 export default function PlaySentences() {
@@ -64,7 +75,7 @@ export default function PlaySentences() {
   const [showQuestComplete, setShowQuestComplete] = useState(false);
   const sessionQuestRef = useRef(initialQuest);
   const encounterSequenceRef = useRef(0);
-  const reviewSelectionInitializedRef = useRef(isDailyMode);
+  const reviewSelectionInitializedRef = useRef(isDailyMode || requestedReviewSentenceIndex >= 0);
   const queryClient = useQueryClient();
 
   const current = BASIC_SENTENCES[index];
