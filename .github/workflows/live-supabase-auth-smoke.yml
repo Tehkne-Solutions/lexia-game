@@ -1,0 +1,38 @@
+name: Lexia Live Supabase Auth Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      recovery:
+        description: 'Also request a real password-recovery e-mail'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  live-auth-api-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: lexia-live-smoke
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run disposable GoTrue + REST/JWT RLS proof
+        env:
+          LEXIA_LIVE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          LEXIA_LIVE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_PUBLISHABLE_KEY }}
+          LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY }}
+          LEXIA_LIVE_TEST_EMAIL: ${{ secrets.LEXIA_LIVE_TEST_EMAIL }}
+          LEXIA_LIVE_TEST_PASSWORD: ${{ secrets.LEXIA_LIVE_TEST_PASSWORD }}
+          LEXIA_LIVE_TEST_RECOVERY: ${{ inputs.recovery }}
+        run: node scripts/run-live-supabase-auth-smoke.mjs
