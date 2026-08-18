@@ -1,0 +1,58 @@
+name: Lexia Supabase Release Attestation
+
+on:
+  workflow_dispatch:
+    inputs:
+      auth_run_id:
+        description: 'Successful Lexia Live Supabase Auth Smoke run ID (recovery=true)'
+        required: true
+        type: string
+      services_run_id:
+        description: 'Successful Lexia Live Supabase Services Smoke run ID (service=both)'
+        required: true
+        type: string
+      browser_run_id:
+        description: 'Successful Lexia Live Supabase Browser Cutover run ID'
+        required: true
+        type: string
+      auth_redirect_evidence_url:
+        description: 'HTTPS evidence reference confirming Supabase Auth site URL / redirect allow-list'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  attest-release-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: lexia-release-approval
+
+    steps:
+      - name: Checkout attested commit
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify same-commit live evidence chain
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          LEXIA_AUTH_RUN_ID: ${{ inputs.auth_run_id }}
+          LEXIA_SERVICES_RUN_ID: ${{ inputs.services_run_id }}
+          LEXIA_BROWSER_RUN_ID: ${{ inputs.browser_run_id }}
+          LEXIA_AUTH_REDIRECT_EVIDENCE_URL: ${{ inputs.auth_redirect_evidence_url }}
+        run: node scripts/run-m10-release-attestation.mjs
+
+      - name: Upload M10 release attestation
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m10-release-attestation
+          path: artifacts/m10/release-attestation.json
+          if-no-files-found: error
+          retention-days: 30

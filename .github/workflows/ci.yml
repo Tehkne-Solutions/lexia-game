@@ -80,6 +80,9 @@ jobs:
       - name: Browser cutover harness contract
         run: node scripts/check-browser-cutover-harness.mjs
 
+      - name: Release orchestration contract
+        run: node scripts/check-release-orchestration.mjs
+
       - name: Supabase schema contract
         run: npm run check:supabase-schema
 
