@@ -68,6 +68,9 @@ jobs:
       - name: Fresh Start contract
         run: node scripts/check-fresh-start.mjs
 
+      - name: Production runtime readiness contract
+        run: node scripts/check-production-runtime-readiness.mjs
+
       - name: Supabase schema contract
         run: npm run check:supabase-schema
 
