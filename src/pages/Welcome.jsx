@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass, Trophy, RotateCcw } from 'lucide-react';
+import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass, Trophy, RotateCcw, CheckCircle2 } from 'lucide-react';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import DailyChallengeCard from '@/components/game/DailyChallengeCard';
 import { speak, playClickSound } from '@/lib/sounds';
@@ -14,6 +14,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { getJourneyState } from '@/game/journeyEngine';
 import { getJourneyWorldExperience } from '@/game/worldExperienceEngine';
 import { buildLearnerReviewQuest, getLearnerReviewQuestLabel } from '@/game/learnerReviewQuestEngine';
+
+const reviewCompleted = new URLSearchParams(window.location.search).get('reviewComplete') === '1';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -156,6 +158,29 @@ export default function Welcome() {
               </span>
             </div>
           </motion.div>
+
+          {reviewCompleted && !reviewQuest.hasDueReviews && (
+            <motion.div
+              className="w-full max-w-xs rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-3 py-3 shadow-sm"
+              initial={{ opacity: 0, y: 10, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.74 }}
+              role="status"
+              aria-label="Revisões em dia"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-none">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-display text-sm text-emerald-900">Revisões em dia</p>
+                  <p className="font-body text-xs text-emerald-800 mt-0.5">
+                    Você terminou tudo que estava pronto para hoje.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {dailyChallenge && (
             <motion.button
