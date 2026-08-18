@@ -74,6 +74,9 @@ jobs:
       - name: Adaptive journey review contract
         run: node scripts/check-adaptive-journey-review.mjs
 
+      - name: Journey review insights contract
+        run: node scripts/check-journey-review-insights.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -143,11 +146,14 @@ jobs:
       - name: Practice hub browser QA
         run: node scripts/check-practice-hub-browser.mjs
 
-      - name: Upload M18 visual regression evidence
+      - name: Review insights browser QA
+        run: node scripts/check-review-insights-browser.mjs
+
+      - name: Upload M19 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m18-browser-layout
+          name: lexia-m19-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png
@@ -156,5 +162,7 @@ jobs:
             artifacts/m16/*.json
             artifacts/m17/*.png
             artifacts/m17/*.json
+            artifacts/m19/*.png
+            artifacts/m19/*.json
           if-no-files-found: warn
           retention-days: 14

@@ -13,6 +13,36 @@ function isRepeatedSuccessMastered(record) {
   return attempts > 0 && correct >= 3 && correct / attempts >= 0.6;
 }
 
+function reviewTime(record) {
+  const parsed = Date.parse(record?.next_review || '');
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function summarizeReviewReadiness(records, now) {
+  const attempted = records.filter((record) => Number(record?.total_attempts || 0) > 0);
+  const scheduled = attempted
+    .map((record) => ({ record, dueAt: reviewTime(record) }))
+    .filter((item) => item.dueAt !== null);
+  const due = scheduled.filter((item) => item.dueAt <= now);
+  const upcoming = scheduled
+    .filter((item) => item.dueAt > now)
+    .sort((a, b) => a.dueAt - b.dueAt);
+  const stabilityValues = attempted
+    .map((record) => Number(record?.stability || 0))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const averageStability = stabilityValues.length > 0
+    ? Math.round((stabilityValues.reduce((sum, value) => sum + value, 0) / stabilityValues.length) * 10) / 10
+    : 0;
+
+  return {
+    dueReviews: due.length,
+    scheduledReviews: scheduled.length,
+    upcomingReviews: upcoming.length,
+    nextReviewAt: upcoming[0]?.dueAt ? new Date(upcoming[0].dueAt).toISOString() : null,
+    averageStability,
+  };
+}
+
 export const PARENT_JOURNEY_CHAPTERS = Object.freeze([
   Object.freeze({
     id: 'letters',
@@ -71,7 +101,7 @@ export const PARENT_JOURNEY_TOTAL_TARGETS = PARENT_JOURNEY_CHAPTERS.reduce(
   0,
 );
 
-function summarizeChapter(chapter, records) {
+function summarizeChapter(chapter, records, now) {
   const chapterRecords = records.filter(chapter.matches);
   const started = chapterRecords.filter((record) => Number(record?.total_attempts || 0) > 0).length;
   const mastered = chapterRecords.filter(chapter.isMastered).length;
@@ -79,6 +109,7 @@ function summarizeChapter(chapter, records) {
   const correct = chapterRecords.reduce((sum, record) => sum + Number(record?.correct_attempts || 0), 0);
   const accuracy = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
   const completionPct = Math.min(100, Math.round((mastered / chapter.total) * 100));
+  const review = summarizeReviewReadiness(chapterRecords, now);
 
   return {
     id: chapter.id,
@@ -94,10 +125,11 @@ function summarizeChapter(chapter, records) {
     accuracy,
     completionPct,
     completed: mastered >= chapter.total,
+    ...review,
   };
 }
 
-function buildRecommendations({ chapters, journey, overallAccuracy, totalAttempts, maxStreak }) {
+function buildRecommendations({ chapters, journey, overallAccuracy, totalAttempts, maxStreak, dueReviews }) {
   const current = chapters.find((chapter) => chapter.stage === journey.stage) || chapters.at(-1);
   const remaining = current ? Math.max(current.total - current.mastered, 0) : 0;
   const recommendations = [];
@@ -106,6 +138,10 @@ function buildRecommendations({ chapters, journey, overallAccuracy, totalAttempt
     recommendations.push('A jornada principal foi dominada. Mantenha revisões curtas na Torre da Maestria para consolidar o aprendizado.');
   } else if (current) {
     recommendations.push(`Foco atual: ${current.label}. Faltam ${remaining} objetivos para dominar este capítulo.`);
+  }
+
+  if (dueReviews > 0) {
+    recommendations.push(`${dueReviews} ${dueReviews === 1 ? 'revisão está pronta' : 'revisões estão prontas'} agora. Uma sessão curta de revisão ajuda a consolidar o que já foi aprendido.`);
   }
 
   if (totalAttempts === 0) {
@@ -118,19 +154,21 @@ function buildRecommendations({ chapters, journey, overallAccuracy, totalAttempt
     recommendations.push('A precisão está estável. Mantenha a frequência de prática e revise erros logo após cada sessão.');
   }
 
-  if (maxStreak < 5 && totalAttempts > 0) {
+  if (recommendations.length < 3 && maxStreak < 5 && totalAttempts > 0) {
     recommendations.push('Uma meta simples para a próxima sessão: construir uma sequência de 5 acertos com atenção e sem pressa.');
-  } else if (maxStreak >= 5) {
+  } else if (recommendations.length < 3 && maxStreak >= 5) {
     recommendations.push(`Maior sequência atual: ${maxStreak}. Use esse ritmo como motivação, sem transformar sequência em pressão.`);
   }
 
   return recommendations.slice(0, 3);
 }
 
-export function buildParentJourneyInsights(allProgress = []) {
+export function buildParentJourneyInsights(allProgress = [], options = {}) {
   const records = Array.isArray(allProgress) ? allProgress : [];
-  const chapters = PARENT_JOURNEY_CHAPTERS.map((chapter) => summarizeChapter(chapter, records));
+  const now = Number.isFinite(options?.now) ? Number(options.now) : Date.now();
+  const chapters = PARENT_JOURNEY_CHAPTERS.map((chapter) => summarizeChapter(chapter, records, now));
   const journey = getJourneyState(records);
+  const review = summarizeReviewReadiness(records, now);
 
   const totalStars = records.reduce((sum, record) => sum + Number(record?.stars_earned || 0), 0);
   const totalAttempts = records.reduce((sum, record) => sum + Number(record?.total_attempts || 0), 0);
@@ -146,6 +184,7 @@ export function buildParentJourneyInsights(allProgress = []) {
     overallAccuracy,
     totalAttempts,
     maxStreak,
+    dueReviews: review.dueReviews,
   });
 
   return {
@@ -162,13 +201,14 @@ export function buildParentJourneyInsights(allProgress = []) {
     totalChapters: PARENT_JOURNEY_CHAPTERS.length,
     overallCompletionPct,
     recommendations,
+    ...review,
   };
 }
 
 export function buildParentWeeklyReport(insights) {
   const safe = insights || buildParentJourneyInsights([]);
   const chapterLines = (safe.chapters || [])
-    .map((chapter) => `• ${chapter.shortLabel}: ${chapter.mastered}/${chapter.total} dominados (${chapter.completionPct}%) · Precisão ${chapter.accuracy}%`)
+    .map((chapter) => `• ${chapter.shortLabel}: ${chapter.mastered}/${chapter.total} dominados (${chapter.completionPct}%) · Precisão ${chapter.accuracy}% · Revisões agora ${chapter.dueReviews}`)
     .join('\n');
   const recommendationLines = (safe.recommendations || []).map((item) => `• ${item}`).join('\n');
 
@@ -181,6 +221,9 @@ export function buildParentWeeklyReport(insights) {
     `Precisão geral: ${safe.overallAccuracy}%`,
     `Maior sequência: ${safe.maxStreak}`,
     `Tentativas totais: ${safe.totalAttempts}`,
+    `Revisões prontas agora: ${safe.dueReviews || 0}`,
+    `Revisões com agenda FSRS: ${safe.scheduledReviews || 0}`,
+    `Próxima revisão futura: ${safe.nextReviewAt || 'nenhuma agendada'}`,
     '',
     'Capítulos:',
     chapterLines,
