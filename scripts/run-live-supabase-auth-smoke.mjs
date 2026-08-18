@@ -27,7 +27,6 @@ function taggedEmail(tag) {
 }
 
 const users = [];
-const progressIds = [];
 
 async function request(path, { method = 'GET', key = publishableKey, token, json, headers = {} } = {}) {
   const requestHeaders = new Headers(headers);
@@ -134,7 +133,6 @@ async function createProgress(token, letter) {
     },
   }, `progress create ${letter}`);
   assert.ok(Array.isArray(payload) && payload[0]?.id, 'progress create must return representation');
-  progressIds.push(payload[0].id);
   return payload[0];
 }
 
@@ -180,7 +178,6 @@ async function optionalRecovery(email) {
 
 const emailA = taggedEmail('a');
 const emailB = taggedEmail('b');
-let primaryAccessToken = null;
 
 try {
   const signupA = await signUp(emailA, 'a');
@@ -190,8 +187,7 @@ try {
   if (!signupB.session?.access_token) await adminConfirmUser(signupB.user.id);
 
   let sessionA = signupA.session?.access_token ? signupA.session : await signIn(emailA);
-  let sessionB = signupB.session?.access_token ? signupB.session : await signIn(emailB);
-  primaryAccessToken = sessionA.access_token;
+  const sessionB = signupB.session?.access_token ? signupB.session : await signIn(emailB);
 
   const userA = await me(sessionA.access_token);
   const userB = await me(sessionB.access_token);
@@ -217,18 +213,22 @@ try {
   assert.equal(ownPatch?.[0]?.stars_earned, 2, 'A must update own progress');
   const ownDelete = await deleteProgress(sessionA.access_token, rowA.id);
   assert.equal(ownDelete?.[0]?.id, rowA.id, 'A must delete own progress');
-  progressIds.splice(progressIds.indexOf(rowA.id), 1);
 
   sessionA = await refresh(sessionA.refresh_token);
-  primaryAccessToken = sessionA.access_token;
   assert.equal((await me(sessionA.access_token)).id, userA.id, 'refreshed session must retain learner identity');
 
   const recovery = await optionalRecovery(emailA);
+  const refreshTokenAtLogout = sessionA.refresh_token;
   await logout(sessionA.access_token);
-  primaryAccessToken = null;
 
-  const afterLogout = await request('/auth/v1/user', { token: sessionA.access_token });
-  assert.ok([401, 403].includes(afterLogout.response.status), 'logged-out access token must no longer authenticate');
+  const refreshAfterLogout = await request('/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    json: { refresh_token: refreshTokenAtLogout },
+  });
+  assert.ok(
+    [400, 401, 403].includes(refreshAfterLogout.response.status),
+    'logout must revoke the session refresh token even though an issued access JWT can remain valid until expiry'
+  );
 
   console.log(JSON.stringify({
     gate: 'M09-B',
@@ -239,7 +239,7 @@ try {
     restCrud: true,
     realJwtRlsIsolation: true,
     refresh: true,
-    logout: true,
+    logoutRefreshRevocation: true,
     recovery,
     secretsPrinted: false,
   }));
