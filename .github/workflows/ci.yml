@@ -46,6 +46,9 @@ jobs:
       - name: Edge Functions contract
         run: node scripts/check-edge-functions.mjs
 
+      - name: Progress migration contract
+        run: node scripts/check-progress-migration.mjs
+
       - name: Lint
         run: npm run lint
 
