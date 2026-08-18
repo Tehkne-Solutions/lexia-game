@@ -36,13 +36,18 @@ import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/s
 const urlParams = new URLSearchParams(window.location.search);
 const isPracticeMode = urlParams.get('mode') === 'practice';
 const isDailyMode = urlParams.get('daily') === '1';
+const isReviewMode = urlParams.get('review') === '1';
 const requestedDailyTargetKey = urlParams.get('dailyTarget');
 const requestedDailyLetter = ALPHABET.some((item) => item.letter === requestedDailyTargetKey)
   ? requestedDailyTargetKey
   : null;
+const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
+const requestedReviewLetter = ALPHABET.some((item) => item.letter === requestedReviewTargetKey)
+  ? requestedReviewTargetKey
+  : null;
 
 export default function PlayGame() {
-  const [currentLetter, setCurrentLetter] = useState(() => requestedDailyLetter || getInitialLearningLetter(ALPHABET));
+  const [currentLetter, setCurrentLetter] = useState(() => requestedDailyLetter || requestedReviewLetter || getInitialLearningLetter(ALPHABET));
   const [phase, setPhase] = useState('draw');
   const [aiResult, setAiResult] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -57,7 +62,7 @@ export default function PlayGame() {
   const [sessionQuest, setSessionQuest] = useState(null);
   const [showQuestComplete, setShowQuestComplete] = useState(false);
   const prevStatsRef = useRef(null);
-  const journeySyncRef = useRef(Boolean(isDailyMode && requestedDailyLetter));
+  const journeySyncRef = useRef(Boolean((isDailyMode && requestedDailyLetter) || (isReviewMode && requestedReviewLetter)));
   const sessionQuestInitializedRef = useRef(false);
   const sessionQuestRef = useRef(null);
   const encounterSequenceRef = useRef(0);
@@ -78,16 +83,18 @@ export default function PlayGame() {
   const totalStreak = allProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
   const masteredCount = allProgress.filter(p => calculateMastery(p) >= 80).length;
   const journey = getJourneyState(allProgress);
-  const isGuidedMission = !isPracticeMode && journey.stage === JOURNEY_STAGES.LETTERS;
+  const isGuidedMission = !isPracticeMode && !isReviewMode && journey.stage === JOURNEY_STAGES.LETTERS;
   const isCurrentMissionTarget = isGuidedMission && journey.target === currentLetter;
 
   useEffect(() => {
     if (isPracticeMode || journeySyncRef.current || !hasLoadedProgress) return;
-    if (journey.stage === JOURNEY_STAGES.LETTERS && journey.target) {
+    if (isReviewMode) {
+      setCurrentLetter(requestedReviewLetter || pickNextLetter(allProgress, currentLetter, ALPHABET));
+    } else if (journey.stage === JOURNEY_STAGES.LETTERS && journey.target) {
       setCurrentLetter(journey.target);
     }
     journeySyncRef.current = true;
-  }, [hasLoadedProgress, journey.stage, journey.target]);
+  }, [hasLoadedProgress, journey.stage, journey.target, allProgress, currentLetter]);
 
   useEffect(() => {
     if (sessionQuestInitializedRef.current || !hasLoadedProgress) return;
@@ -410,7 +417,7 @@ Look carefully at the image. Return JSON:
         </div>
       </div>
 
-      {!isPracticeMode && (
+      {!isPracticeMode && !isReviewMode && (
         <div className="px-3 py-1.5 border-b border-border/60 bg-card/70 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
           <Compass className="w-3.5 h-3.5 text-primary" />
           <span className="font-bold text-primary">
@@ -518,7 +525,7 @@ Look carefully at the image. Return JSON:
                 </Button>
               </div>
 
-              {!isPracticeMode && (
+              {!isPracticeMode && !isReviewMode && (
                 <Link to="/world" className="w-full max-w-[260px]">
                   <Button variant="ghost" size="sm" className="w-full rounded-xl gap-1.5 text-xs text-muted-foreground">
                     <MapIcon className="w-3.5 h-3.5" /> Ver jornada no mapa
