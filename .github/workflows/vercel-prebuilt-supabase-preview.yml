@@ -1,0 +1,97 @@
+name: Lexia Vercel Prebuilt Supabase Preview
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-deploy-prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: lexia-live-smoke
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Validate protected deployment configuration
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          LEXIA_LIVE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          LEXIA_LIVE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_PUBLISHABLE_KEY }}
+          LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY }}
+          LEXIA_LIVE_TEST_EMAIL: ${{ secrets.LEXIA_LIVE_TEST_EMAIL }}
+          LEXIA_LIVE_TEST_PASSWORD: ${{ secrets.LEXIA_LIVE_TEST_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID LEXIA_LIVE_SUPABASE_URL LEXIA_LIVE_SUPABASE_PUBLISHABLE_KEY LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY LEXIA_LIVE_TEST_EMAIL LEXIA_LIVE_TEST_PASSWORD; do
+            test -n "${!name:-}" || { echo "Missing protected environment value: $name" >&2; exit 1; }
+          done
+
+      - name: Pull Vercel preview project configuration
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build Supabase preview locally in GitHub Actions
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VITE_LEXIA_PLATFORM_PROVIDER: supabase
+          VITE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_LEXIA_SUPABASE_AUTH_READY: 'true'
+          VITE_LEXIA_SUPABASE_EDGE_READY: 'true'
+          VITE_LEXIA_RELEASE_SHA: ${{ github.sha }}
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy prebuilt preview
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN" 2>&1 | tee /tmp/lexia-vercel-deploy.log
+          DEPLOYMENT_URL="$(grep -Eo 'https://[A-Za-z0-9._-]+\.vercel\.app' /tmp/lexia-vercel-deploy.log | tail -n 1)"
+          test -n "$DEPLOYMENT_URL" || { echo 'Vercel preview URL not found in deploy output' >&2; exit 1; }
+          echo "url=$DEPLOYMENT_URL" >> "$GITHUB_OUTPUT"
+          echo "Created controlled preview: $DEPLOYMENT_URL"
+
+      - name: Prove the generated deployed Supabase preview
+        env:
+          LEXIA_LIVE_PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+          LEXIA_LIVE_SUPABASE_URL: ${{ secrets.LEXIA_LIVE_SUPABASE_URL }}
+          LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.LEXIA_LIVE_SUPABASE_SERVICE_ROLE_KEY }}
+          LEXIA_LIVE_TEST_EMAIL: ${{ secrets.LEXIA_LIVE_TEST_EMAIL }}
+          LEXIA_LIVE_TEST_PASSWORD: ${{ secrets.LEXIA_LIVE_TEST_PASSWORD }}
+        run: node scripts/run-live-deployed-supabase-preview-smoke.mjs
+
+      - name: Upload prebuilt deployed-preview evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m10c-prebuilt-vercel-supabase-preview
+          path: artifacts/m10b/*.png
+          if-no-files-found: error
+          retention-days: 30

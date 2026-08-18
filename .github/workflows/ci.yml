@@ -86,6 +86,9 @@ jobs:
       - name: Deployed preview harness contract
         run: node scripts/check-deployed-preview-harness.mjs
 
+      - name: Prebuilt preview pipeline contract
+        run: node scripts/check-prebuilt-preview-pipeline.mjs
+
       - name: Supabase schema contract
         run: npm run check:supabase-schema
 
