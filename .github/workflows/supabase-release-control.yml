@@ -1,0 +1,66 @@
+name: Lexia Supabase Release Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      auth_redirect_evidence_url:
+        description: 'HTTPS evidence confirming Supabase Auth site URL / redirect allow-list'
+        required: true
+        type: string
+      production_origin:
+        description: 'Intended public Lexia production HTTPS root origin'
+        required: true
+        type: string
+      rollback_evidence_url:
+        description: 'HTTPS rollback-readiness evidence for this release'
+        required: true
+        type: string
+      preview_strategy:
+        description: 'How to prove the deployed Supabase preview'
+        required: true
+        default: prebuilt
+        type: choice
+        options:
+          - prebuilt
+          - existing-secret
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: lexia-supabase-release-control
+  cancel-in-progress: false
+
+jobs:
+  prepare-production-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    environment: lexia-release-approval
+
+    steps:
+      - name: Checkout release-control commit
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Orchestrate same-SHA M09 → M10-D release chain
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          LEXIA_AUTH_REDIRECT_EVIDENCE_URL: ${{ inputs.auth_redirect_evidence_url }}
+          LEXIA_PRODUCTION_ORIGIN: ${{ inputs.production_origin }}
+          LEXIA_ROLLBACK_EVIDENCE_URL: ${{ inputs.rollback_evidence_url }}
+          LEXIA_PREVIEW_STRATEGY: ${{ inputs.preview_strategy }}
+        run: node scripts/run-m11-release-control.mjs
+
+      - name: Upload M11 release-control evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m11-release-control-candidate
+          path: artifacts/m11/release-control.json
+          if-no-files-found: error
+          retention-days: 30
