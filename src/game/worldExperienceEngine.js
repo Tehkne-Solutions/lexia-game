@@ -98,6 +98,15 @@ export function getUnlockedWorldRelics(stats = {}) {
     .filter((relic) => relic.unlocked);
 }
 
+export function getWorldRelicProgress(stats = {}) {
+  const relics = getUnlockedWorldRelics(stats);
+  return {
+    unlocked: relics.length,
+    total: Object.keys(WORLD_EXPERIENCES).length,
+    relics,
+  };
+}
+
 export function getJourneyWorldExperience(journey, stats = {}) {
   return getWorldExperience(journey?.worldId || 'alphabet', stats);
 }
