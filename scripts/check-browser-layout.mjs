@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const artifactsDir = path.join(root, 'artifacts', 'm07g');
+const artifactsDir = path.join(root, 'artifacts', 'm08');
 const previewPort = 4173;
 const debugPort = 9222;
 const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -123,6 +123,17 @@ async function waitForSelector(cdp, selector, timeoutMs = 10000) {
   throw new Error(`Timed out waiting for ${selector} at ${url}. Body: ${body}`);
 }
 
+async function waitForText(cdp, text, timeoutMs = 10000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const found = await cdp.evaluate(`document.body?.innerText?.includes(${JSON.stringify(text)})`);
+    if (found) return;
+    await sleep(150);
+  }
+  const url = await cdp.evaluate('location.href');
+  throw new Error(`Timed out waiting for text ${JSON.stringify(text)} at ${url}`);
+}
+
 async function navigate(cdp, url, selector) {
   await cdp.send('Page.navigate', { url });
   const deadline = Date.now() + 10000;
@@ -132,7 +143,6 @@ async function navigate(cdp, url, selector) {
     await sleep(100);
   }
   await waitForSelector(cdp, selector);
-  // Capture the stable visual state, not Framer Motion's initial opacity/position frames.
   await sleep(1500);
 }
 
@@ -186,6 +196,14 @@ function assertViewportMetrics(metrics, { name, allowShellScroll = false, expect
   }
 }
 
+async function assertBoundedGameSurface(cdp, viewportName, surfaceName) {
+  const metrics = await getLayoutMetrics(cdp, '.game-viewport', '.game-scroll-y');
+  assertViewportMetrics(metrics, { name: `${viewportName}/${surfaceName}` });
+  assert.ok(metrics.scrollClientHeight > 0, `${viewportName}/${surfaceName}: bounded content region must render`);
+  assert.ok(metrics.scrollScrollHeight >= metrics.scrollClientHeight, `${viewportName}/${surfaceName}: scroll metrics invalid`);
+  return metrics;
+}
+
 const viewports = [
   { name: 'mobile-short', width: 360, height: 640, mobile: true },
   { name: 'mobile', width: 390, height: 844, mobile: true },
@@ -211,7 +229,7 @@ let cdp;
 try {
   await waitForHttp(baseUrl);
   const chromeBin = findChrome();
-  const profileDir = path.join(root, '.tmp-m07g-chrome');
+  const profileDir = path.join(root, '.tmp-m08-chrome');
   await rm(profileDir, { recursive: true, force: true });
   chrome = spawn(chromeBin, [
     '--headless=new',
@@ -252,14 +270,25 @@ try {
     await capture(cdp, `${viewport.name}-play`);
 
     await navigate(cdp, `${baseUrl}/world`, '.game-viewport');
-    const mapMetrics = await getLayoutMetrics(cdp, '.game-viewport', '.game-scroll-y');
-    assertViewportMetrics(mapMetrics, { name: `${viewport.name}/world` });
-    assert.ok(mapMetrics.scrollClientHeight > 0, `${viewport.name}/world: bounded map scroll region must render`);
-    assert.ok(mapMetrics.scrollScrollHeight >= mapMetrics.scrollClientHeight, `${viewport.name}/world: map scroll metrics invalid`);
+    await assertBoundedGameSurface(cdp, viewport.name, 'world');
+    await waitForText(cdp, 'Sílabas Complexas');
+    await waitForText(cdp, 'Frases Mágicas');
     await capture(cdp, `${viewport.name}-world`);
+
+    await navigate(cdp, `${baseUrl}/play-syllables?mode=complex`, '.game-viewport');
+    await waitForText(cdp, 'Sílabas Complexas');
+    await waitForText(cdp, 'Expedição dos Encontros');
+    await assertBoundedGameSurface(cdp, viewport.name, 'complex-syllables');
+    await capture(cdp, `${viewport.name}-complex-syllables`);
+
+    await navigate(cdp, `${baseUrl}/play-sentences`, '.game-viewport');
+    await waitForText(cdp, 'Frases Mágicas');
+    await waitForText(cdp, 'Expedição das Histórias');
+    await assertBoundedGameSurface(cdp, viewport.name, 'sentences');
+    await capture(cdp, `${viewport.name}-sentences`);
   }
 
-  console.log('Lexia Browser Layout M07-G: PASS (Chrome mobile-short/mobile/desktop; Welcome + PlayGame + World Map)');
+  console.log('Lexia Browser Layout M08: PASS (Chrome mobile-short/mobile/desktop; 5 journey surfaces × 3 viewports)');
 } finally {
   cdp?.close();
   chrome?.kill('SIGTERM');
