@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { activePlatformProvider } from '@/platform';
 
 import Welcome from './pages/Welcome';
 import Login from './pages/Login';
@@ -21,6 +22,7 @@ import Settings from './pages/Settings';
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
+  const isPublicSupabaseWelcome = activePlatformProvider === 'supabase' && location.pathname === '/';
 
   if (location.pathname === '/login') {
     return <Login />;
@@ -40,7 +42,8 @@ const AuthenticatedApp = () => {
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
+    }
+    if (authError.type === 'auth_required' && !isPublicSupabaseWelcome) {
       navigateToLogin();
       return null;
     }
