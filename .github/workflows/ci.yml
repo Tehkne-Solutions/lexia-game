@@ -68,6 +68,9 @@ jobs:
       - name: Journey daily challenge contract
         run: node scripts/check-journey-daily-challenge.mjs
 
+      - name: Journey free practice contract
+        run: node scripts/check-journey-free-practice.mjs
+
       - name: Game shell contract
         run: node scripts/check-game-shell.mjs
 
@@ -134,16 +137,21 @@ jobs:
       - name: Daily challenge browser QA
         run: node scripts/check-daily-challenge-browser.mjs
 
-      - name: Upload M16 visual evidence
+      - name: Practice hub browser QA
+        run: node scripts/check-practice-hub-browser.mjs
+
+      - name: Upload M17 visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lexia-m16-browser-layout
+          name: lexia-m17-browser-layout
           path: |
             artifacts/m14/*.png
             artifacts/m15/*.png
             artifacts/m15/*.json
             artifacts/m16/*.png
             artifacts/m16/*.json
+            artifacts/m17/*.png
+            artifacts/m17/*.json
           if-no-files-found: warn
           retention-days: 14

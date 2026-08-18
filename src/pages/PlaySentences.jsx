@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { CheckCircle, ChevronRight, Home, RotateCcw, Volume2 } from 'lucide-react';
+import { CheckCircle, ChevronRight, Home, RotateCcw, Sparkles, Volume2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import MascotAvatar from '@/components/game/MascotAvatar';
@@ -22,6 +22,7 @@ import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 
 const urlParams = new URLSearchParams(window.location.search);
 const isDailyMode = urlParams.get('daily') === '1';
+const isPracticeMode = urlParams.get('practice') === 'true';
 const requestedDailyTargetKey = urlParams.get('dailyTarget');
 
 function shuffledTokens(words) {
@@ -54,7 +55,10 @@ export default function PlaySentences() {
   const [totalStars, setTotalStars] = useState(0);
   const [lastStarMultiplier, setLastStarMultiplier] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
-  const initialQuest = createSessionQuest({ stage: JOURNEY_STAGES.SENTENCES, worldId: 'sentences' });
+  const initialQuest = createSessionQuest(
+    { stage: JOURNEY_STAGES.SENTENCES, worldId: 'sentences' },
+    { enabled: !isPracticeMode },
+  );
   const [sessionQuest, setSessionQuest] = useState(initialQuest);
   const [showQuestComplete, setShowQuestComplete] = useState(false);
   const sessionQuestRef = useRef(initialQuest);
@@ -177,7 +181,7 @@ export default function PlaySentences() {
       setPhase('correct');
       setMascotExpression('excited');
       setMascotMessage('A frase ganhou vida!');
-      saveMutation.mutate({ isCorrect: true, encounterId });
+      if (!isPracticeMode) saveMutation.mutate({ isCorrect: true, encounterId });
       setTimeout(() => speak(getSpokenFeedback(true, `Você montou: ${current.sentence}.`, { motivationalChance: 0.55 })), 350);
       if (nextStreak > 0 && nextStreak % 5 === 0 && !sessionQuestRef.current?.completed) {
         setShowCelebration(true);
@@ -191,7 +195,7 @@ export default function PlaySentences() {
     setPhase('wrong');
     setMascotExpression('encouraging');
     setMascotMessage('A ordem pode mudar!');
-    saveMutation.mutate({ isCorrect: false, encounterId });
+    if (!isPracticeMode) saveMutation.mutate({ isCorrect: false, encounterId });
     setTimeout(() => speak(getSpokenFeedback(false, current.hint, { motivationalChance: 0.3 })), 400);
   }, [current, selectedSentence, streak, saveMutation]);
 
@@ -231,14 +235,21 @@ export default function PlaySentences() {
       />
 
       <header className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 flex-shrink-0">
-        <Link to="/world">
+        <Link to={isPracticeMode ? '/practice' : '/world'}>
           <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
             <Home className="w-4 h-4" />
           </Button>
         </Link>
-        <div className="text-center min-w-0">
-          <p className="font-display text-sm sm:text-base text-foreground">Frases Mágicas</p>
-          <p className="font-body text-[10px] text-muted-foreground">O Jardim das Histórias</p>
+        <div className="flex items-center justify-center gap-2 min-w-0">
+          {isPracticeMode && (
+            <span className="bg-secondary/20 text-secondary border border-secondary/40 rounded-full px-2 py-0.5 flex items-center gap-1 text-xs font-body font-bold flex-none">
+              <Sparkles className="w-3 h-3" /> Prática
+            </span>
+          )}
+          <div className="text-center min-w-0">
+            <p className="font-display text-sm sm:text-base text-foreground">Frases Mágicas</p>
+            <p className="font-body text-[10px] text-muted-foreground">O Jardim das Histórias</p>
+          </div>
         </div>
         <div className="flex items-center gap-1 bg-amber-100 rounded-full px-2 py-0.5">
           <span className="text-sm">⭐</span>
@@ -326,8 +337,10 @@ export default function PlaySentences() {
               <motion.div key="correct" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                 className="w-full rounded-2xl border-2 border-green-400 bg-green-50 p-4 text-center">
                 <p className="font-display text-xl text-green-700">{current.sentence}</p>
-                <p className="font-body text-sm text-green-600 mt-1">Frase completa! +{lastStarMultiplier} ⭐</p>
-                <Button onClick={nextItem} disabled={saveMutation.isPending} className="mt-3 rounded-2xl gap-2 font-display">
+                <p className="font-body text-sm text-green-600 mt-1">
+                  {isPracticeMode ? 'Frase completa! Treino livre.' : `Frase completa! +${lastStarMultiplier} ⭐`}
+                </p>
+                <Button onClick={nextItem} disabled={!isPracticeMode && saveMutation.isPending} className="mt-3 rounded-2xl gap-2 font-display">
                   Próxima história <ChevronRight className="w-4 h-4" />
                 </Button>
               </motion.div>
