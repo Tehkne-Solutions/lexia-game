@@ -1,7 +1,26 @@
 -- Lexia independent progress store
 -- Tehkné Solutions
+--
+-- Fresh projects get the canonical M04 schema directly. If an incompatible
+-- legacy table already exists, fail closed and let the explicit reconciliation
+-- migration decide whether it is safe to replace.
 
 create extension if not exists pgcrypto;
+
+do $$
+begin
+  if to_regclass('public.lexia_progress') is not null
+     and not exists (
+       select 1
+       from information_schema.columns
+       where table_schema = 'public'
+         and table_name = 'lexia_progress'
+         and column_name = 'user_id'
+     ) then
+    raise exception 'Incompatible legacy public.lexia_progress detected; run explicit reconciliation migration before canonical schema migration';
+  end if;
+end
+$$;
 
 create table if not exists public.lexia_progress (
   id uuid primary key default gen_random_uuid(),
