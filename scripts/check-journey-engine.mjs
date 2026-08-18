@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { getJourneyState, JOURNEY_STAGES, summarizeJourneyProgress } from '../src/game/journeyEngine.js';
 
 const fresh = getJourneyState([]);
@@ -59,4 +60,22 @@ assert.equal(summary.syllablesMastered, 20);
 assert.equal(summary.wordsMastered, 20);
 assert.equal(summary.totalStars, 92);
 
-console.log('Lexia Journey Engine M07 contract: PASS (fresh start → letters → syllables → words → mastery)');
+const welcome = await readFile(new URL('../src/pages/Welcome.jsx', import.meta.url), 'utf8');
+assert.ok(welcome.includes('getJourneyState'));
+assert.ok(welcome.includes('enabled: canLoadProgress'), 'public Supabase Welcome must not query private progress');
+assert.ok(welcome.includes('Missão atual'));
+assert.ok(welcome.includes('to={journey.path}'));
+
+const worldMap = await readFile(new URL('../src/pages/WorldMap.jsx', import.meta.url), 'utf8');
+assert.ok(worldMap.includes('const journey = getJourneyState(allProgress)'));
+assert.ok(worldMap.includes("journey.worldId === world.id"));
+assert.ok(worldMap.includes("isRecommended ? journey.path : world.playPath"));
+
+const playGame = await readFile(new URL('../src/pages/PlayGame.jsx', import.meta.url), 'utf8');
+assert.ok(playGame.includes('isFetched: hasLoadedProgress'), 'guided activity must wait for learner progress before syncing mission');
+assert.ok(playGame.includes('setCurrentLetter(journey.target)'), 'PlayGame must start on the Journey Engine target for returning learners');
+assert.ok(playGame.includes("journey.stage === JOURNEY_STAGES.LETTERS"));
+assert.ok(playGame.includes('Ver jornada no mapa'));
+assert.ok(playGame.includes('if (!isPracticeMode) saveMutation.mutate({ letter: currentLetter, gradeValue: 2 })'), 'practice fallback must not persist progress');
+
+console.log('Lexia Journey Engine M07 contract: PASS (engine + Welcome + World Map + PlayGame handoff aligned)');
