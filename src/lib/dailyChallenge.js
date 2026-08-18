@@ -1,59 +1,71 @@
-import { ALPHABET } from './alphabetData';
-import { getDailyChallengeCandidates } from '../learning/engine.js';
+import {
+  buildDailyChallengeDefinition,
+  getDailyChallengeCompletedCount,
+  getDailyChallengeStarMultiplier,
+  getNextDailyChallengeTarget,
+  isDailyChallengeTarget,
+} from '../game/dailyChallengeEngine.js';
 
-const CHALLENGE_KEY = 'lexia_daily_challenge';
+const CHALLENGE_KEY = 'lexia_daily_challenge_v2';
 
-function getTodayKey() {
+export function getTodayChallengeKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function getDailyChallenge(allProgress) {
-  const today = getTodayKey();
-  const saved = (() => {
-    try { return JSON.parse(localStorage.getItem(CHALLENGE_KEY)); } catch { return null; }
-  })();
+function readSavedChallenge() {
+  try { return JSON.parse(localStorage.getItem(CHALLENGE_KEY)); } catch { return null; }
+}
 
-  if (saved && saved.date === today) return saved;
-
-  // Daily challenges now respect the active curriculum instead of introducing
-  // arbitrary late-stage letters before the learner is ready for them.
-  const worst = getDailyChallengeCandidates(allProgress, ALPHABET, 8);
-  const shuffled = [...worst].sort(() => Math.random() - 0.5).slice(0, 3);
-  const letters = shuffled.map((item) => item.letter);
-
-  const challenge = {
-    date: today,
-    letters,
-    progress: {},
-    completed: false,
-    starsMultiplier: 2,
-  };
-
+function writeSavedChallenge(challenge) {
   localStorage.setItem(CHALLENGE_KEY, JSON.stringify(challenge));
   return challenge;
 }
 
-export function updateChallengeProgress(letter, success) {
-  const today = getTodayKey();
-  const saved = (() => {
-    try { return JSON.parse(localStorage.getItem(CHALLENGE_KEY)); } catch { return null; }
-  })();
+export function getDailyChallenge(allProgress = []) {
+  const today = getTodayChallengeKey();
+  const saved = readSavedChallenge();
+  if (saved?.schema === 'lexia.daily-challenge.v2' && saved.date === today) return saved;
 
-  if (!saved || saved.date !== today) return null;
-  if (!saved.letters.includes(letter)) return saved;
+  const definition = buildDailyChallengeDefinition(allProgress, today);
+  return writeSavedChallenge({
+    ...definition,
+    progress: Object.fromEntries(definition.targetKeys.map((key) => [key, false])),
+    completed: false,
+  });
+}
 
-  saved.progress[letter] = saved.progress[letter] || success;
-  const allDone = saved.letters.every((challengeLetter) => saved.progress[challengeLetter]);
-  if (allDone) saved.completed = true;
+export function updateChallengeProgress(entityKey, success) {
+  const today = getTodayChallengeKey();
+  const saved = readSavedChallenge();
+  if (!saved || saved.date !== today || saved.schema !== 'lexia.daily-challenge.v2') return null;
+  if (!isDailyChallengeTarget(saved, entityKey)) return saved;
+  if (!success) return saved;
 
-  localStorage.setItem(CHALLENGE_KEY, JSON.stringify(saved));
-  return saved;
+  saved.progress = { ...saved.progress, [entityKey]: true };
+  saved.completed = saved.targetKeys.every((key) => Boolean(saved.progress[key]));
+  return writeSavedChallenge(saved);
+}
+
+export function getChallengeStarMultiplier(challenge, entityKey) {
+  return getDailyChallengeStarMultiplier(challenge, entityKey);
+}
+
+export function getChallengeCompletedCount(challenge) {
+  return getDailyChallengeCompletedCount(challenge);
+}
+
+export function getNextChallengeTarget(challenge) {
+  return getNextDailyChallengeTarget(challenge);
+}
+
+export function isChallengeTarget(challenge, entityKey) {
+  return isDailyChallengeTarget(challenge, entityKey);
 }
 
 export function isChallengeCompleted() {
-  const today = getTodayKey();
-  const saved = (() => {
-    try { return JSON.parse(localStorage.getItem(CHALLENGE_KEY)); } catch { return null; }
-  })();
-  return saved?.date === today && saved?.completed === true;
+  const today = getTodayChallengeKey();
+  const saved = readSavedChallenge();
+  return saved?.schema === 'lexia.daily-challenge.v2'
+    && saved?.date === today
+    && saved?.completed === true;
 }
