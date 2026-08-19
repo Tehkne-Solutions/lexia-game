@@ -35,8 +35,16 @@ export default function CurriculumGameplayHud({
             </span>
           )}
           <span className="font-display text-sm sm:text-base text-foreground truncate">{title}</span>
-          <span className="lexia-stat-chip" aria-label={`${totalStars} estrelas`}>⭐ {totalStars}</span>
-          {streak > 0 && <span className="lexia-stat-chip hidden sm:inline-flex" aria-label={`${streak} sequência`}>🔥 {streak}</span>}
+          <span className="lexia-stat-chip" aria-label={`${totalStars} estrelas`}>
+            <span aria-hidden="true">⭐</span>
+            <span>{totalStars}</span>
+          </span>
+          {streak > 0 && (
+            <span className="lexia-stat-chip hidden sm:inline-flex" aria-label={`${streak} sequência`}>
+              <span aria-hidden="true">🔥</span>
+              <span>{streak}</span>
+            </span>
+          )}
         </div>
         <div className="w-9" aria-hidden="true" />
       </header>
