@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import {
   buildLearnerDailyPlan,
   LEARNER_DAILY_PLAN_KIND,
+  LEARNER_DAILY_PLAN_STATE,
 } from '../src/game/learnerDailyPlanEngine.js';
 
 const firstRunJourney = {
@@ -43,6 +44,10 @@ assert.deepEqual(freshPlan.steps.map((step) => step.kind), [
   LEARNER_DAILY_PLAN_KIND.DAILY_BONUS,
 ]);
 assert.equal(freshPlan.steps[0].path, '/play');
+assert.equal(freshPlan.steps[0].state, LEARNER_DAILY_PLAN_STATE.CURRENT);
+assert.equal(freshPlan.steps[1].state, LEARNER_DAILY_PLAN_STATE.OPTIONAL);
+assert.equal(freshPlan.currentStep.kind, LEARNER_DAILY_PLAN_KIND.CURRICULUM);
+assert.equal(freshPlan.nextRequiredStep, null);
 assert.equal(freshPlan.requiredCount, 1);
 assert.equal(freshPlan.summary, 'Missão atual → bônus opcional');
 
@@ -62,6 +67,13 @@ assert.deepEqual(duePlan.steps.map((step) => step.kind), [
   LEARNER_DAILY_PLAN_KIND.CURRICULUM,
   LEARNER_DAILY_PLAN_KIND.DAILY_BONUS,
 ]);
+assert.deepEqual(duePlan.steps.map((step) => step.state), [
+  LEARNER_DAILY_PLAN_STATE.CURRENT,
+  LEARNER_DAILY_PLAN_STATE.NEXT,
+  LEARNER_DAILY_PLAN_STATE.OPTIONAL,
+]);
+assert.equal(duePlan.currentStep.kind, LEARNER_DAILY_PLAN_KIND.REVIEW);
+assert.equal(duePlan.nextRequiredStep.kind, LEARNER_DAILY_PLAN_KIND.CURRICULUM);
 assert.equal(duePlan.steps[0].path, '/play?review=1&reviewTarget=A');
 assert.equal(duePlan.steps[0].progressTotal, 2);
 assert.equal(duePlan.steps[1].path, '/play-syllables');
@@ -80,8 +92,12 @@ assert.deepEqual(healthyPlan.steps.map((step) => step.kind), [
   LEARNER_DAILY_PLAN_KIND.CURRICULUM,
   LEARNER_DAILY_PLAN_KIND.DAILY_BONUS,
 ]);
+assert.equal(healthyPlan.steps[0].state, LEARNER_DAILY_PLAN_STATE.CURRENT);
+assert.equal(healthyPlan.steps[1].state, LEARNER_DAILY_PLAN_STATE.COMPLETE);
 assert.equal(healthyPlan.steps[1].completed, true);
 assert.equal(healthyPlan.steps[1].progressCurrent, 3);
+assert.equal(healthyPlan.currentStep.kind, LEARNER_DAILY_PLAN_KIND.CURRICULUM);
+assert.equal(healthyPlan.bonusStep.state, LEARNER_DAILY_PLAN_STATE.COMPLETE);
 assert.equal(healthyPlan.requiredCount, 1);
 
 const noBonusPlan = buildLearnerDailyPlan({
@@ -91,6 +107,7 @@ const noBonusPlan = buildLearnerDailyPlan({
 });
 assert.deepEqual(noBonusPlan.steps.map((step) => step.kind), [LEARNER_DAILY_PLAN_KIND.CURRICULUM]);
 assert.equal(noBonusPlan.hasDailyBonus, false);
+assert.equal(noBonusPlan.currentStep.state, LEARNER_DAILY_PLAN_STATE.CURRENT);
 assert.equal(noBonusPlan.summary, 'Missão atual');
 
 assert.throws(
@@ -112,4 +129,4 @@ const workflowSource = await readFile(new URL('../.github/workflows/learner-dail
 assert.ok(workflowSource.includes('Learner daily plan contract'));
 assert.ok(workflowSource.includes('node scripts/check-learner-daily-plan.mjs'));
 
-console.log('Lexia M30 Learner Daily Plan contract: PASS (review → curriculum → optional daily bonus, first-run guard, compact Home integration)');
+console.log('Lexia M30 Learner Daily Plan contract: PASS (current → next → optional/complete focus states, first-run guard, compact Home integration)');
