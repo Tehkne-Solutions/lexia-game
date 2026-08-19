@@ -73,6 +73,7 @@ The adaptive priority is now validated through the real built application in Chr
 - the production platform module is restored immediately after the disposable E2E build;
 - no test alias or E2E hook enters the production Vite configuration;
 - browser proof verifies the exact primary CTA, not merely the presence of review text;
+- route mode/target parameters must be evaluated when `PlayGame` mounts, never at module load, so SPA navigation cannot reuse stale query parameters;
 - horizontal overflow remains blocked on the mobile proof viewport.
 
 — Tehkné Solutions
