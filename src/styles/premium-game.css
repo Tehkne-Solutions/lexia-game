@@ -1,0 +1,138 @@
+/* Lexia premium game language — Tehkné Solutions */
+
+:root:not(.high-contrast) {
+  --background: 43 44% 96%;
+  --foreground: 216 33% 17%;
+  --card: 45 60% 99%;
+  --card-foreground: 216 33% 17%;
+  --popover: 45 60% 99%;
+  --popover-foreground: 216 33% 17%;
+  --primary: 201 66% 35%;
+  --primary-foreground: 45 70% 98%;
+  --secondary: 153 39% 37%;
+  --secondary-foreground: 45 70% 98%;
+  --muted: 40 25% 90%;
+  --muted-foreground: 218 11% 42%;
+  --accent: 40 92% 58%;
+  --accent-foreground: 30 50% 15%;
+  --border: 38 25% 82%;
+  --input: 38 25% 82%;
+  --ring: 201 66% 35%;
+
+  --lexia-paper-deep: 39 34% 90%;
+  --lexia-ink-soft: 216 22% 31%;
+  --lexia-primary-depth: 202 72% 25%;
+  --lexia-green-depth: 154 48% 27%;
+  --lexia-gold-depth: 35 78% 42%;
+  --lexia-panel-edge: 36 30% 78%;
+  --lexia-shadow: 216 30% 14%;
+}
+
+:root.dark:not(.high-contrast) {
+  --background: 215 34% 11%;
+  --foreground: 43 38% 94%;
+  --card: 215 29% 15%;
+  --card-foreground: 43 38% 94%;
+  --popover: 215 29% 15%;
+  --popover-foreground: 43 38% 94%;
+  --primary: 190 52% 54%;
+  --primary-foreground: 215 38% 10%;
+  --secondary: 151 35% 48%;
+  --secondary-foreground: 215 38% 10%;
+  --muted: 214 23% 20%;
+  --muted-foreground: 40 16% 70%;
+  --accent: 40 78% 59%;
+  --accent-foreground: 215 38% 10%;
+  --border: 211 21% 27%;
+  --input: 211 21% 27%;
+  --ring: 190 52% 54%;
+
+  --lexia-paper-deep: 215 25% 18%;
+  --lexia-ink-soft: 42 16% 72%;
+  --lexia-primary-depth: 193 58% 34%;
+  --lexia-green-depth: 151 40% 31%;
+  --lexia-gold-depth: 35 60% 42%;
+  --lexia-panel-edge: 211 21% 31%;
+  --lexia-shadow: 215 50% 4%;
+}
+
+html:not(.high-contrast) body {
+  background-color: hsl(var(--background));
+}
+
+html:not(.high-contrast) .game-viewport,
+html:not(.high-contrast) .game-viewport-scroll {
+  background-color: hsl(var(--background));
+}
+
+html:not(.high-contrast) .game-viewport .bg-card,
+html:not(.high-contrast) .game-viewport-scroll .bg-card {
+  background-color: hsl(var(--card));
+}
+
+/* Home adventure panel: book-like surface, not an app dashboard card. */
+html:not(.high-contrast) [aria-label="Plano de aventura"] {
+  border-color: hsl(var(--lexia-panel-edge)) !important;
+  background-color: hsl(var(--card)) !important;
+  box-shadow:
+    0 1px 0 hsl(var(--card)) inset,
+    0 7px 0 hsl(var(--lexia-paper-deep)),
+    0 15px 28px hsl(var(--lexia-shadow) / 0.14) !important;
+}
+
+/* Primary Home CTA: physical game control, no gradient/glow. */
+html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r {
+  background-image: none !important;
+  background-color: hsl(var(--primary)) !important;
+  border: 1px solid hsl(var(--lexia-primary-depth)) !important;
+  box-shadow:
+    0 5px 0 hsl(var(--lexia-primary-depth)),
+    0 11px 22px hsl(var(--lexia-shadow) / 0.18) !important;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease !important;
+}
+
+html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r:hover {
+  background-color: hsl(var(--primary) / 0.92) !important;
+  box-shadow:
+    0 5px 0 hsl(var(--lexia-primary-depth)),
+    0 13px 25px hsl(var(--lexia-shadow) / 0.2) !important;
+}
+
+html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 2px 0 hsl(var(--lexia-primary-depth)),
+    0 6px 12px hsl(var(--lexia-shadow) / 0.16) !important;
+}
+
+/* Cards used for review and daily bonus gain distinct authored material cues. */
+html:not(.high-contrast) .border-sky-300.bg-sky-50\/90 {
+  border-color: hsl(var(--primary) / 0.42) !important;
+  background-color: hsl(var(--card)) !important;
+  box-shadow: 0 5px 0 hsl(var(--primary) / 0.12);
+}
+
+html:not(.high-contrast) .border-amber-300.bg-amber-50\/80 {
+  border-color: hsl(var(--accent) / 0.72) !important;
+  background-color: hsl(var(--card)) !important;
+  box-shadow: 0 4px 0 hsl(var(--accent) / 0.16);
+}
+
+/* Make game cards feel printed/constructed rather than floating SaaS panels. */
+html:not(.high-contrast) .game-viewport .rounded-3xl.border-2,
+html:not(.high-contrast) .game-viewport-scroll .rounded-3xl.border-2 {
+  box-shadow:
+    0 1px 0 hsl(var(--card)) inset,
+    0 6px 0 hsl(var(--lexia-paper-deep)),
+    0 12px 22px hsl(var(--lexia-shadow) / 0.13);
+}
+
+html:not(.high-contrast) .font-display {
+  letter-spacing: 0.005em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r {
+    transition: none !important;
+  }
+}
