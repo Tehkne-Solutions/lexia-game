@@ -1,0 +1,46 @@
+name: M29-C Fix Route Params
+
+on:
+  push:
+    branches:
+      - agent/m29c-adaptive-home-browser-proof
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[m29c-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m29c-adaptive-home-browser-proof
+          fetch-depth: 0
+      - name: Apply exact-review route fix
+        shell: python
+        run: |
+          from pathlib import Path
+
+          play = Path('src/pages/PlayGame.jsx')
+          source = play.read_text()
+          old = """const urlParams = new URLSearchParams(window.location.search);\nconst isPracticeMode = urlParams.get('mode') === 'practice';\nconst isDailyMode = urlParams.get('daily') === '1';\nconst isReviewMode = urlParams.get('review') === '1';\nconst requestedDailyTargetKey = urlParams.get('dailyTarget');\nconst requestedDailyLetter = ALPHABET.some((item) => item.letter === requestedDailyTargetKey)\n  ? requestedDailyTargetKey\n  : null;\nconst requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;\nconst requestedReviewLetter = ALPHABET.some((item) => item.letter === requestedReviewTargetKey)\n  ? requestedReviewTargetKey\n  : null;\n\nexport default function PlayGame() {\n"""
+          new = """export default function PlayGame() {\n  const urlParams = new URLSearchParams(window.location.search);\n  const isPracticeMode = urlParams.get('mode') === 'practice';\n  const isDailyMode = urlParams.get('daily') === '1';\n  const isReviewMode = urlParams.get('review') === '1';\n  const requestedDailyTargetKey = urlParams.get('dailyTarget');\n  const requestedDailyLetter = ALPHABET.some((item) => item.letter === requestedDailyTargetKey)\n    ? requestedDailyTargetKey\n    : null;\n  const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;\n  const requestedReviewLetter = ALPHABET.some((item) => item.letter === requestedReviewTargetKey)\n    ? requestedReviewTargetKey\n    : null;\n"""
+          if old not in source:
+              raise SystemExit('PlayGame route-param source pattern not found')
+          play.write_text(source.replace(old, new, 1))
+
+          contract = Path('scripts/check-exact-review-handoff.mjs')
+          check = contract.read_text()
+          marker = "const practiceSource = await readFile(new URL('../src/pages/PracticeHub.jsx', import.meta.url), 'utf8');"
+          guard = """const playComponentIndex = playSource.indexOf('export default function PlayGame()');\nconst playRouteParamsIndex = playSource.indexOf('const urlParams = new URLSearchParams(window.location.search);');\nassert.ok(\n  playRouteParamsIndex > playComponentIndex,\n  'PlayGame route params must be evaluated per component mount so SPA navigation preserves exact targets',\n);\n\n"""
+          if marker not in check:
+              raise SystemExit('Exact review contract insertion point not found')
+          contract.write_text(check.replace(marker, guard + marker, 1))
+      - name: Commit fix
+        run: |
+          git config user.name "Tehkne Solutions Automation"
+          git config user.email "automation@tehkne.invalid"
+          git add src/pages/PlayGame.jsx scripts/check-exact-review-handoff.mjs
+          git commit -m "fix(m29): preserve SPA review route targets [m29c-applied]"
+          git push origin HEAD:agent/m29c-adaptive-home-browser-proof
