@@ -44,22 +44,28 @@ assert.ok(
   'delegated curriculum HUD must hide campaign context during Practice, Review and Daily modes',
 );
 assert.ok(
-  curriculumHudSource.includes("to={isReviewMode ? '/' : '/world'}"),
-  'delegated curriculum HUD must keep Review navigation isolated from the world map',
+  curriculumHudSource.includes("const resolvedHomePath = homePath || (isReviewMode ? '/' : '/world')"),
+  'delegated curriculum HUD must keep Review fallback isolated from the world map',
+);
+assert.ok(
+  curriculumHudSource.includes('<Link to={resolvedHomePath}'),
+  'delegated curriculum HUD must navigate through the resolved safe home path',
 );
 
 const sentenceSource = await readFile(new URL('../src/pages/PlaySentences.jsx', import.meta.url), 'utf8');
 for (const required of [
   "const isReviewMode = urlParams.get('review') === '1'",
   "const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null",
+  "const homePath = isPracticeMode ? '/practice' : isReviewMode ? '/' : '/world'",
   'function findReviewSentenceIndex(targetKey)',
   'const requestedDailySentenceIndex = isDailyMode ? findDailySentenceIndex(requestedDailyTargetKey) : -1',
   'const requestedReviewSentenceIndex = isReviewMode ? findReviewSentenceIndex(requestedReviewTargetKey) : -1',
   'if (requestedDailySentenceIndex >= 0) return requestedDailySentenceIndex',
   'if (requestedReviewSentenceIndex >= 0) return requestedReviewSentenceIndex',
   'useRef(isDailyMode || requestedReviewSentenceIndex >= 0)',
+  'homePath={homePath}',
 ]) {
-  assert.ok(sentenceSource.includes(required), `PlaySentences M22 invariant missing: ${required}`);
+  assert.ok(sentenceSource.includes(required), `PlaySentences M22/M37-C invariant missing: ${required}`);
 }
 assert.ok(
   sentenceSource.indexOf('if (requestedDailySentenceIndex >= 0)') < sentenceSource.indexOf('if (requestedReviewSentenceIndex >= 0)'),
@@ -71,4 +77,4 @@ assert.ok(ciSource.includes('Advanced exact review handoff contract'));
 assert.ok(ciSource.includes('node scripts/check-exact-review-handoff-advanced.mjs'));
 assert.ok(ciSource.includes('Advanced exact review browser QA'));
 
-console.log('Lexia M22/M37-B Advanced Exact Review Handoff contract: PASS (simple + complex + words + sentences exact targets, Daily precedence + delegated HUD isolation preserved)');
+console.log('Lexia M22/M37-B/M37-C Advanced Exact Review Handoff contract: PASS (simple + complex + words + sentences exact targets, Daily precedence + resolved HUD isolation preserved)');
