@@ -1,0 +1,42 @@
+name: Lexia Post Review Handoff
+
+on:
+  push:
+    branches:
+      - main
+      - 'integration/**'
+      - 'agent/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  post-review-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Learner next action contract
+        run: node scripts/check-learner-next-action.mjs
+      - name: Core typecheck
+        run: npm run typecheck:core
+      - name: Post-review handoff browser proof
+        run: node scripts/check-post-review-handoff-browser.mjs
+      - name: Upload M31-A evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m31a-post-review-handoff
+          path: artifacts/m31a
+          if-no-files-found: warn
