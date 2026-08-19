@@ -1,0 +1,40 @@
+name: Lexia Post Daily Handoff
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  post-daily-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Learner next action contract
+        run: node scripts/check-learner-next-action.mjs
+      - name: Core typecheck
+        run: npm run typecheck:core
+      - name: Prepare Chrome runtime
+        shell: bash
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_BIN"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+      - name: Post-daily handoff browser proof
+        run: node scripts/check-post-daily-handoff-browser.mjs
+      - name: Upload M33 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m33-post-daily-handoff
+          path: artifacts/m33
+          if-no-files-found: warn
