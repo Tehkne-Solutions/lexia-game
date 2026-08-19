@@ -116,19 +116,15 @@ async function waitForText(cdp, text, timeoutMs = 12000) {
   return waitFor(cdp, `document.body?.innerText?.includes(${JSON.stringify(text)})`, `text ${JSON.stringify(text)}`, timeoutMs);
 }
 
-async function clickButton(cdp, text, exact = true) {
+async function clickAdaptivePrimary(cdp) {
   const clicked = await cdp.evaluate(`(() => {
-    const text = ${JSON.stringify(text)};
-    const exact = ${JSON.stringify(exact)};
-    const button = [...document.querySelectorAll('button')].find((item) => {
-      const value = item.innerText?.trim() || '';
-      return exact ? value === text : value.includes(text);
-    });
-    if (!button) return false;
-    button.click();
+    const buttons = [...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora');
+    const primary = buttons.find((button) => String(button.className).includes('bg-gradient-to-r'));
+    if (!primary) return false;
+    primary.click();
     return true;
   })()`);
-  assert.equal(clicked, true, `button ${JSON.stringify(text)} must be clickable`);
+  assert.equal(clicked, true, 'adaptive primary Revisar agora CTA must be clickable');
   await sleep(500);
 }
 
@@ -216,12 +212,14 @@ try {
 
   const reviewHome = await snapshot(cdp);
   const reviewButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora').length`);
+  const primaryReviewButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora' && String(button.className).includes('bg-gradient-to-r')).length`);
   assert.ok(reviewButtons >= 2, 'due-review Home must expose both review card action and adaptive primary CTA');
+  assert.equal(primaryReviewButtons, 1, 'due-review Home must expose exactly one primary review CTA');
   assert.ok(reviewHome.body.includes('1 revisão pronta'), 'Home must explain the due review count');
   assert.ok(reviewHome.scrollWidth <= reviewHome.width + 1, 'due-review Home must not overflow horizontally');
   await capture(cdp, '01-home-review-primary');
 
-  await clickButton(cdp, 'Revisar agora');
+  await clickAdaptivePrimary(cdp);
   await waitFor(cdp, `location.pathname === '/play' && new URLSearchParams(location.search).get('review') === '1'`, 'exact review route');
   const reviewTarget = await cdp.evaluate(`new URLSearchParams(location.search).get('reviewTarget')`);
   assert.equal(reviewTarget, 'A', 'adaptive primary CTA must preserve the exact oldest-due target');
@@ -242,8 +240,8 @@ try {
   await navigate(cdp, baseUrl);
   await waitForText(cdp, 'Continuar sílabas');
   const resumed = await snapshot(cdp);
-  const primaryLabels = await cdp.evaluate(`[...document.querySelectorAll('button')].map((button) => button.innerText?.trim()).filter(Boolean)`);
-  assert.ok(primaryLabels.includes('Continuar sílabas'), 'when review debt is cleared, curriculum must resume as the primary action');
+  const primaryCurriculumButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Continuar sílabas' && String(button.className).includes('bg-gradient-to-r')).length`);
+  assert.equal(primaryCurriculumButtons, 1, 'when review debt is cleared, curriculum must resume as the primary action');
   assert.ok(!resumed.body.includes('1 revisão pronta'), 'cleared review debt must disappear from Home');
   assert.ok(resumed.scrollWidth <= resumed.width + 1, 'resumed Home must not overflow horizontally');
   await capture(cdp, '03-home-curriculum-restored');
