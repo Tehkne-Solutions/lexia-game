@@ -29,13 +29,23 @@ for (const required of [
   'if (requestedDailyItemIndex >= 0) return requestedDailyItemIndex',
   'if (requestedReviewItemIndex >= 0) return requestedReviewItemIndex',
   'useRef(isDailyMode || requestedReviewItemIndex >= 0)',
-  '!isPracticeMode && !isReviewMode && (',
+  '<CurriculumGameplayHud',
 ]) {
   assert.ok(syllableSource.includes(required), `PlaySyllables M22 invariant missing: ${required}`);
 }
 assert.ok(
   syllableSource.indexOf('if (requestedDailyItemIndex >= 0)') < syllableSource.indexOf('if (requestedReviewItemIndex >= 0)'),
   'Daily target must retain first precedence over Review target in syllables/words',
+);
+
+const curriculumHudSource = await readFile(new URL('../src/components/game/CurriculumGameplayHud.jsx', import.meta.url), 'utf8');
+assert.ok(
+  curriculumHudSource.includes('!isPracticeMode && !isReviewMode && !isDailyMode'),
+  'delegated curriculum HUD must hide campaign context during Practice, Review and Daily modes',
+);
+assert.ok(
+  curriculumHudSource.includes("to={isReviewMode ? '/' : '/world'}"),
+  'delegated curriculum HUD must keep Review navigation isolated from the world map',
 );
 
 const sentenceSource = await readFile(new URL('../src/pages/PlaySentences.jsx', import.meta.url), 'utf8');
@@ -61,4 +71,4 @@ assert.ok(ciSource.includes('Advanced exact review handoff contract'));
 assert.ok(ciSource.includes('node scripts/check-exact-review-handoff-advanced.mjs'));
 assert.ok(ciSource.includes('Advanced exact review browser QA'));
 
-console.log('Lexia M22 Advanced Exact Review Handoff contract: PASS (simple + complex + words + sentences exact targets, Daily precedence preserved)');
+console.log('Lexia M22/M37-B Advanced Exact Review Handoff contract: PASS (simple + complex + words + sentences exact targets, Daily precedence + delegated HUD isolation preserved)');
