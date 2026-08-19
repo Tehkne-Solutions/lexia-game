@@ -8,6 +8,9 @@ import {
   loadLearnerReviewContinuation,
   navigateLearnerReviewContinuation,
 } from '../src/game/learnerReviewRuntime.js';
+import { ALPHABET } from '../src/lib/alphabetData.js';
+import { BASIC_SENTENCES } from '../src/lib/sentencesData.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '../src/lib/syllablesData.js';
 
 const now = Date.parse('2026-08-18T18:00:00.000Z');
 const hour = 60 * 60 * 1000;
@@ -45,14 +48,18 @@ function masteredAdvanced(key, nextReview = future) {
   };
 }
 
-const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => masteredLetter(letter));
-const simple = Array.from({ length: 20 }, (_, index) => masteredAdvanced(`SYL_TEST_${index + 1}`));
-const complex = Array.from({ length: 20 }, (_, index) => masteredAdvanced(`SYLC_TEST_${index + 1}`));
-const words = Array.from({ length: 20 }, (_, index) => masteredAdvanced(`WORD_TEST_${index + 1}`));
-const sentences = Array.from({ length: 20 }, (_, index) => masteredAdvanced(`SENT_TEST_${index + 1}`));
+const letters = ALPHABET.map(({ letter }) => masteredLetter(letter));
+const simple = BASIC_SYLLABLES.map((item) => masteredAdvanced(`SYL_${item.syllable}`));
+const complex = COMPLEX_SYLLABLES.map((item) => masteredAdvanced(`SYLC_${item.syllable}`));
+const words = BASIC_WORDS.map((item) => masteredAdvanced(`WORD_${item.word}`));
+const sentences = BASIC_SENTENCES.map((item) => masteredAdvanced(`SENT_${item.id}`));
 
-letters[25] = masteredLetter('Z', new Date(now - 3 * hour).toISOString());
-words[4] = masteredAdvanced('WORD_VACA', new Date(now - hour).toISOString());
+const zIndex = letters.findIndex((record) => record.letter === 'Z');
+const vacaIndex = words.findIndex((record) => record.letter === 'WORD_VACA');
+assert.ok(zIndex >= 0, 'canonical alphabet must include Z');
+assert.ok(vacaIndex >= 0, 'canonical word catalog must include VACA');
+letters[zIndex] = masteredLetter('Z', new Date(now - 3 * hour).toISOString());
+words[vacaIndex] = masteredAdvanced('WORD_VACA', new Date(now - hour).toISOString());
 const dueProgress = [...letters, ...simple, ...complex, ...words, ...sentences];
 
 const first = getLearnerReviewContinuation(dueProgress, { now });
@@ -148,4 +155,4 @@ const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.me
 assert.ok(ciSource.includes('Due-only review session contract'));
 assert.ok(ciSource.includes('Due-only review browser QA'));
 
-console.log('Lexia M23 Due-Only Review Session contract: PASS (fresh persisted queue, cross-chapter handoff, no weak/new drift, explicit completion)');
+console.log('Lexia M23/M27 Due-Only Review Session contract: PASS (canonical whole-curriculum queue, fresh persisted handoff, explicit completion)');
