@@ -57,18 +57,19 @@ export function buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, da
 
   const requiredSteps = steps.filter((step) => step.required);
   const hasReviewFirst = requiredSteps[0]?.kind === LEARNER_DAILY_PLAN_KIND.REVIEW;
+  const hasDailyBonus = steps.some((step) => step.kind === LEARNER_DAILY_PLAN_KIND.DAILY_BONUS);
+  const requiredSequence = hasReviewFirst ? 'Revisão curta → missão atual' : 'Missão atual';
 
   return {
     steps,
     requiredCount: requiredSteps.length,
     hasReviewFirst,
+    hasDailyBonus,
     headline: journey.firstRun
       ? 'Sua primeira aventura começa aqui'
       : hasReviewFirst
         ? 'Primeiro relembrar, depois avançar'
         : 'Seu caminho de hoje está pronto',
-    summary: hasReviewFirst
-      ? 'Revisão curta → missão atual → bônus opcional'
-      : 'Missão atual → bônus opcional',
+    summary: hasDailyBonus ? `${requiredSequence} → bônus opcional` : requiredSequence,
   };
 }
