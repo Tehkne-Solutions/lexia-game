@@ -4,6 +4,7 @@ import {
   buildParentJourneyInsights,
   buildParentWeeklyReport,
 } from '../src/game/parentInsightsEngine.js';
+import { BASIC_SYLLABLES } from '../src/lib/syllablesData.js';
 
 const now = Date.parse('2026-08-18T18:00:00.000Z');
 const hour = 60 * 60 * 1000;
@@ -98,7 +99,7 @@ const report = buildParentWeeklyReport(insights);
 assert.ok(report.includes('Revisões prontas agora: 2'));
 assert.ok(report.includes('Revisões com agenda FSRS: 4'));
 assert.ok(report.includes(`Próxima revisão futura: ${new Date(now + 2 * hour).toISOString()}`));
-assert.ok(report.includes('Sílabas simples: 1/20 dominados'));
+assert.ok(report.includes(`Sílabas simples: 1/${BASIC_SYLLABLES.length} dominados`));
 assert.ok(report.includes('Revisões agora 1'));
 
 const engineSource = await readFile(new URL('../src/game/parentInsightsEngine.js', import.meta.url), 'utf8');
@@ -125,4 +126,4 @@ assert.ok(ciSource.includes('Journey review insights contract'));
 assert.ok(ciSource.includes('node scripts/check-journey-review-insights.mjs'));
 assert.ok(ciSource.includes('Review insights browser QA'));
 
-console.log('Lexia M19 Journey Review Insights contract: PASS (whole-journey due/upcoming schedule, deterministic clock, legacy mastery preserved)');
+console.log('Lexia M19/M27 Journey Review Insights contract: PASS (canonical curriculum totals + whole-journey FSRS readiness)');
