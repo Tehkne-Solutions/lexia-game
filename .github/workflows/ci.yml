@@ -94,8 +94,7 @@ jobs:
           cleanup_chrome
           trap - EXIT
 
-      - name: Typecheck legacy UI baseline
-        continue-on-error: true
+      - name: Typecheck UI
         run: npm run typecheck
 
       - name: Typecheck core
