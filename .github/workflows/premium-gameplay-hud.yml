@@ -1,0 +1,106 @@
+name: Lexia Premium Gameplay HUD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/pages/PlayGame.jsx'
+      - 'src/components/game/GameplayHud.jsx'
+      - 'src/components/game/GameplayResultActions.jsx'
+      - 'src/components/game/GameActionButton.jsx'
+      - 'src/styles/premium-game.css'
+      - 'scripts/check-premium-gameplay-hud.mjs'
+      - '.github/workflows/premium-gameplay-hud.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  premium-gameplay-hud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Premium gameplay HUD contract
+        run: node scripts/check-premium-gameplay-hud.mjs
+      - name: Typecheck UI
+        run: npm run typecheck
+      - name: Typecheck core
+        run: npm run typecheck:core
+      - name: Build
+        run: npm run build
+      - name: Prepare Chrome browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ldconfig -p | grep -q 'libXtst.so.6'; then
+            sudo apt-get update -y
+            sudo apt-get install -y libxtst6
+          fi
+
+          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "No Chrome/Chromium executable found" >&2
+            exit 1
+          fi
+          echo "CHROME_BIN=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+          PROFILE_DIR="$(mktemp -d)"
+          CHROME_STDOUT="$(mktemp)"
+          CHROME_STDERR="$(mktemp)"
+          "$CHROME_PATH" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --mute-audio \
+            --no-first-run \
+            --no-default-browser-check \
+            --remote-debugging-address=127.0.0.1 \
+            --remote-debugging-port=9333 \
+            --user-data-dir="$PROFILE_DIR" \
+            about:blank >"$CHROME_STDOUT" 2>"$CHROME_STDERR" &
+          CHROME_PID=$!
+          cleanup_chrome() {
+            kill "$CHROME_PID" 2>/dev/null || true
+            wait "$CHROME_PID" 2>/dev/null || true
+            rm -rf "$PROFILE_DIR" "$CHROME_STDOUT" "$CHROME_STDERR" 2>/dev/null || true
+          }
+          trap cleanup_chrome EXIT
+
+          READY=0
+          for _ in $(seq 1 120); do
+            if curl --fail --silent --show-error http://127.0.0.1:9333/json/version >/dev/null 2>&1; then
+              READY=1
+              break
+            fi
+            if ! kill -0 "$CHROME_PID" 2>/dev/null; then
+              echo "Chrome exited during CDP preflight" >&2
+              cat "$CHROME_STDERR" >&2 || true
+              exit 1
+            fi
+            sleep 0.25
+          done
+          if [ "$READY" -ne 1 ]; then
+            echo "Chrome did not expose CDP during preflight" >&2
+            cat "$CHROME_STDERR" >&2 || true
+            exit 1
+          fi
+          echo "Chrome CDP preflight: PASS"
+          cleanup_chrome
+          trap - EXIT
+      - name: Browser layout regression
+        run: node scripts/check-browser-layout.mjs
+      - name: Daily challenge browser regression
+        run: node scripts/check-daily-challenge-browser.mjs
+      - name: Exact review browser regression
+        run: node scripts/check-exact-review-browser.mjs

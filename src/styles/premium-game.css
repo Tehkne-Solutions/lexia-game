@@ -172,6 +172,51 @@ html:not(.high-contrast) .font-display {
   letter-spacing: 0.005em;
 }
 
+/* M37-A: authored gameplay HUD and result controls. */
+html:not(.high-contrast) .lexia-gameplay-hud {
+  border-bottom: 1px solid hsl(var(--lexia-panel-edge));
+  background-color: hsl(var(--card) / 0.96);
+  box-shadow: 0 3px 0 hsl(var(--lexia-paper-deep)), 0 9px 18px hsl(var(--lexia-shadow) / 0.08);
+  backdrop-filter: blur(10px);
+}
+
+html:not(.high-contrast) .lexia-hud-icon {
+  border-color: hsl(var(--lexia-panel-edge) / 0.8) !important;
+  box-shadow: 0 2px 0 hsl(var(--lexia-paper-deep));
+}
+
+html:not(.high-contrast) .lexia-mode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid hsl(var(--secondary) / 0.35);
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+  background-color: hsl(var(--card));
+  color: hsl(var(--secondary));
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+html:not(.high-contrast) .lexia-gameplay-context {
+  border-bottom: 1px solid hsl(var(--lexia-panel-edge) / 0.7);
+  background-color: hsl(var(--card) / 0.9);
+}
+
+html:not(.high-contrast) .lexia-gameplay-context-reward {
+  border-color: hsl(var(--accent) / 0.5);
+  background-color: hsl(var(--accent) / 0.1);
+  color: hsl(var(--lexia-gold-depth));
+}
+
+html:not(.high-contrast) .lexia-result-feedback-panel {
+  border: 1px solid hsl(var(--lexia-panel-edge));
+  border-radius: 1rem;
+  padding: 0.65rem;
+  background-color: hsl(var(--card));
+  box-shadow: 0 4px 0 hsl(var(--lexia-paper-deep));
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r,
   html:not(.high-contrast) .lexia-primary-action {
