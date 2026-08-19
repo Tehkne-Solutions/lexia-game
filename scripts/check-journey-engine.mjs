@@ -88,7 +88,8 @@ const welcome = await readFile(new URL('../src/pages/Welcome.jsx', import.meta.u
 assert.ok(welcome.includes('getJourneyState'));
 assert.ok(welcome.includes('enabled: canLoadProgress'), 'public Supabase Welcome must not query private progress');
 assert.ok(welcome.includes('Missão atual'));
-assert.ok(welcome.includes('to={journey.path}'));
+assert.ok(welcome.includes('getLearnerNextAction'), 'Home must delegate primary routing through the adaptive learner action boundary');
+assert.ok(welcome.includes('to={primaryAction.path}'), 'Home primary CTA must consume the adaptive action path');
 
 const worldMap = await readFile(new URL('../src/pages/WorldMap.jsx', import.meta.url), 'utf8');
 assert.ok(worldMap.includes('const journey = getJourneyState(allProgress)'));
@@ -101,4 +102,4 @@ assert.ok(playGame.includes('setCurrentLetter(journey.target)'), 'PlayGame must 
 assert.ok(playGame.includes("journey.stage === JOURNEY_STAGES.LETTERS"));
 assert.ok(playGame.includes('Ver jornada no mapa'));
 
-console.log(`Lexia Journey Engine M08/M27 contract: PASS (${JOURNEY_TOTAL_TARGETS} canonical targets → mastery)`);
+console.log(`Lexia Journey Engine M08/M29 contract: PASS (${JOURNEY_TOTAL_TARGETS} canonical targets → mastery + adaptive Home delegation)`);

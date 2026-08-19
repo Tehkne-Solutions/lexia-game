@@ -145,6 +145,9 @@ jobs:
       - name: Learner review quest contract
         run: node scripts/check-learner-review-quest.mjs
 
+      - name: Learner next action contract
+        run: node scripts/check-learner-next-action.mjs
+
       - name: Exact review handoff contract
         run: node scripts/check-exact-review-handoff.mjs
 
