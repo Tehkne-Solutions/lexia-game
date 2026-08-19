@@ -34,7 +34,7 @@ async function clearAllProgress() {
 }
 
 function hostedAuthOnly() {
-  const error = new Error('Base44 uses its hosted authentication flow');
+  const error = /** @type {Error & { code?: string }} */ (new Error('Base44 uses its hosted authentication flow'));
   error.code = 'HOSTED_AUTH_ONLY';
   throw error;
 }
