@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  refresh-lock:
+  finalize:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -25,25 +25,29 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Refresh compatible lockfile
-        run: npm update --package-lock-only --ignore-scripts
-
-      - name: Install refreshed dependency graph
+      - name: Install locked dependency graph
         run: npm ci
 
       - name: Enforce no high or critical vulnerabilities
         run: npm audit --audit-level=high
 
-      - name: Persist refreshed lockfile
+      - name: Promote permanent security gate and remove harness
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- package-lock.json; then
-            echo "package-lock.json already current"
-            exit 0
-          fi
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/ci.yml')
+          text = path.read_text()
+          old = '      - name: Dependency audit baseline\n        run: npm audit --json || true\n'
+          new = '      - name: Dependency security gate\n        run: npm audit --audit-level=high\n'
+          if old not in text:
+              raise SystemExit('temporary dependency audit baseline not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          rm .github/workflows/m28b-lock-refresh.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          git commit -m "M28-B: refresh compatible dependency lock"
+          git add .github/workflows/ci.yml .github/workflows/m28b-lock-refresh.yml
+          git commit -m "M28-B: enforce dependency security gate"
           git push origin HEAD:agent/m28b-read-resilience-boundary
