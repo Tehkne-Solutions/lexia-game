@@ -116,9 +116,10 @@ assert.equal(
   'sentence practice must gate both correct and incorrect persistence paths',
 );
 assert.ok(
-  sentencesSource.includes("to={isPracticeMode ? '/practice' : isReviewMode ? '/' : '/world'}"),
+  sentencesSource.includes("const homePath = isPracticeMode ? '/practice' : isReviewMode ? '/' : '/world'"),
   'sentence practice must keep first-precedence return to Practice Hub while Review returns home and Campaign returns to World',
 );
+assert.ok(sentencesSource.includes('homePath={homePath}'), 'sentence gameplay must delegate the resolved return path to its shared HUD');
 assert.ok(sentencesSource.includes("isPracticeMode ? 'Frase completa! Treino livre.'"), 'practice success must not advertise persistent star rewards');
 
 const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
@@ -126,4 +127,4 @@ assert.ok(ciSource.includes('Journey free practice contract'));
 assert.ok(ciSource.includes('node scripts/check-journey-free-practice.mjs'));
 assert.ok(ciSource.includes('Practice hub browser QA'));
 
-console.log('Lexia M17/M27 Journey Free Practice contract: PASS (canonical stage fixtures, 5-stage sequential unlocks, Journey Engine truth)');
+console.log('Lexia M17/M27/M37-C Journey Free Practice contract: PASS (canonical stage fixtures, persistence-free practice, delegated sentence return path)');

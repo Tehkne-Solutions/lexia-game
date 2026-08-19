@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { CheckCircle, ChevronRight, Home, RotateCcw, Sparkles, Volume2 } from 'lucide-react';
+import { CheckCircle, ChevronRight, RotateCcw, Volume2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import CelebrationOverlay from '@/components/game/CelebrationOverlay';
 import SessionQuestBar from '@/components/game/SessionQuestBar';
 import SessionQuestComplete from '@/components/game/SessionQuestComplete';
+import CurriculumGameplayHud from '@/components/game/CurriculumGameplayHud';
+import GameActionButton from '@/components/game/GameActionButton';
+import GamePanel from '@/components/game/GamePanel';
 import { lexiaPlatform } from '@/platform';
 import { BASIC_SENTENCES } from '@/lib/sentencesData';
 import { loadLearnerReviewContinuation, navigateLearnerReviewContinuation } from '@/game/learnerReviewRuntime';
@@ -28,6 +29,7 @@ const isReviewMode = urlParams.get('review') === '1';
 const isPracticeMode = urlParams.get('practice') === 'true';
 const requestedDailyTargetKey = urlParams.get('dailyTarget');
 const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
+const homePath = isPracticeMode ? '/practice' : isReviewMode ? '/' : '/world';
 
 function shuffledTokens(words) {
   const tokens = words.map((word, index) => ({ id: `${index}-${word}`, word }));
@@ -280,6 +282,8 @@ export default function PlaySentences() {
     nextItem();
   }, [nextItem]);
 
+  const panelTone = isReviewMode ? 'review' : isDailyMode ? 'reward' : 'paper';
+
   return (
     <div className="game-viewport flex flex-col bg-background">
       <SessionQuestComplete
@@ -287,47 +291,30 @@ export default function PlaySentences() {
         onContinue={handleContinueAfterQuest}
       />
 
-      <header className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 flex-shrink-0">
-        <Link to={isPracticeMode ? '/practice' : isReviewMode ? '/' : '/world'}>
-          <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
-            <Home className="w-4 h-4" />
-          </Button>
-        </Link>
-        <div className="flex items-center justify-center gap-2 min-w-0">
-          {isPracticeMode && (
-            <span className="bg-secondary/20 text-secondary border border-secondary/40 rounded-full px-2 py-0.5 flex items-center gap-1 text-xs font-body font-bold flex-none">
-              <Sparkles className="w-3 h-3" /> Prática
-            </span>
-          )}
-          <div className="text-center min-w-0">
-            <p className="font-display text-sm sm:text-base text-foreground">Frases Mágicas</p>
-            <p className="font-body text-[10px] text-muted-foreground">O Jardim das Histórias</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 bg-amber-100 rounded-full px-2 py-0.5">
-          <span className="text-sm">⭐</span>
-          <span className="font-body font-bold text-sm text-amber-700">{totalStars}</span>
-        </div>
-      </header>
-
-      {isDailyMode && (
-        <div className="px-3 py-1.5 border-b border-amber-200 bg-amber-50 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
-          <span aria-hidden="true">🏆</span>
-          <span className="font-bold text-amber-800">Desafio diário</span>
-          <span className="text-amber-700">alvo novo vale ⭐×2</span>
-        </div>
-      )}
+      <CurriculumGameplayHud
+        title="Frases Mágicas"
+        missionLabel="O Jardim das Histórias"
+        dailyBonusLabel="alvo novo vale ⭐×2"
+        homePath={homePath}
+        isPracticeMode={isPracticeMode}
+        isReviewMode={isReviewMode}
+        isDailyMode={isDailyMode}
+        totalStars={totalStars}
+        streak={streak}
+        onHome={playClickSound}
+      />
 
       <SessionQuestBar quest={sessionQuest} />
 
       <div className="game-scroll-y game-safe-bottom flex-1 flex flex-col items-center justify-center gap-3 px-4 py-3 max-w-lg mx-auto w-full">
         <MascotAvatar className="game-compact-mascot" expression={mascotExpression} size="sm" message={mascotMessage} />
 
-        <motion.section
+        <GamePanel
           key={current.id}
+          tone={panelTone}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full rounded-3xl border-2 border-primary/20 bg-card shadow-xl p-4 sm:p-6 flex flex-col items-center gap-4"
+          className="w-full rounded-3xl p-4 sm:p-6 flex flex-col items-center gap-4"
         >
           <motion.span className="text-6xl" animate={{ y: [0, -5, 0] }} transition={{ duration: 2, repeat: Infinity }}>
             {current.emoji}
@@ -338,10 +325,15 @@ export default function PlaySentences() {
             <p className="font-body text-sm text-muted-foreground mt-1">{current.hint}</p>
           </div>
 
-          <Button variant="ghost" size="sm" className="rounded-full gap-1 text-muted-foreground"
-            onClick={() => speak(current.hint)}>
+          <GameActionButton
+            gameVariant="neutral"
+            variant="ghost"
+            size="sm"
+            className="rounded-full gap-1 text-muted-foreground"
+            onClick={() => speak(current.hint)}
+          >
             <Volume2 className="w-4 h-4" /> Ouvir pista
-          </Button>
+          </GameActionButton>
 
           <div className="w-full min-h-16 rounded-2xl border-2 border-dashed border-primary/25 bg-primary/5 p-2 flex flex-wrap gap-2 items-center justify-center">
             {selectedTokens.length === 0 ? (
@@ -375,41 +367,61 @@ export default function PlaySentences() {
                 </div>
 
                 <div className="grid grid-cols-[auto_1fr] gap-2">
-                  <Button variant="outline" size="lg" onClick={resetBuild} disabled={selectedIds.length === 0} className="rounded-2xl px-4">
+                  <GameActionButton
+                    gameVariant="secondary"
+                    variant="outline"
+                    size="lg"
+                    onClick={resetBuild}
+                    disabled={selectedIds.length === 0}
+                    className="px-4"
+                    aria-label="Recomeçar frase"
+                  >
                     <RotateCcw className="w-4 h-4" />
-                  </Button>
-                  <Button size="lg" onClick={checkAnswer} disabled={selectedIds.length !== current.words.length}
-                    className="rounded-2xl font-display text-lg gap-2">
+                  </GameActionButton>
+                  <GameActionButton
+                    gameVariant="primary"
+                    size="lg"
+                    onClick={checkAnswer}
+                    disabled={selectedIds.length !== current.words.length}
+                    className="font-display text-lg gap-2"
+                  >
                     <CheckCircle className="w-5 h-5" /> Verificar frase
-                  </Button>
+                  </GameActionButton>
                 </div>
               </motion.div>
             )}
 
             {phase === 'correct' && (
-              <motion.div key="correct" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                className="w-full rounded-2xl border-2 border-green-400 bg-green-50 p-4 text-center">
-                <p className="font-display text-xl text-green-700">{current.sentence}</p>
-                <p className="font-body text-sm text-green-600 mt-1">
-                  {isPracticeMode ? 'Frase completa! Treino livre.' : `Frase completa! +${lastStarMultiplier} ⭐`}
-                </p>
-                <Button onClick={nextItem} disabled={!isPracticeMode && saveMutation.isPending} className="mt-3 rounded-2xl gap-2 font-display">
-                  {isReviewMode ? 'Próxima revisão' : 'Próxima história'} <ChevronRight className="w-4 h-4" />
-                </Button>
+              <motion.div key="correct" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full">
+                <GamePanel tone="success" className="rounded-2xl p-4 text-center">
+                  <p className="font-display text-xl text-secondary">{current.sentence}</p>
+                  <p className="font-body text-sm text-secondary mt-1">
+                    {isPracticeMode ? 'Frase completa! Treino livre.' : `Frase completa! +${lastStarMultiplier} ⭐`}
+                  </p>
+                  <GameActionButton
+                    gameVariant="primary"
+                    onClick={nextItem}
+                    disabled={!isPracticeMode && saveMutation.isPending}
+                    className="mt-3 gap-2 font-display"
+                  >
+                    {isReviewMode ? 'Próxima revisão' : 'Próxima história'} <ChevronRight className="w-4 h-4" />
+                  </GameActionButton>
+                </GamePanel>
               </motion.div>
             )}
 
             {phase === 'wrong' && (
-              <motion.div key="wrong" initial={{ opacity: 0, scale: 0.9 }} animate={{ scale: 1, opacity: 1 }}
-                className="w-full rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-center">
-                <p className="font-body text-sm text-amber-800">As palavras estão certas, mas a ordem ainda pode mudar.</p>
-                <Button onClick={resetBuild} className="mt-3 rounded-2xl gap-2 font-display">
-                  <RotateCcw className="w-4 h-4" /> Tentar outra ordem
-                </Button>
+              <motion.div key="wrong" initial={{ opacity: 0, scale: 0.9 }} animate={{ scale: 1, opacity: 1 }} className="w-full">
+                <GamePanel tone="reward" className="rounded-2xl p-4 text-center">
+                  <p className="font-body text-sm text-foreground">As palavras estão certas, mas a ordem ainda pode mudar.</p>
+                  <GameActionButton gameVariant="secondary" onClick={resetBuild} className="mt-3 gap-2 font-display">
+                    <RotateCcw className="w-4 h-4" /> Tentar outra ordem
+                  </GameActionButton>
+                </GamePanel>
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.section>
+        </GamePanel>
       </div>
 
       <CelebrationOverlay show={showCelebration} stars={3} message={`Combo ${streak}x! 🔥`} onDone={nextItem} />

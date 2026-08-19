@@ -7,6 +7,7 @@ export default function CurriculumGameplayHud({
   title,
   missionLabel,
   dailyBonusLabel,
+  homePath = null,
   isPracticeMode,
   isReviewMode,
   isDailyMode,
@@ -14,10 +15,17 @@ export default function CurriculumGameplayHud({
   streak,
   onHome,
 }) {
+  const resolvedHomePath = homePath || (isReviewMode ? '/' : '/world');
+  const homeLabel = resolvedHomePath === '/practice'
+    ? 'Voltar à prática'
+    : resolvedHomePath === '/'
+      ? 'Voltar ao início'
+      : 'Voltar ao mapa';
+
   return (
     <>
       <header className="game-safe-top lexia-gameplay-hud flex items-center justify-between px-3 py-2 flex-shrink-0">
-        <Link to={isReviewMode ? '/' : '/world'} aria-label={isReviewMode ? 'Voltar ao início' : 'Voltar ao mapa'}>
+        <Link to={resolvedHomePath} aria-label={homeLabel}>
           <GameActionButton
             gameVariant="neutral"
             variant="ghost"
