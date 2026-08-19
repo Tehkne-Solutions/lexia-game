@@ -44,6 +44,7 @@ assert.deepEqual(freshPlan.steps.map((step) => step.kind), [
 ]);
 assert.equal(freshPlan.steps[0].path, '/play');
 assert.equal(freshPlan.requiredCount, 1);
+assert.equal(freshPlan.summary, 'Missão atual → bônus opcional');
 
 const duePlan = buildLearnerDailyPlan({
   journey: returningJourney,
@@ -67,6 +68,7 @@ assert.equal(duePlan.steps[1].path, '/play-syllables');
 assert.equal(duePlan.steps[2].required, false);
 assert.equal(duePlan.steps[2].progressCurrent, 1);
 assert.equal(duePlan.requiredCount, 2);
+assert.equal(duePlan.summary, 'Revisão curta → missão atual → bônus opcional');
 
 const healthyPlan = buildLearnerDailyPlan({
   journey: returningJourney,
@@ -88,6 +90,8 @@ const noBonusPlan = buildLearnerDailyPlan({
   dailyChallenge: null,
 });
 assert.deepEqual(noBonusPlan.steps.map((step) => step.kind), [LEARNER_DAILY_PLAN_KIND.CURRICULUM]);
+assert.equal(noBonusPlan.hasDailyBonus, false);
+assert.equal(noBonusPlan.summary, 'Missão atual');
 
 assert.throws(
   () => buildLearnerDailyPlan({ journey: {}, reviewQuest: null, dailyChallenge: null }),
@@ -98,12 +102,14 @@ const welcomeSource = await readFile(new URL('../src/pages/Welcome.jsx', import.
 for (const required of [
   'buildLearnerDailyPlan',
   'Plano de aventura',
-  'dailyPlan.steps',
+  'dailyPlan.headline',
+  'dailyPlan.summary',
 ]) {
   assert.ok(welcomeSource.includes(required), `Welcome daily-plan integration missing: ${required}`);
 }
 
-const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
-assert.ok(ciSource.includes('Learner daily plan contract'));
+const workflowSource = await readFile(new URL('../.github/workflows/learner-daily-plan.yml', import.meta.url), 'utf8');
+assert.ok(workflowSource.includes('Learner daily plan contract'));
+assert.ok(workflowSource.includes('node scripts/check-learner-daily-plan.mjs'));
 
-console.log('Lexia M30 Learner Daily Plan contract: PASS (review → curriculum → optional daily bonus, first-run guard, no parallel scoring)');
+console.log('Lexia M30 Learner Daily Plan contract: PASS (review → curriculum → optional daily bonus, first-run guard, compact Home integration)');
