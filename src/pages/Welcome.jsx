@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass, Trophy, RotateCcw, CheckCircle2 } from 'lucide-react';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import DailyChallengeCard from '@/components/game/DailyChallengeCard';
@@ -37,23 +36,11 @@ export default function Welcome() {
   });
 
   const visibleProgress = canLoadProgress ? allProgress : [];
-  const journey = useMemo(
-    () => getJourneyState(visibleProgress),
-    [visibleProgress],
-  );
+  const journey = useMemo(() => getJourneyState(visibleProgress), [visibleProgress]);
   const stats = useMemo(() => buildStats(visibleProgress), [visibleProgress]);
-  const activeExperience = useMemo(
-    () => getJourneyWorldExperience(journey, stats),
-    [journey, stats],
-  );
-  const reviewQuest = useMemo(
-    () => buildLearnerReviewQuest(visibleProgress),
-    [visibleProgress],
-  );
-  const primaryAction = useMemo(
-    () => getLearnerNextAction(journey, reviewQuest),
-    [journey, reviewQuest],
-  );
+  const activeExperience = useMemo(() => getJourneyWorldExperience(journey, stats), [journey, stats]);
+  const reviewQuest = useMemo(() => buildLearnerReviewQuest(visibleProgress), [visibleProgress]);
+  const primaryAction = useMemo(() => getLearnerNextAction(journey, reviewQuest), [journey, reviewQuest]);
   const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
   const dailyCompletedCount = getChallengeCompletedCount(dailyChallenge);
   const dailyPlan = useMemo(
@@ -92,20 +79,9 @@ export default function Welcome() {
           <motion.span
             key={i}
             className="absolute text-2xl md:text-3xl opacity-20"
-            style={{
-              left: `${10 + (i * 12) % 80}%`,
-              top: `${5 + (i * 15) % 85}%`,
-            }}
-            animate={{
-              y: [0, -20, 0],
-              rotate: [0, 10, -10, 0],
-              opacity: [0.15, 0.3, 0.15],
-            }}
-            transition={{
-              duration: 4 + i * 0.5,
-              repeat: Infinity,
-              delay: i * 0.4,
-            }}
+            style={{ left: `${10 + (i * 12) % 80}%`, top: `${5 + (i * 15) % 85}%` }}
+            animate={{ y: [0, -20, 0], rotate: [0, 10, -10, 0], opacity: [0.15, 0.3, 0.15] }}
+            transition={{ duration: 4 + i * 0.5, repeat: Infinity, delay: i * 0.4 }}
           >
             {emoji}
           </motion.span>
@@ -165,13 +141,10 @@ export default function Welcome() {
             </div>
             <h2 className="font-display text-lg text-foreground">{dailyPlan.headline}</h2>
             <p className="font-body text-xs font-semibold text-muted-foreground mt-1">{dailyPlan.summary}</p>
-
             <div className="mt-3 border-t border-border/70 pt-2.5">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Missão atual</span>
-                <span className="font-body text-xs font-bold text-muted-foreground">
-                  {journey.current}/{journey.total}
-                </span>
+                <span className="font-body text-xs font-bold text-muted-foreground">{journey.current}/{journey.total}</span>
               </div>
               <p className="font-display text-sm text-foreground mt-0.5 truncate">{journey.title}</p>
               <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
@@ -196,9 +169,7 @@ export default function Welcome() {
                 </div>
                 <div className="min-w-0">
                   <p className="font-display text-sm text-emerald-900">Revisões em dia</p>
-                  <p className="font-body text-xs text-emerald-800 mt-0.5">
-                    Você terminou tudo que estava pronto para hoje.
-                  </p>
+                  <p className="font-body text-xs text-emerald-800 mt-0.5">Você terminou tudo que estava pronto para hoje.</p>
                 </div>
               </div>
             </GamePanel>
@@ -207,10 +178,7 @@ export default function Welcome() {
           {dailyChallenge && (
             <motion.button
               type="button"
-              onClick={() => {
-                playClickSound();
-                setShowDailyChallenge(true);
-              }}
+              onClick={() => { playClickSound(); setShowDailyChallenge(true); }}
               className="lexia-game-panel lexia-game-panel-reward w-full max-w-xs px-3 py-2.5 text-left hover:border-amber-400 transition-colors"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -221,14 +189,10 @@ export default function Welcome() {
                   <Trophy className="w-5 h-5 text-amber-700" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-body text-[10px] uppercase tracking-[0.12em] font-bold text-amber-700">
-                    Desafio diário · {dailyChallenge.typeLabel}
-                  </p>
+                  <p className="font-body text-[10px] uppercase tracking-[0.12em] font-bold text-amber-700">Desafio diário · {dailyChallenge.typeLabel}</p>
                   <p className="font-display text-sm text-foreground truncate">{dailyChallenge.title}</p>
                 </div>
-                <span className="font-body text-xs font-bold text-amber-800 whitespace-nowrap">
-                  {dailyCompletedCount}/3 · ⭐×2
-                </span>
+                <span className="font-body text-xs font-bold text-amber-800 whitespace-nowrap">{dailyCompletedCount}/3 · ⭐×2</span>
               </div>
             </motion.button>
           )}
@@ -246,12 +210,8 @@ export default function Welcome() {
                   <RotateCcw className="w-5 h-5 text-sky-700" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-body text-[10px] uppercase tracking-[0.12em] font-bold text-sky-700">
-                    Revisão inteligente
-                  </p>
-                  <p className="font-display text-sm text-foreground truncate">
-                    {getLearnerReviewQuestLabel(reviewQuest)} · {reviewQuest.nextChapter?.title}
-                  </p>
+                  <p className="font-body text-[10px] uppercase tracking-[0.12em] font-bold text-sky-700">Revisão inteligente</p>
+                  <p className="font-display text-sm text-foreground truncate">{getLearnerReviewQuestLabel(reviewQuest)} · {reviewQuest.nextChapter?.title}</p>
                 </div>
               </div>
               <Link to={reviewQuest.nextPath} className="block mt-2">
@@ -275,24 +235,14 @@ export default function Welcome() {
             transition={{ delay: 0.85 }}
           >
             <Link to={primaryAction.path} className="w-full">
-              <GameActionButton
-                gameVariant="primary"
-                size="lg"
-                onClick={() => playClickSound()}
-                className="w-full font-display text-xl py-7 gap-3"
-              >
+              <GameActionButton gameVariant="primary" size="lg" onClick={() => playClickSound()} className="w-full font-display text-xl py-7 gap-3">
                 <Play className="w-6 h-6" />
                 {primaryAction.cta}
               </GameActionButton>
             </Link>
 
             <Link to="/practice" className="w-full">
-              <GameActionButton
-                gameVariant="secondary"
-                variant="outline"
-                onClick={() => playClickSound()}
-                className="w-full font-body font-bold text-sm py-4 gap-2"
-              >
+              <GameActionButton gameVariant="secondary" variant="outline" onClick={() => playClickSound()} className="w-full font-body font-bold text-sm py-4 gap-2">
                 <Sparkles className="w-4 h-4" />
                 Prática Livre (sem pressão)
               </GameActionButton>
@@ -300,73 +250,43 @@ export default function Welcome() {
 
             <div className="grid grid-cols-3 gap-2 w-full">
               <Link to="/world" className="col-span-1">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => playClickSound()}
-                  className="w-full rounded-2xl font-body font-bold text-sm py-5 gap-1 border-2 hover:bg-muted/50 flex-col h-auto"
-                >
+                <GameActionButton gameVariant="neutral" variant="outline" size="lg" onClick={() => playClickSound()} className="w-full font-body font-bold text-sm py-5 gap-1 flex-col h-auto">
                   <Map className="w-5 h-5" />
                   Mapa
-                </Button>
+                </GameActionButton>
               </Link>
               <Link to="/profile" className="col-span-1">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => playClickSound()}
-                  className="w-full rounded-2xl font-body font-bold text-sm py-5 gap-1 border-2 hover:bg-muted/50 flex-col h-auto"
-                >
+                <GameActionButton gameVariant="neutral" variant="outline" size="lg" onClick={() => playClickSound()} className="w-full font-body font-bold text-sm py-5 gap-1 flex-col h-auto">
                   <User className="w-5 h-5" />
                   Perfil
-                </Button>
+                </GameActionButton>
               </Link>
               <Link to="/parent" className="col-span-1">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => playClickSound()}
-                  className="w-full rounded-2xl font-body font-bold text-sm py-5 gap-1 border-2 hover:bg-muted/50 flex-col h-auto"
-                >
+                <GameActionButton gameVariant="neutral" variant="outline" size="lg" onClick={() => playClickSound()} className="w-full font-body font-bold text-sm py-5 gap-1 flex-col h-auto">
                   <BarChart3 className="w-5 h-5" />
                   Pais
-                </Button>
+                </GameActionButton>
               </Link>
             </div>
 
             <div className="grid grid-cols-3 gap-2 w-full mt-1">
               <Link to="/speed-challenge" className="col-span-1">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={() => playClickSound()}
-                  className="w-full rounded-2xl font-body font-bold text-xs py-4 gap-1 hover:bg-amber-50 dark:hover:bg-amber-950/30 flex-col h-auto"
-                >
+                <GameActionButton gameVariant="neutral" variant="ghost" size="lg" onClick={() => playClickSound()} className="w-full font-body font-bold text-xs py-4 gap-1 flex-col h-auto border-transparent">
                   <Zap className="w-5 h-5 text-amber-500" />
                   Desafio
-                </Button>
+                </GameActionButton>
               </Link>
               <Link to="/story" className="col-span-1">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={() => playClickSound()}
-                  className="w-full rounded-2xl font-body font-bold text-xs py-4 gap-1 hover:bg-primary/5 flex-col h-auto"
-                >
+                <GameActionButton gameVariant="neutral" variant="ghost" size="lg" onClick={() => playClickSound()} className="w-full font-body font-bold text-xs py-4 gap-1 flex-col h-auto border-transparent">
                   <BookOpen className="w-5 h-5 text-primary" />
                   História
-                </Button>
+                </GameActionButton>
               </Link>
               <Link to="/settings" className="col-span-1">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={() => playClickSound()}
-                  className="w-full rounded-2xl font-body font-bold text-xs py-4 gap-1 hover:bg-muted/50 flex-col h-auto"
-                >
+                <GameActionButton gameVariant="neutral" variant="ghost" size="lg" onClick={() => playClickSound()} className="w-full font-body font-bold text-xs py-4 gap-1 flex-col h-auto border-transparent">
                   <SettingsIcon className="w-5 h-5 text-muted-foreground" />
                   Acessar
-                </Button>
+                </GameActionButton>
               </Link>
             </div>
           </motion.div>
@@ -384,11 +304,7 @@ export default function Welcome() {
 
       <AnimatePresence>
         {showDailyChallenge && dailyChallenge && (
-          <DailyChallengeCard
-            challenge={dailyChallenge}
-            onStart={startDailyChallenge}
-            onClose={() => setShowDailyChallenge(false)}
-          />
+          <DailyChallengeCard challenge={dailyChallenge} onStart={startDailyChallenge} onClose={() => setShowDailyChallenge(false)} />
         )}
       </AnimatePresence>
     </div>
