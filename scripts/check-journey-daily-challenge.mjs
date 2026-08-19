@@ -194,7 +194,7 @@ for (const forbidden of [
 assert.ok(engineSource.includes('getJourneyState(allProgress)'), 'daily challenge stage must come from Journey Engine');
 
 const platformIndex = await readFile(new URL('../src/platform/index.js', import.meta.url), 'utf8');
-assert.ok(platformIndex.includes('decorateProgressWithDailyChallenge(selectedProvider.progress)'), 'all providers must share the same daily write decoration');
+assert.ok(platformIndex.includes('decorateProgressWithDailyChallenge(resilientProvider.progress)'), 'all providers must share the same daily write decoration after read resilience');
 
 const decoratorSource = await readFile(new URL('../src/platform/decorators/dailyChallengeProgressDecorator.js', import.meta.url), 'utf8');
 assert.ok(decoratorSource.includes("from '../../lib/dailyChallenge.js'"), 'decorator must remain directly testable by Node');

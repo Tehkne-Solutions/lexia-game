@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+
       - name: Prepare Chrome browser runtime
         shell: bash
         run: |
@@ -73,7 +76,7 @@ jobs:
           trap cleanup_chrome EXIT
 
           READY=0
-          for _ in $(seq 1 60); do
+          for _ in $(seq 1 120); do
             if curl --fail --silent --show-error http://127.0.0.1:9333/json/version >/dev/null 2>&1; then
               READY=1
               break
