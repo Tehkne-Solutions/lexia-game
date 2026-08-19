@@ -111,7 +111,8 @@ export default function PlaySentences() {
   }, [isFetched, allProgress]);
 
   const saveMutation = useMutation({
-    mutationFn: async ({ isCorrect, encounterId }) => {
+    mutationFn: async (/** @type {{ isCorrect: boolean, encounterId: string }} */ variables) => {
+      const { isCorrect, encounterId } = variables;
       const entityKey = `SENT_${current.id}`;
       const existing = allProgress.find((record) => record.letter === entityKey);
       const challenge = getDailyChallenge(allProgress);

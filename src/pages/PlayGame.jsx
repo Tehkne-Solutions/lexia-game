@@ -117,7 +117,8 @@ export default function PlayGame() {
   }, [allProgress]);
 
   const saveMutation = useMutation({
-    mutationFn: async ({ letter, gradeValue, encounterId }) => {
+    mutationFn: async (/** @type {{ letter: string, gradeValue: number, encounterId: string }} */ variables) => {
+      const { letter, gradeValue, encounterId } = variables;
       const existing = progressMap[letter];
       const isCorrect = gradeValue >= 3;
       const challenge = getDailyChallenge(allProgress);
