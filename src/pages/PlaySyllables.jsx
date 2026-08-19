@@ -317,6 +317,7 @@ export default function PlaySyllables() {
       <CurriculumGameplayHud
         title={CONFIG.title}
         missionLabel={CONFIG.missionLabel}
+        dailyBonusLabel="alvo novo vale ⭐×2"
         isPracticeMode={isPracticeMode}
         isReviewMode={isReviewMode}
         isDailyMode={isDailyMode}
