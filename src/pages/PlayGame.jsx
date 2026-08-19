@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { lexiaPlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Home, Grid3X3, ChevronRight, Volume2, ThumbsDown, ThumbsUp, Zap, Sparkles, Compass, Map as MapIcon } from 'lucide-react';
+import { Volume2, Zap } from 'lucide-react';
 
 import DrawingCanvas from '@/components/game/DrawingCanvas';
 import LetterDisplay from '@/components/game/LetterDisplay';
 import MascotAvatar from '@/components/game/MascotAvatar';
-import ProgressBar from '@/components/game/ProgressBar';
 import CelebrationOverlay from '@/components/game/CelebrationOverlay';
 import LetterSelector from '@/components/game/LetterSelector';
 import AiResultBadge from '@/components/game/AiResultBadge';
@@ -17,6 +14,9 @@ import AchievementToast from '@/components/game/AchievementToast';
 import DailyChallengeCard from '@/components/game/DailyChallengeCard';
 import SessionQuestBar from '@/components/game/SessionQuestBar';
 import SessionQuestComplete from '@/components/game/SessionQuestComplete';
+import GameplayHud from '@/components/game/GameplayHud';
+import GameplayResultActions from '@/components/game/GameplayResultActions';
+import GameActionButton from '@/components/game/GameActionButton';
 
 import { ALPHABET, getLetterData } from '@/lib/alphabetData';
 import { createNewCard, reviewCard, calculateMastery, pickNextLetter } from '@/lib/fsrs';
@@ -406,57 +406,20 @@ Look carefully at the image. Return JSON:
         onContinue={handleContinueAfterQuest}
       />
 
-      <div className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 backdrop-blur-sm flex-shrink-0">
-        <Link to="/">
-          <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
-            <Home className="w-4 h-4" />
-          </Button>
-        </Link>
-
-        <div className="flex items-center gap-2 flex-1 justify-center">
-          {isPracticeMode && (
-            <span className="bg-secondary/20 text-secondary border border-secondary/40 rounded-full px-2 py-0.5 flex items-center gap-1 text-xs font-body font-bold">
-              <Sparkles className="w-3 h-3" /> Prática Livre
-            </span>
-          )}
-          <ProgressBar current={masteredCount} total={26} streak={totalStreak} stars={totalStars} />
-        </div>
-
-        <div className="flex gap-1">
-          {!isReviewMode && dailyChallenge?.type === 'letters' && !dailyChallenge.completed && (
-            <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8 relative"
-              onClick={() => { playClickSound(); setShowDailyChallenge(true); }}>
-              <Zap className="w-4 h-4 text-amber-500" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-500 rounded-full" />
-            </Button>
-          )}
-          {!isReviewMode && (
-            <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8"
-              onClick={() => { playClickSound(); setShowSelector(true); }}>
-              <Grid3X3 className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {!isPracticeMode && !isReviewMode && (
-        <div className="px-3 py-1.5 border-b border-border/60 bg-card/70 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
-          <Compass className="w-3.5 h-3.5 text-primary" />
-          <span className="font-bold text-primary">
-            {isCurrentMissionTarget ? 'Missão atual' : 'Missão recomendada'}
-          </span>
-          <span className="text-muted-foreground">{journey.title}</span>
-          <Link to="/world" className="ml-1 text-primary font-bold hover:underline">Mapa</Link>
-        </div>
-      )}
-
-      {isDailyMode && (
-        <div className="px-3 py-1.5 border-b border-amber-200 bg-amber-50 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
-          <span aria-hidden="true">🏆</span>
-          <span className="font-bold text-amber-800">Desafio diário</span>
-          <span className="text-amber-700">alvo novo vale ⭐×2</span>
-        </div>
-      )}
+      <GameplayHud
+        isPracticeMode={isPracticeMode}
+        isReviewMode={isReviewMode}
+        isDailyMode={isDailyMode}
+        dailyChallenge={dailyChallenge}
+        masteredCount={masteredCount}
+        totalStreak={totalStreak}
+        totalStars={totalStars}
+        isCurrentMissionTarget={isCurrentMissionTarget}
+        journeyTitle={journey.title}
+        onOpenDailyChallenge={() => { playClickSound(); setShowDailyChallenge(true); }}
+        onOpenSelector={() => { playClickSound(); setShowSelector(true); }}
+        onHome={playClickSound}
+      />
 
       <SessionQuestBar quest={sessionQuest} />
 
@@ -465,20 +428,22 @@ Look carefully at the image. Return JSON:
 
         <div className="flex items-center gap-3">
           <LetterDisplay letter={currentLetter} showAnchor={true} />
-          <Button
-            variant="ghost" size="sm"
+          <GameActionButton
+            gameVariant="neutral"
+            variant="ghost"
+            size="sm"
             className="rounded-full gap-1 text-muted-foreground h-8 px-2"
             onClick={() => { const d = getLetterData(currentLetter); speak(`${currentLetter} de ${d?.word}!`); }}
           >
             <Volume2 className="w-3.5 h-3.5" />
             <span className="text-xs">Ouvir</span>
-          </Button>
+          </GameActionButton>
         </div>
 
         {starMultiplier > 1 && (
           <motion.div
             initial={{ scale: 0 }} animate={{ scale: 1 }}
-            className="bg-amber-100 border border-amber-400 rounded-full px-3 py-0.5 flex items-center gap-1"
+            className="lexia-game-panel lexia-game-panel-reward rounded-full px-3 py-0.5 flex items-center gap-1"
           >
             <Zap className="w-3 h-3 text-amber-600" />
             <span className="text-xs font-body font-bold text-amber-700">Desafio: ×{starMultiplier} estrelas!</span>
@@ -518,42 +483,14 @@ Look carefully at the image. Return JSON:
                 targetLetter={currentLetter}
               />
 
-              <div className="w-full max-w-[260px]">
-                <p className="text-xs font-body text-muted-foreground text-center mb-1.5">
-                  A corujinha errou? Corrija:
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm"
-                    onClick={() => handleManualOverride(false)} disabled={isWorking}
-                    className="flex-1 rounded-xl gap-1 text-red-500 border-red-200 hover:bg-red-50 text-xs">
-                    <ThumbsDown className="w-3 h-3" /> Estava errado
-                  </Button>
-                  <Button variant="outline" size="sm"
-                    onClick={() => handleManualOverride(true)} disabled={isWorking}
-                    className="flex-1 rounded-xl gap-1 text-green-600 border-green-200 hover:bg-green-50 text-xs">
-                    <ThumbsUp className="w-3 h-3" /> Estava certo!
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 w-full max-w-[260px]">
-                <Button variant="outline" size="sm" onClick={retryLetter} disabled={isWorking}
-                  className="flex-1 rounded-xl font-body font-bold text-xs">
-                  Tentar Novamente
-                </Button>
-                <Button size="sm" onClick={goToNextLetter} disabled={isWorking}
-                  className="flex-1 rounded-xl font-display text-sm gap-1 bg-gradient-to-r from-secondary to-secondary/80 shadow-md">
-                  {isPracticeMode ? 'Próxima' : 'Continuar'} <ChevronRight className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-
-              {!isPracticeMode && !isReviewMode && (
-                <Link to="/world" className="w-full max-w-[260px]">
-                  <Button variant="ghost" size="sm" className="w-full rounded-xl gap-1.5 text-xs text-muted-foreground">
-                    <MapIcon className="w-3.5 h-3.5" /> Ver jornada no mapa
-                  </Button>
-                </Link>
-              )}
+              <GameplayResultActions
+                isWorking={isWorking}
+                isPracticeMode={isPracticeMode}
+                isReviewMode={isReviewMode}
+                onManualOverride={handleManualOverride}
+                onRetry={retryLetter}
+                onContinue={goToNextLetter}
+              />
             </motion.div>
           )}
         </AnimatePresence>
