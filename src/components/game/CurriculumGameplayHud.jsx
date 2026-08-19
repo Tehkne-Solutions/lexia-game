@@ -6,6 +6,7 @@ import GameActionButton from '@/components/game/GameActionButton';
 export default function CurriculumGameplayHud({
   title,
   missionLabel,
+  dailyBonusLabel,
   isPracticeMode,
   isReviewMode,
   isDailyMode,
@@ -61,7 +62,7 @@ export default function CurriculumGameplayHud({
         <div className="lexia-gameplay-context lexia-gameplay-context-reward flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-body flex-shrink-0">
           <span aria-hidden="true">🏆</span>
           <span className="font-bold">Desafio diário</span>
-          <span>alvo novo vale ⭐×2</span>
+          <span>{dailyBonusLabel}</span>
         </div>
       )}
     </>
