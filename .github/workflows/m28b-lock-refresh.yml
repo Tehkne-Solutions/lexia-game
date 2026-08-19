@@ -25,6 +25,9 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Refresh lock after dependency cleanup
+        run: npm install --package-lock-only --ignore-scripts
+
       - name: Install locked dependency graph
         run: npm ci
 
@@ -48,6 +51,6 @@ jobs:
           rm .github/workflows/m28b-lock-refresh.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/ci.yml .github/workflows/m28b-lock-refresh.yml
-          git commit -m "M28-B: enforce dependency security gate"
+          git add package-lock.json .github/workflows/ci.yml .github/workflows/m28b-lock-refresh.yml
+          git commit -m "M28-B: finalize dependency security hardening"
           git push origin HEAD:agent/m28b-read-resilience-boundary
