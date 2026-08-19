@@ -4,9 +4,35 @@ export const LEARNER_DAILY_PLAN_KIND = Object.freeze({
   DAILY_BONUS: 'daily-bonus',
 });
 
+export const LEARNER_DAILY_PLAN_STATE = Object.freeze({
+  CURRENT: 'current',
+  NEXT: 'next',
+  OPTIONAL: 'optional',
+  COMPLETE: 'complete',
+});
+
 function normalizeCount(value) {
   const count = Number(value || 0);
   return Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
+}
+
+function withFocusState(steps) {
+  let foundCurrent = false;
+  return steps.map((step) => {
+    if (!step.required) {
+      return {
+        ...step,
+        state: step.completed ? LEARNER_DAILY_PLAN_STATE.COMPLETE : LEARNER_DAILY_PLAN_STATE.OPTIONAL,
+      };
+    }
+
+    if (!foundCurrent) {
+      foundCurrent = true;
+      return { ...step, state: LEARNER_DAILY_PLAN_STATE.CURRENT };
+    }
+
+    return { ...step, state: LEARNER_DAILY_PLAN_STATE.NEXT };
+  });
 }
 
 export function buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, dailyCompletedCount = 0 }) {
@@ -14,11 +40,11 @@ export function buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, da
     throw new Error('Learner daily plan requires a valid journey');
   }
 
-  const steps = [];
+  const rawSteps = [];
   const totalDue = normalizeCount(reviewQuest?.totalDue);
 
   if (!journey.firstRun && reviewQuest?.hasDueReviews && reviewQuest?.nextPath) {
-    steps.push({
+    rawSteps.push({
       kind: LEARNER_DAILY_PLAN_KIND.REVIEW,
       required: true,
       path: reviewQuest.nextPath,
@@ -29,7 +55,7 @@ export function buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, da
     });
   }
 
-  steps.push({
+  rawSteps.push({
     kind: LEARNER_DAILY_PLAN_KIND.CURRICULUM,
     required: true,
     path: journey.path,
@@ -41,7 +67,7 @@ export function buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, da
 
   if (dailyChallenge?.playPath) {
     const completed = Math.min(3, normalizeCount(dailyCompletedCount));
-    steps.push({
+    rawSteps.push({
       kind: LEARNER_DAILY_PLAN_KIND.DAILY_BONUS,
       required: false,
       path: dailyChallenge.playPath,
@@ -55,16 +81,23 @@ export function buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, da
     });
   }
 
+  const steps = withFocusState(rawSteps);
   const requiredSteps = steps.filter((step) => step.required);
   const hasReviewFirst = requiredSteps[0]?.kind === LEARNER_DAILY_PLAN_KIND.REVIEW;
   const hasDailyBonus = steps.some((step) => step.kind === LEARNER_DAILY_PLAN_KIND.DAILY_BONUS);
   const requiredSequence = hasReviewFirst ? 'Revisão curta → missão atual' : 'Missão atual';
+  const currentStep = steps.find((step) => step.state === LEARNER_DAILY_PLAN_STATE.CURRENT) || null;
+  const nextRequiredStep = steps.find((step) => step.state === LEARNER_DAILY_PLAN_STATE.NEXT) || null;
+  const bonusStep = steps.find((step) => step.kind === LEARNER_DAILY_PLAN_KIND.DAILY_BONUS) || null;
 
   return {
     steps,
     requiredCount: requiredSteps.length,
     hasReviewFirst,
     hasDailyBonus,
+    currentStep,
+    nextRequiredStep,
+    bonusStep,
     headline: journey.firstRun
       ? 'Sua primeira aventura começa aqui'
       : hasReviewFirst
