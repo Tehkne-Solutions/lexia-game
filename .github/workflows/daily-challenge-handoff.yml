@@ -1,0 +1,54 @@
+name: Lexia Daily Challenge Handoff
+
+on:
+  push:
+    branches:
+      - main
+      - 'integration/**'
+      - 'agent/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  daily-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Daily challenge handoff contract
+        run: node scripts/check-daily-challenge-handoff.mjs
+      - name: Core typecheck
+        run: npm run typecheck:core
+      - name: Prepare Chrome runtime
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          elif command -v google-chrome-stable >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome-stable)" >> "$GITHUB_ENV"
+          elif command -v chromium >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v chromium)" >> "$GITHUB_ENV"
+          else
+            echo "Chrome/Chromium not found" >&2
+            exit 1
+          fi
+      - name: Daily challenge handoff browser proof
+        run: node scripts/check-daily-challenge-handoff-browser.mjs
+      - name: Upload M32 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m32-daily-challenge-handoff
+          path: artifacts/m32
+          if-no-files-found: warn
