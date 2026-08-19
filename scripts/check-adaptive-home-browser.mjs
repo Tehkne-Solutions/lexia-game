@@ -113,7 +113,13 @@ async function waitFor(cdp, expression, label, timeoutMs = 12000) {
 }
 
 async function waitForText(cdp, text, timeoutMs = 12000) {
-  return waitFor(cdp, `document.body?.innerText?.includes(${JSON.stringify(text)})`, `text ${JSON.stringify(text)}`, timeoutMs);
+  const needle = String(text).toLocaleLowerCase('pt-BR');
+  return waitFor(
+    cdp,
+    `document.body?.innerText?.toLocaleLowerCase('pt-BR').includes(${JSON.stringify(needle)})`,
+    `text ${JSON.stringify(text)}`,
+    timeoutMs,
+  );
 }
 
 async function clickAdaptivePrimary(cdp) {
@@ -215,7 +221,7 @@ try {
   const primaryReviewButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora' && String(button.className).includes('bg-gradient-to-r')).length`);
   assert.ok(reviewButtons >= 2, 'due-review Home must expose both review card action and adaptive primary CTA');
   assert.equal(primaryReviewButtons, 1, 'due-review Home must expose exactly one primary review CTA');
-  assert.ok(reviewHome.body.includes('1 revisão pronta'), 'Home must explain the due review count');
+  assert.ok(reviewHome.body.toLocaleLowerCase('pt-BR').includes('1 revisão pronta'), 'Home must explain the due review count');
   assert.ok(reviewHome.scrollWidth <= reviewHome.width + 1, 'due-review Home must not overflow horizontally');
   await capture(cdp, '01-home-review-primary');
 
@@ -242,7 +248,7 @@ try {
   const resumed = await snapshot(cdp);
   const primaryCurriculumButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Continuar sílabas' && String(button.className).includes('bg-gradient-to-r')).length`);
   assert.equal(primaryCurriculumButtons, 1, 'when review debt is cleared, curriculum must resume as the primary action');
-  assert.ok(!resumed.body.includes('1 revisão pronta'), 'cleared review debt must disappear from Home');
+  assert.ok(!resumed.body.toLocaleLowerCase('pt-BR').includes('1 revisão pronta'), 'cleared review debt must disappear from Home');
   assert.ok(resumed.scrollWidth <= resumed.width + 1, 'resumed Home must not overflow horizontally');
   await capture(cdp, '03-home-curriculum-restored');
 
