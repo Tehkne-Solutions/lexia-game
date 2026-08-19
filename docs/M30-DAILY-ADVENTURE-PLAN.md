@@ -61,6 +61,28 @@ Cards detalhados, CTA adaptativo, Prática Livre, mapa e demais superfícies con
 - progresso diário já existente;
 - integração compacta na Home.
 
-O workflow `Lexia Learner Daily Plan` executa o contrato, dependency audit e `typecheck:core` como gate próprio, enquanto os gates gerais continuam cobrindo lint, build, Critical E2E e browser QA.
+## M30-B — Foco e transição do plano
+
+O plano passa a expor semanticamente o estado de cada passo sem criar estado persistido adicional:
+
+- `current` — o que deve receber atenção agora;
+- `next` — próximo passo obrigatório;
+- `optional` — bônus disponível, mas não bloqueante;
+- `complete` — bônus já concluído.
+
+Com revisão vencida, `currentStep` é a revisão e `nextRequiredStep` é a missão curricular. Assim que a dívida de revisão desaparece, o plano é recalculado e a missão curricular torna-se imediatamente o `currentStep`.
+
+O Fresh Start continua protegido: mesmo que exista estado inconsistente de revisão, a primeira missão permanece como passo atual.
+
+### Browser proof
+
+`scripts/check-daily-plan-focus-browser.mjs` executa o app real em Chrome com a fixture canônica e prova no viewport 390×844:
+
+1. uma letra vencida faz a Home mostrar `Primeiro relembrar, depois avançar` e `Revisão curta → missão atual`;
+2. ao mover essa revisão para o futuro, a Home recalcula para `Seu caminho de hoje está pronto` e `Missão atual`;
+3. nenhum dos dois estados gera overflow horizontal;
+4. screenshots e JSON de evidência são preservados no artifact `lexia-m30b-daily-plan-focus`.
+
+O workflow `Lexia Learner Daily Plan` executa dependency audit, contrato M30, `typecheck:core` e o browser proof como gate próprio, enquanto CI geral, Critical E2E e Adaptive Home Browser permanecem como regressões obrigatórias.
 
 — Tehkné Solutions
