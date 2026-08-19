@@ -11,6 +11,15 @@ const EXPRESSIONS = {
   sleeping: { eyes: '💤', mouth: '😴' },
 };
 
+/**
+ * @param {{
+ *   expression?: string,
+ *   size?: string,
+ *   message?: React.ReactNode,
+ *   className?: string,
+ *   accessories?: any
+ * }} props
+ */
 export default function MascotAvatar({ expression = 'happy', size = 'md', message, className = '', accessories }) {
   const sizes = {
     sm: 'w-16 h-16 text-3xl',
@@ -43,7 +52,6 @@ export default function MascotAvatar({ expression = 'happy', size = 'md', messag
       >
         <span role="img" aria-label="mascot">🦉</span>
 
-        {/* Accessories */}
         {equipped.hat && (
           <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl z-20" style={{ fontSize: '1.4em' }}>{equipped.hat.emoji}</span>
         )}
@@ -57,7 +65,6 @@ export default function MascotAvatar({ expression = 'happy', size = 'md', messag
           <span className="absolute -top-1 -right-1 z-20" style={{ fontSize: '1em' }}>{equipped.extra.emoji}</span>
         )}
 
-        {/* Sparkle effects */}
         {(expression === 'celebrating' || expression === 'excited') && (
           <>
             <motion.span
@@ -86,7 +93,6 @@ export default function MascotAvatar({ expression = 'happy', size = 'md', messag
           className="bg-card border-2 border-primary/20 rounded-2xl px-4 py-2 max-w-[200px]
             text-center text-sm font-body font-semibold text-foreground shadow-md relative"
         >
-          {/* Speech bubble tail */}
           <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-card border-l-2 border-t-2 
             border-primary/20 rotate-45" />
           <span className="relative z-10">{message}</span>
