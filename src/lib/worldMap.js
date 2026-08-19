@@ -1,4 +1,9 @@
-// Learning world map progression.
+import { ALPHABET } from './alphabetData.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from './syllablesData.js';
+import { BASIC_SENTENCES } from './sentencesData.js';
+
+// Learning world map progression. Lesson totals are derived from the same
+// canonical catalogs used by the Journey Engine so map completion cannot drift.
 export const WORLDS = [
   {
     id: 'alphabet',
@@ -9,8 +14,8 @@ export const WORLDS = [
     description: 'Aprenda todas as 26 letras do alfabeto',
     unlockRequirement: 0,
     unlockType: 'always',
-    totalLessons: 26,
-    getLessonsCompleted: (stats) => stats.lettersMastered || 0,
+    totalLessons: ALPHABET.length,
+    getLessonsCompleted: (stats) => Math.min(stats.lettersMastered || 0, ALPHABET.length),
     playPath: '/play',
   },
   {
@@ -23,8 +28,8 @@ export const WORLDS = [
     unlockRequirement: 100,
     unlockMasteryPct: 0.70,
     unlockType: 'stars_or_mastery',
-    totalLessons: 20,
-    getLessonsCompleted: (stats) => Math.min(stats.syllablesBasicMastered || 0, 20),
+    totalLessons: BASIC_SYLLABLES.length,
+    getLessonsCompleted: (stats) => Math.min(stats.syllablesBasicMastered || 0, BASIC_SYLLABLES.length),
     playPath: '/play-syllables',
   },
   {
@@ -36,8 +41,8 @@ export const WORLDS = [
     description: 'BRA, CRA, TRA… combinações avançadas',
     unlockRequirement: 200,
     unlockType: 'previous_or_stars',
-    totalLessons: 20,
-    getLessonsCompleted: (stats) => Math.min(stats.syllablesComplexMastered || 0, 20),
+    totalLessons: COMPLEX_SYLLABLES.length,
+    getLessonsCompleted: (stats) => Math.min(stats.syllablesComplexMastered || 0, COMPLEX_SYLLABLES.length),
     playPath: '/play-syllables?mode=complex',
   },
   {
@@ -49,8 +54,8 @@ export const WORLDS = [
     description: 'BOLA, CASA, GATO… palavras do dia a dia',
     unlockRequirement: 150,
     unlockType: 'previous_or_stars',
-    totalLessons: 20,
-    getLessonsCompleted: (stats) => Math.min(stats.wordsMastered || 0, 20),
+    totalLessons: BASIC_WORDS.length,
+    getLessonsCompleted: (stats) => Math.min(stats.wordsMastered || 0, BASIC_WORDS.length),
     playPath: '/play-syllables?mode=words',
   },
   {
@@ -62,8 +67,8 @@ export const WORLDS = [
     description: 'Organize palavras e monte frases completas!',
     unlockRequirement: 300,
     unlockType: 'previous_or_stars',
-    totalLessons: 20,
-    getLessonsCompleted: (stats) => Math.min(stats.sentencesMastered || 0, 20),
+    totalLessons: BASIC_SENTENCES.length,
+    getLessonsCompleted: (stats) => Math.min(stats.sentencesMastered || 0, BASIC_SENTENCES.length),
     playPath: '/play-sentences',
   },
 ];
@@ -80,7 +85,7 @@ export function isWorldUnlocked(world, stats) {
 
   if (world.unlockType === 'stars_or_mastery') {
     if (stats.totalStars >= world.unlockRequirement) return true;
-    const masteryPct = (stats.lettersMastered || 0) / 26;
+    const masteryPct = (stats.lettersMastered || 0) / ALPHABET.length;
     if (masteryPct >= world.unlockMasteryPct) return true;
     return isPreviousWorldComplete(world, stats);
   }
