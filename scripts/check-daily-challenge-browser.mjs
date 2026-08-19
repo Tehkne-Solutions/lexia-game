@@ -7,6 +7,9 @@ import {
   DAILY_CHALLENGE_TYPES,
   buildDailyChallengeDefinition,
 } from '../src/game/dailyChallengeEngine.js';
+import { ALPHABET } from '../src/lib/alphabetData.js';
+import { BASIC_SENTENCES } from '../src/lib/sentencesData.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '../src/lib/syllablesData.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const artifactsDir = path.join(root, 'artifacts', 'm16');
@@ -18,7 +21,7 @@ const challengeKey = 'lexia_daily_challenge_v2';
 const today = new Date().toISOString().slice(0, 10);
 
 const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-const masteredLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => ({
+const masteredLetters = ALPHABET.map(({ letter }) => ({
   letter,
   stability: 10,
   difficulty: 3,
@@ -31,24 +34,16 @@ const masteredLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => (
   last_grade: 4,
   stars_earned: 2,
 }));
-const syllables = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SYL_${index}`,
+const mastered = (letter) => ({
+  letter,
   total_attempts: 3,
   correct_attempts: 3,
   stars_earned: 1,
-}));
-const complexSyllables = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SYLC_${index}`,
-  total_attempts: 3,
-  correct_attempts: 3,
-  stars_earned: 1,
-}));
-const words = Array.from({ length: 20 }, (_, index) => ({
-  letter: `WORD_${index}`,
-  total_attempts: 3,
-  correct_attempts: 3,
-  stars_earned: 1,
-}));
+});
+const syllables = BASIC_SYLLABLES.map((item) => mastered(`SYL_${item.syllable}`));
+const complexSyllables = COMPLEX_SYLLABLES.map((item) => mastered(`SYLC_${item.syllable}`));
+const words = BASIC_WORDS.map((item) => mastered(`WORD_${item.word}`));
+const sentences = BASIC_SENTENCES.map((item) => mastered(`SENT_${item.id}`));
 
 const definitions = [
   buildDailyChallengeDefinition([], today),
@@ -56,10 +51,11 @@ const definitions = [
   buildDailyChallengeDefinition([...masteredLetters, ...syllables], today),
   buildDailyChallengeDefinition([...masteredLetters, ...syllables, ...complexSyllables], today),
   buildDailyChallengeDefinition([...masteredLetters, ...syllables, ...complexSyllables, ...words], today),
+  buildDailyChallengeDefinition([...masteredLetters, ...syllables, ...complexSyllables, ...words, ...sentences], today),
 ];
 
 assert.deepEqual(
-  definitions.map((definition) => definition.type),
+  definitions.slice(0, 5).map((definition) => definition.type),
   [
     DAILY_CHALLENGE_TYPES.LETTERS,
     DAILY_CHALLENGE_TYPES.SIMPLE_SYLLABLES,
@@ -313,7 +309,7 @@ try {
       throw error;
     }
 
-    for (const definition of definitions) {
+    for (const definition of definitions.slice(0, 5)) {
       const targetItem = definition.targets[0];
       await seedChallenge(cdp, definition);
       const launchPath = withTarget(definition.playPath, targetItem.key);
@@ -338,7 +334,7 @@ try {
     }
   }
 
-  console.log('Lexia Journey Daily Challenge Browser M16: PASS (card + five mechanics × mobile-short/mobile/desktop = 18 screenshots; combined release evidence = 48)');
+  console.log('Lexia Journey Daily Challenge Browser M16/M27: PASS (canonical five-stage fixtures × mobile-short/mobile/desktop)');
 } finally {
   cdp?.close();
   chrome?.kill('SIGTERM');
