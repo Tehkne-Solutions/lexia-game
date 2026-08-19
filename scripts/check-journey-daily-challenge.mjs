@@ -1,117 +1,171 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
-  buildDailyChallenge,
-  getChallengeStarMultiplier,
+  DAILY_CHALLENGE_TYPES,
+  buildDailyChallengeDefinition,
+  getDailyChallengeType,
+} from '../src/game/dailyChallengeEngine.js';
+import { ALPHABET } from '../src/lib/alphabetData.js';
+import { BASIC_SENTENCES } from '../src/lib/sentencesData.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '../src/lib/syllablesData.js';
+import {
+  getDailyChallenge,
   getSavedDailyChallenge,
-  setSavedDailyChallenge,
-  updateChallengeProgress,
 } from '../src/lib/dailyChallenge.js';
 import { decorateProgressWithDailyChallenge } from '../src/platform/decorators/dailyChallengeProgressDecorator.js';
-import { getJourneyState } from '../src/game/journeyEngine.js';
 
-function makeProgress(letter, overrides = {}) {
-  return {
-    id: `progress-${letter}`,
-    child_name: 'Jogador',
-    letter,
-    total_attempts: 10,
-    correct_attempts: 9,
-    streak: 3,
-    stars_earned: 3,
-    stability: 4,
-    difficulty: 2,
-    interval: 8,
-    repetitions: 3,
-    next_review: '2026-08-01T00:00:00.000Z',
-    last_grade: 4,
-    level: 1,
-    ...overrides,
-  };
+const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+const masteredLetters = ALPHABET.map(({ letter }) => ({
+  letter,
+  stability: 10,
+  difficulty: 3,
+  interval: 30,
+  repetitions: 5,
+  next_review: futureDate,
+  total_attempts: 5,
+  correct_attempts: 5,
+  streak: 5,
+  last_grade: 4,
+  stars_earned: 2,
+}));
+const mastered = (letter) => ({
+  letter,
+  total_attempts: 3,
+  correct_attempts: 3,
+  stars_earned: 1,
+});
+const syllables = BASIC_SYLLABLES.map((item) => mastered(`SYL_${item.syllable}`));
+const complexSyllables = COMPLEX_SYLLABLES.map((item) => mastered(`SYLC_${item.syllable}`));
+const words = BASIC_WORDS.map((item) => mastered(`WORD_${item.word}`));
+const sentences = BASIC_SENTENCES.map((item) => mastered(`SENT_${item.id}`));
+
+const stageCases = [
+  {
+    name: 'letters',
+    progress: [],
+    type: DAILY_CHALLENGE_TYPES.LETTERS,
+    path: '/play?daily=1',
+    key: (value) => value.length === 1,
+  },
+  {
+    name: 'simple syllables',
+    progress: masteredLetters,
+    type: DAILY_CHALLENGE_TYPES.SIMPLE_SYLLABLES,
+    path: '/play-syllables?daily=1',
+    key: (value) => value.startsWith('SYL_'),
+  },
+  {
+    name: 'complex syllables',
+    progress: [...masteredLetters, ...syllables],
+    type: DAILY_CHALLENGE_TYPES.COMPLEX_SYLLABLES,
+    path: '/play-syllables?mode=complex&daily=1',
+    key: (value) => value.startsWith('SYLC_'),
+  },
+  {
+    name: 'words',
+    progress: [...masteredLetters, ...syllables, ...complexSyllables],
+    type: DAILY_CHALLENGE_TYPES.WORDS,
+    path: '/play-syllables?mode=words&daily=1',
+    key: (value) => value.startsWith('WORD_'),
+  },
+  {
+    name: 'sentences',
+    progress: [...masteredLetters, ...syllables, ...complexSyllables, ...words],
+    type: DAILY_CHALLENGE_TYPES.SENTENCES,
+    path: '/play-sentences?daily=1',
+    key: (value) => value.startsWith('SENT_'),
+  },
+];
+
+for (const stage of stageCases) {
+  const definition = buildDailyChallengeDefinition(stage.progress, '2026-08-18');
+  assert.equal(definition.schema, 'lexia.daily-challenge.v2', `${stage.name}: schema`);
+  assert.equal(definition.type, stage.type, `${stage.name}: type must follow Journey Engine stage`);
+  assert.equal(definition.playPath, stage.path, `${stage.name}: route must preserve the real mechanic`);
+  assert.equal(definition.targets.length, 3, `${stage.name}: exactly three targets`);
+  assert.equal(definition.targetKeys.length, 3, `${stage.name}: exactly three target keys`);
+  assert.ok(definition.targetKeys.every(stage.key), `${stage.name}: keys must belong to the current mechanic`);
+  assert.equal(definition.starsMultiplier, 2, `${stage.name}: first completion bonus must remain x2`);
+  assert.deepEqual(
+    buildDailyChallengeDefinition(stage.progress, '2026-08-18'),
+    definition,
+    `${stage.name}: same day and progress must be deterministic`,
+  );
 }
 
-const storage = new Map();
+const complete = [...masteredLetters, ...syllables, ...complexSyllables, ...words, ...sentences];
+const masteryRotation = new Set(
+  Array.from({ length: 100 }, (_, index) => getDailyChallengeType(complete, `rotation-${index}`)),
+);
+assert.deepEqual(
+  new Set(Object.values(DAILY_CHALLENGE_TYPES)),
+  masteryRotation,
+  'mastery daily rotation must still reach all five curriculum families',
+);
+
+const memory = new Map();
 globalThis.localStorage = {
-  getItem(key) {
-    return storage.has(key) ? storage.get(key) : null;
-  },
-  setItem(key, value) {
-    storage.set(key, String(value));
-  },
-  removeItem(key) {
-    storage.delete(key);
-  },
+  getItem: (key) => memory.get(key) ?? null,
+  setItem: (key, value) => memory.set(key, String(value)),
+  removeItem: (key) => memory.delete(key),
+  clear: () => memory.clear(),
 };
 
-const alphabetProgress = Array.from({ length: 26 }, (_, index) => makeProgress(String.fromCharCode(65 + index)));
-const journeyAfterAlphabet = getJourneyState(alphabetProgress);
-assert.equal(journeyAfterAlphabet.stage, 'syllables', 'full alphabet mastery should hand off to syllables');
-
-const challenge = buildDailyChallenge(alphabetProgress, new Date('2026-08-01T10:00:00.000Z'));
-assert.equal(challenge.type, 'syllables', 'daily challenge must follow Journey Engine stage');
-assert.equal(challenge.playPath, '/PlaySyllables?mode=syllables', 'syllable challenge uses the canonical play route');
-assert.equal(challenge.targets.length, 3, 'daily challenge keeps three targets');
-assert.ok(challenge.targets.every((target) => target.key.startsWith('SYL_')), 'daily syllable targets use canonical persistence keys');
-
-setSavedDailyChallenge(challenge);
-const firstKey = challenge.targets[0].key;
-assert.equal(getChallengeStarMultiplier(challenge, firstKey), 2, 'active pending target gets double stars');
-assert.equal(getChallengeStarMultiplier(challenge, 'SYL_FAKE'), 1, 'non-target keeps regular stars');
-
-const completedOnce = updateChallengeProgress(firstKey, true);
-assert.equal(completedOnce.completedCount, 1, 'correct daily target completion is persisted');
-assert.equal(completedOnce.targets.find((target) => target.key === firstKey)?.completed, true);
-assert.equal(getChallengeStarMultiplier(completedOnce, firstKey), 1, 'completed daily target no longer gets duplicate bonus');
-
-const unchangedOnRetry = updateChallengeProgress(firstKey, true);
-assert.equal(unchangedOnRetry.completedCount, 1, 'repeating the same completed target is idempotent');
-
-const unchangedOnFailure = updateChallengeProgress(challenge.targets[1].key, false);
-assert.equal(unchangedOnFailure.completedCount, 1, 'incorrect answers never advance the challenge');
-
-const secondKey = challenge.targets[1].key;
-const thirdKey = challenge.targets[2].key;
+memory.clear();
+const challenge = getDailyChallenge([]);
+assert.equal(challenge.targets.length, 3);
+const [firstKey, secondKey, thirdKey] = challenge.targetKeys;
 const writes = [];
-const progress = {
-  async create(data) {
-    writes.push({ type: 'create', data });
-    return { id: `created-${writes.length}`, ...data };
-  },
-  async update(id, data) {
-    writes.push({ type: 'update', id, data });
-    return { id, ...data };
-  },
+const provider = {
+  list: async () => [],
+  remove: async () => null,
+  clearAll: async () => [],
+  create: async (data) => { writes.push({ kind: 'create', data }); return data; },
+  update: async (id, data) => { writes.push({ kind: 'update', id, data }); return data; },
 };
-const decorated = decorateProgressWithDailyChallenge(progress);
+const decorated = decorateProgressWithDailyChallenge(provider);
 
-setSavedDailyChallenge(challenge);
 await decorated.create({
   letter: firstKey,
   last_grade: 4,
-  stars_earned: 1,
+  stars_earned: 4,
   level: 1,
 });
-assert.equal(writes.at(-1).data.stars_earned, 2, 'decorated create applies double-star persistence exactly once');
-assert.equal(writes.at(-1).data.level, 1, 'level remains derived from the boosted star total');
-assert.equal(getSavedDailyChallenge().completedCount, 1, 'create completes daily target only after remote write succeeds');
+assert.equal(writes.at(-1).data.stars_earned, 5, 'platform boundary must add exactly one bonus star to the page base reward');
+assert.equal(writes.at(-1).data.level, 2, 'letter level must be recalculated after the bonus crosses a level boundary');
+assert.equal(getSavedDailyChallenge().progress[firstKey], true, 'target is completed only after successful remote create');
 
 await decorated.update('row-1', {
   letter: firstKey,
   last_grade: 4,
-  stars_earned: 2,
-  level: 1,
+  stars_earned: 6,
+  level: 2,
 });
-assert.equal(writes.at(-1).data.stars_earned, 2, 'completed target is not boosted twice');
-assert.equal(getSavedDailyChallenge().completedCount, 1, 'completed target stays idempotent through update');
+assert.equal(writes.at(-1).data.stars_earned, 6, 'repeating the same daily target must not farm another bonus');
 
-await decorated.update('row-fail', {
+await decorated.update('row-2', {
   letter: secondKey,
-  last_grade: 2,
+  last_grade: 1,
   stars_earned: 0,
   level: 1,
 });
-assert.equal(writes.at(-1).data.stars_earned, 0, 'incorrect persisted answer never gets daily bonus');
-assert.equal(getSavedDailyChallenge().completedCount, 1, 'incorrect persisted answer never completes daily target');
+assert.equal(writes.at(-1).data.stars_earned, 0, 'incorrect attempts never receive a daily bonus');
+assert.equal(getSavedDailyChallenge().progress[secondKey], false, 'incorrect attempts never complete a target');
+
+const failing = decorateProgressWithDailyChallenge({
+  ...provider,
+  update: async () => { throw new Error('remote write failed'); },
+});
+await assert.rejects(
+  failing.update('row-2', {
+    letter: secondKey,
+    last_grade: 3,
+    stars_earned: 1,
+    level: 1,
+  }),
+  /remote write failed/,
+);
+assert.equal(getSavedDailyChallenge().progress[secondKey], false, 'failed remote writes must not mutate local daily completion');
 
 await decorated.update('row-2', {
   letter: secondKey,
@@ -155,4 +209,32 @@ const welcomeSource = await readFile(new URL('../src/pages/Welcome.jsx', import.
 assert.ok(welcomeSource.includes('if (!canLoadProgress || isFetching) return;'), 'Welcome must not create a Fresh Start challenge before returning progress loads');
 assert.ok(welcomeSource.includes('Desafio diário · {dailyChallenge.typeLabel}'));
 
-console.log('Lexia M16 Journey Daily Challenge contract: PASS (stage-aware targets, persistent completion, atomic ×2 stars, duplicate-safe bonus)');
+const playGameSource = await readFile(new URL('../src/pages/PlayGame.jsx', import.meta.url), 'utf8');
+assert.ok(playGameSource.includes("const isDailyMode = urlParams.get('daily') === '1'"));
+assert.ok(
+  playGameSource.includes('requestedDailyLetter || requestedReviewLetter || getInitialLearningLetter(ALPHABET)'),
+  'Daily target must keep first precedence while Review becomes the secondary explicit handoff',
+);
+assert.ok(
+  playGameSource.indexOf('requestedDailyLetter || requestedReviewLetter') >= 0,
+  'Daily target must remain ahead of Review target in letter initialization',
+);
+assert.ok(playGameSource.includes("dailyChallenge?.type === 'letters'"), 'letter-only inline launcher must hide incompatible daily types');
+assert.ok(!playGameSource.includes('challenge?.letters?.includes'), 'PlayGame must retire the v1 letter-array challenge contract');
+
+const syllableSource = await readFile(new URL('../src/pages/PlaySyllables.jsx', import.meta.url), 'utf8');
+assert.ok(syllableSource.includes('findDailyItemIndex(requestedDailyTargetKey)'));
+assert.ok(syllableSource.includes('getNextChallengeTarget(challenge)'));
+assert.ok(syllableSource.includes('alvo novo vale ⭐×2'));
+
+const sentenceSource = await readFile(new URL('../src/pages/PlaySentences.jsx', import.meta.url), 'utf8');
+assert.ok(sentenceSource.includes('findDailySentenceIndex(requestedDailyTargetKey)'));
+assert.ok(sentenceSource.includes('getNextChallengeTarget(challenge)'));
+assert.ok(sentenceSource.includes('alvo novo vale ⭐×2'));
+
+const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
+assert.ok(ciSource.includes('Journey daily challenge contract'));
+assert.ok(ciSource.includes('node scripts/check-journey-daily-challenge.mjs'));
+assert.ok(ciSource.includes('Daily challenge browser QA'));
+
+console.log('Lexia M16/M27 Journey Daily Challenge contract: PASS (canonical stage fixtures, 5-stage missions, exact targets, provider-neutral x2)');
