@@ -124,8 +124,12 @@ assert.ok(playGameSource.includes('loadLearnerReviewContinuation(lexiaPlatform.p
 assert.ok(playGameSource.includes('navigateLearnerReviewContinuation(continuation)'));
 assert.ok(playGameSource.includes('if (isReviewMode && !isDailyMode)'));
 assert.ok(playGameSource.includes('await continueReviewSession()'));
-assert.ok(playGameSource.includes("!isReviewMode && dailyChallenge?.type === 'letters'"), 'letter review must not expose Daily launcher');
-assert.ok(playGameSource.includes('{!isReviewMode && ('), 'letter review must not expose arbitrary letter selector');
+assert.ok(playGameSource.includes('<GameplayHud'), 'letter activity must delegate mode-aware HUD controls');
+assert.ok(playGameSource.includes('isReviewMode={isReviewMode}'), 'letter activity must pass review mode to the delegated HUD');
+
+const gameplayHudSource = await readFile(new URL('../src/components/game/GameplayHud.jsx', import.meta.url), 'utf8');
+assert.ok(gameplayHudSource.includes("!isReviewMode && dailyChallenge?.type === 'letters'"), 'letter review must not expose Daily launcher');
+assert.ok(gameplayHudSource.includes('!isReviewMode && ('), 'letter review must not expose arbitrary letter selector');
 
 const syllableSource = await readFile(new URL('../src/pages/PlaySyllables.jsx', import.meta.url), 'utf8');
 assert.ok(syllableSource.includes('loadLearnerReviewContinuation(lexiaPlatform.progress)'));
@@ -155,4 +159,4 @@ const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.me
 assert.ok(ciSource.includes('Due-only review session contract'));
 assert.ok(ciSource.includes('Due-only review browser QA'));
 
-console.log('Lexia M23/M27 Due-Only Review Session contract: PASS (canonical whole-curriculum queue, fresh persisted handoff, explicit completion)');
+console.log('Lexia M23/M27/M37-A Due-Only Review Session contract: PASS (canonical whole-curriculum queue, fresh persisted handoff, delegated HUD review isolation)');
