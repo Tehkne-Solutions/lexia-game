@@ -1,5 +1,5 @@
 import { calculateMastery } from '../learning/mastery.js';
-import { getJourneyState, JOURNEY_STAGES } from './journeyEngine.js';
+import { getJourneyState, JOURNEY_STAGES, JOURNEY_TARGET_TOTALS } from './journeyEngine.js';
 
 const LETTER_KEY = /^[A-Z]$/;
 
@@ -49,7 +49,7 @@ export const PARENT_JOURNEY_CHAPTERS = Object.freeze([
     stage: JOURNEY_STAGES.LETTERS,
     label: 'Mundo das Letras',
     shortLabel: 'Letras',
-    total: 26,
+    total: JOURNEY_TARGET_TOTALS.LETTERS,
     emoji: '🔤',
     matches: (record) => LETTER_KEY.test(keyOf(record)),
     isMastered: (record) => calculateMastery(record) >= 80,
@@ -59,7 +59,7 @@ export const PARENT_JOURNEY_CHAPTERS = Object.freeze([
     stage: JOURNEY_STAGES.SYLLABLES,
     label: 'Sílabas Simples',
     shortLabel: 'Sílabas simples',
-    total: 20,
+    total: JOURNEY_TARGET_TOTALS.SYLLABLES,
     emoji: '🌉',
     matches: (record) => keyOf(record).startsWith('SYL_'),
     isMastered: isRepeatedSuccessMastered,
@@ -69,7 +69,7 @@ export const PARENT_JOURNEY_CHAPTERS = Object.freeze([
     stage: JOURNEY_STAGES.COMPLEX_SYLLABLES,
     label: 'Sílabas Complexas',
     shortLabel: 'Sílabas complexas',
-    total: 20,
+    total: JOURNEY_TARGET_TOTALS.COMPLEX_SYLLABLES,
     emoji: '🧭',
     matches: (record) => keyOf(record).startsWith('SYLC_'),
     isMastered: isRepeatedSuccessMastered,
@@ -79,7 +79,7 @@ export const PARENT_JOURNEY_CHAPTERS = Object.freeze([
     stage: JOURNEY_STAGES.WORDS,
     label: 'Primeiras Palavras',
     shortLabel: 'Palavras',
-    total: 20,
+    total: JOURNEY_TARGET_TOTALS.WORDS,
     emoji: '📚',
     matches: (record) => keyOf(record).startsWith('WORD_'),
     isMastered: isRepeatedSuccessMastered,
@@ -89,7 +89,7 @@ export const PARENT_JOURNEY_CHAPTERS = Object.freeze([
     stage: JOURNEY_STAGES.SENTENCES,
     label: 'Frases Mágicas',
     shortLabel: 'Frases',
-    total: 20,
+    total: JOURNEY_TARGET_TOTALS.SENTENCES,
     emoji: '🌱',
     matches: (record) => keyOf(record).startsWith('SENT_'),
     isMastered: isRepeatedSuccessMastered,
