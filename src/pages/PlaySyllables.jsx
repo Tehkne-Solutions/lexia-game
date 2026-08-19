@@ -140,7 +140,8 @@ export default function PlaySyllables() {
   }, [isFetched, allProgress]);
 
   const saveMutation = useMutation({
-    mutationFn: async ({ isCorrect, encounterId }) => {
+    mutationFn: async (/** @type {{ isCorrect: boolean, encounterId: string }} */ variables) => {
+      const { isCorrect, encounterId } = variables;
       const entityKey = ENTITY_PREFIX + target;
       const existing = allProgress.find(p => p.letter === entityKey);
       const challenge = getDailyChallenge(allProgress);
