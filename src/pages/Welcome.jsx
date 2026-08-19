@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Play, BarChart3, Map, User, Sparkles, Zap, BookOpen, Settings as SettingsIcon, Compass, Trophy, RotateCcw, CheckCircle2 } from 'lucide-react';
 import MascotAvatar from '@/components/game/MascotAvatar';
 import DailyChallengeCard from '@/components/game/DailyChallengeCard';
+import GamePanel from '@/components/game/GamePanel';
+import GameActionButton from '@/components/game/GameActionButton';
 import { speak, playClickSound } from '@/lib/sounds';
 import { buildStats } from '@/lib/achievements';
 import { getDailyChallenge, getChallengeCompletedCount } from '@/lib/dailyChallenge';
@@ -143,8 +145,9 @@ export default function Welcome() {
             message={showMessage ? (journey.firstRun ? `Sua primeira missão: letra ${journey.target}!` : primaryAction.title) : undefined}
           />
 
-          <motion.div
-            className="w-full max-w-xs rounded-2xl border-2 border-primary/20 bg-card/90 p-4 shadow-md"
+          <GamePanel
+            tone="paper"
+            className="w-full max-w-xs p-4"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
@@ -175,11 +178,12 @@ export default function Welcome() {
                 <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${missionPct}%` }} />
               </div>
             </div>
-          </motion.div>
+          </GamePanel>
 
           {reviewCompleted && !reviewQuest.hasDueReviews && (
-            <motion.div
-              className="w-full max-w-xs rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-3 py-3 shadow-sm"
+            <GamePanel
+              tone="success"
+              className="w-full max-w-xs px-3 py-3"
               initial={{ opacity: 0, y: 10, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 0.74 }}
@@ -197,7 +201,7 @@ export default function Welcome() {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </GamePanel>
           )}
 
           {dailyChallenge && (
@@ -207,7 +211,7 @@ export default function Welcome() {
                 playClickSound();
                 setShowDailyChallenge(true);
               }}
-              className="w-full max-w-xs rounded-2xl border border-amber-300 bg-amber-50/80 px-3 py-2.5 text-left shadow-sm hover:border-amber-400 transition-colors"
+              className="lexia-game-panel lexia-game-panel-reward w-full max-w-xs px-3 py-2.5 text-left hover:border-amber-400 transition-colors"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.78 }}
@@ -230,8 +234,9 @@ export default function Welcome() {
           )}
 
           {reviewQuest.hasDueReviews && reviewQuest.nextPath && (
-            <motion.div
-              className="w-full max-w-xs rounded-2xl border border-sky-300 bg-sky-50/90 px-3 py-3 shadow-sm"
+            <GamePanel
+              tone="review"
+              className="w-full max-w-xs px-3 py-3"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.82 }}
@@ -250,16 +255,17 @@ export default function Welcome() {
                 </div>
               </div>
               <Link to={reviewQuest.nextPath} className="block mt-2">
-                <Button
+                <GameActionButton
+                  gameVariant="neutral"
                   variant="outline"
                   onClick={() => playClickSound()}
                   className="w-full rounded-xl border-sky-300 text-sky-800 hover:bg-sky-100 font-body font-bold"
                 >
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Revisar agora
-                </Button>
+                </GameActionButton>
               </Link>
-            </motion.div>
+            </GamePanel>
           )}
 
           <motion.div
@@ -269,28 +275,27 @@ export default function Welcome() {
             transition={{ delay: 0.85 }}
           >
             <Link to={primaryAction.path} className="w-full">
-              <Button
+              <GameActionButton
+                gameVariant="primary"
                 size="lg"
                 onClick={() => playClickSound()}
-                className="w-full rounded-2xl font-display text-xl py-7 gap-3
-                  bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70
-                  shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40"
+                className="w-full font-display text-xl py-7 gap-3"
               >
                 <Play className="w-6 h-6" />
                 {primaryAction.cta}
-              </Button>
+              </GameActionButton>
             </Link>
 
             <Link to="/practice" className="w-full">
-              <Button
+              <GameActionButton
+                gameVariant="secondary"
                 variant="outline"
                 onClick={() => playClickSound()}
-                className="w-full rounded-2xl font-body font-bold text-sm py-4 gap-2 border-2
-                  border-secondary/40 text-secondary hover:bg-secondary/10 transition-all"
+                className="w-full font-body font-bold text-sm py-4 gap-2"
               >
                 <Sparkles className="w-4 h-4" />
                 Prática Livre (sem pressão)
-              </Button>
+              </GameActionButton>
             </Link>
 
             <div className="grid grid-cols-3 gap-2 w-full">
