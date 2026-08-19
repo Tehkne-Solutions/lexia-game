@@ -1,0 +1,66 @@
+name: Lexia Adaptive Home Browser
+
+on:
+  push:
+    branches:
+      - main
+      - 'agent/**'
+      - 'sprint/**'
+      - 'integration/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  adaptive-home-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+
+      - name: Prepare Chrome runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ldconfig -p | grep -q 'libXtst.so.6'; then
+            sudo apt-get update -y
+            sudo apt-get install -y libxtst6
+          fi
+          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "No Chrome/Chromium executable found" >&2
+            exit 1
+          fi
+          echo "CHROME_BIN=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Adaptive Home browser proof
+        run: node scripts/check-adaptive-home-browser.mjs
+
+      - name: Upload M29-C evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m29c-adaptive-home-browser
+          path: |
+            artifacts/m29/*.png
+            artifacts/m29/*.json
+          if-no-files-found: warn
+          retention-days: 14
