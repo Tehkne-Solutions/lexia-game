@@ -176,7 +176,7 @@ try {
   const dueBody = await cdp.evaluate('document.body?.innerText || ""');
   const dueWidth = await cdp.evaluate('innerWidth');
   const dueScrollWidth = await cdp.evaluate('Math.max(document.documentElement.scrollWidth, document.body?.scrollWidth || 0)');
-  assert.ok(dueBody.includes('Plano de aventura'));
+  assert.ok(dueBody.toLocaleLowerCase('pt-BR').includes('plano de aventura'));
   assert.ok(dueScrollWidth <= dueWidth + 1, 'due-plan Home must not overflow horizontally');
   await capture(cdp, '01-plan-review-first');
 
