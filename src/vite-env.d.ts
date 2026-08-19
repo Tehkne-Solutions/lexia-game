@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+declare var module: any;
+
 interface ImportMetaEnv {
   readonly VITE_LEXIA_PLATFORM_PROVIDER?: 'base44' | 'supabase';
   readonly VITE_SUPABASE_URL?: string;
