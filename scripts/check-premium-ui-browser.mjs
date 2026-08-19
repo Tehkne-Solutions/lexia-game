@@ -110,7 +110,7 @@ async function visualSnapshot(cdp) {
   return cdp.evaluate(`(() => {
     const root = document.documentElement;
     const plan = document.querySelector('[aria-label="Plano de aventura"]');
-    const cta = [...document.querySelectorAll('button')].find((button) => String(button.className).includes('bg-gradient-to-r'));
+    const cta = [...document.querySelectorAll('button')].find((button) => String(button.className).includes('lexia-primary-action'));
     const rootStyle = getComputedStyle(root);
     const planStyle = plan ? getComputedStyle(plan) : null;
     const ctaStyle = cta ? getComputedStyle(cta) : null;
@@ -168,7 +168,7 @@ try {
     await navigate(cdp, baseUrl);
     await cdp.evaluate(`localStorage.setItem('lexia_accessibility', JSON.stringify({ dyslexiaFont: false, highContrast: false, textSize: 'md' }))`);
     await cdp.send('Page.reload');
-    await waitFor(cdp, `document.querySelector('[aria-label="Plano de aventura"]') && [...document.querySelectorAll('button')].some((button) => String(button.className).includes('bg-gradient-to-r'))`, 'premium Home surface');
+    await waitFor(cdp, `document.querySelector('[aria-label="Plano de aventura"]') && [...document.querySelectorAll('button')].some((button) => String(button.className).includes('lexia-primary-action'))`, 'premium Home surface');
     const normal = await visualSnapshot(cdp);
     assert.equal(normal.planFound, true, `${viewport.name}: adventure plan must exist`);
     assert.equal(normal.ctaFound, true, `${viewport.name}: primary CTA must exist`);
