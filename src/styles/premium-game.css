@@ -81,28 +81,69 @@ html:not(.high-contrast) [aria-label="Plano de aventura"] {
 }
 
 /* Primary Home CTA: physical game control, no gradient/glow. */
-html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r {
+html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r,
+html:not(.high-contrast) .lexia-primary-action {
   background-image: none !important;
   background-color: hsl(var(--primary)) !important;
   border: 1px solid hsl(var(--lexia-primary-depth)) !important;
+  color: hsl(var(--primary-foreground)) !important;
   box-shadow:
     0 5px 0 hsl(var(--lexia-primary-depth)),
     0 11px 22px hsl(var(--lexia-shadow) / 0.18) !important;
   transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease !important;
 }
 
-html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r:hover {
+html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r:hover,
+html:not(.high-contrast) .lexia-primary-action:hover {
   background-color: hsl(var(--primary) / 0.92) !important;
   box-shadow:
     0 5px 0 hsl(var(--lexia-primary-depth)),
     0 13px 25px hsl(var(--lexia-shadow) / 0.2) !important;
 }
 
-html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r:active {
+html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r:active,
+html:not(.high-contrast) .lexia-primary-action:active {
   transform: translateY(3px);
   box-shadow:
     0 2px 0 hsl(var(--lexia-primary-depth)),
     0 6px 12px hsl(var(--lexia-shadow) / 0.16) !important;
+}
+
+html:not(.high-contrast) .lexia-secondary-action {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--secondary) / 0.45) !important;
+  color: hsl(var(--secondary)) !important;
+  box-shadow: 0 4px 0 hsl(var(--secondary) / 0.13);
+}
+
+html:not(.high-contrast) .lexia-neutral-action {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--lexia-panel-edge)) !important;
+  box-shadow: 0 3px 0 hsl(var(--lexia-paper-deep));
+}
+
+html:not(.high-contrast) .lexia-game-panel {
+  border: 1px solid hsl(var(--lexia-panel-edge));
+  background-color: hsl(var(--card));
+  box-shadow:
+    0 1px 0 hsl(var(--card)) inset,
+    0 6px 0 hsl(var(--lexia-paper-deep)),
+    0 14px 24px hsl(var(--lexia-shadow) / 0.14);
+}
+
+html:not(.high-contrast) .lexia-game-panel-review {
+  border-color: hsl(var(--primary) / 0.42);
+  box-shadow: 0 5px 0 hsl(var(--primary) / 0.12), 0 13px 22px hsl(var(--lexia-shadow) / 0.12);
+}
+
+html:not(.high-contrast) .lexia-game-panel-reward {
+  border-color: hsl(var(--accent) / 0.72);
+  box-shadow: 0 5px 0 hsl(var(--accent) / 0.18), 0 13px 22px hsl(var(--lexia-shadow) / 0.12);
+}
+
+html:not(.high-contrast) .lexia-game-panel-success {
+  border-color: hsl(var(--secondary) / 0.56);
+  box-shadow: 0 5px 0 hsl(var(--secondary) / 0.16), 0 13px 22px hsl(var(--lexia-shadow) / 0.12);
 }
 
 /* Cards used for review and daily bonus gain distinct authored material cues. */
@@ -132,7 +173,8 @@ html:not(.high-contrast) .font-display {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r {
+  html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r,
+  html:not(.high-contrast) .lexia-primary-action {
     transition: none !important;
   }
 }

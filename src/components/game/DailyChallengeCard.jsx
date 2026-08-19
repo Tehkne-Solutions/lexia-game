@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { Zap, CheckCircle2 } from 'lucide-react';
+import GamePanel from '@/components/game/GamePanel';
+import GameActionButton from '@/components/game/GameActionButton';
 import {
   getChallengeCompletedCount,
   getNextChallengeTarget,
@@ -28,7 +29,11 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
       exit={{ opacity: 0, scale: 0.9 }}
       className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
     >
-      <div className="w-full max-w-sm bg-card border-2 border-amber-300 rounded-3xl p-5 shadow-2xl">
+      <GamePanel
+        tone="reward"
+        className="w-full max-w-sm rounded-3xl p-5"
+        aria-label="Desafio diário"
+      >
         <div className="flex items-center gap-3 mb-3">
           <motion.span
             className="text-4xl"
@@ -87,23 +92,26 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
         {challenge.completed ? (
           <div className="text-center">
             <p className="font-display text-xl text-green-600 mb-2">🎉 Desafio completo!</p>
-            <Button
+            <GameActionButton
+              gameVariant="primary"
               onClick={() => { playClickSound(); onClose(); }}
-              className="w-full rounded-2xl bg-green-600 hover:bg-green-700 font-display"
+              className="w-full font-display"
             >
               Fechar
-            </Button>
+            </GameActionButton>
           </div>
         ) : (
           <div className="flex gap-2">
-            <Button
+            <GameActionButton
+              gameVariant="neutral"
               variant="outline"
               onClick={() => { playClickSound(); onClose(); }}
-              className="flex-1 rounded-2xl"
+              className="flex-1"
             >
               Depois
-            </Button>
-            <Button
+            </GameActionButton>
+            <GameActionButton
+              gameVariant="primary"
               onClick={() => {
                 playClickSound();
                 const launchChallenge = {
@@ -112,14 +120,14 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
                 };
                 onStart(nextTarget?.display || nextTarget?.key || null, launchChallenge, nextTarget);
               }}
-              className="flex-1 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-display gap-2 shadow-md"
+              className="flex-1 font-display gap-2"
             >
               <Zap className="w-4 h-4" />
               Jogar!
-            </Button>
+            </GameActionButton>
           </div>
         )}
-      </div>
+      </GamePanel>
     </motion.div>
   );
 }
