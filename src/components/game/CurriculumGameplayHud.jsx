@@ -7,7 +7,7 @@ export default function CurriculumGameplayHud({
   title,
   missionLabel,
   dailyBonusLabel,
-  homePath,
+  homePath = null,
   isPracticeMode,
   isReviewMode,
   isDailyMode,
