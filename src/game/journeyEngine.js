@@ -1,4 +1,6 @@
 import { ALPHABET } from '../lib/alphabetData.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '../lib/syllablesData.js';
+import { BASIC_SENTENCES } from '../lib/sentencesData.js';
 import { calculateMastery } from '../learning/mastery.js';
 import { getInitialLearningLetter, pickNextLearningLetter } from '../learning/engine.js';
 
@@ -10,6 +12,17 @@ export const JOURNEY_STAGES = Object.freeze({
   SENTENCES: 'sentences',
   MASTERY: 'mastery',
 });
+
+export const JOURNEY_TARGET_TOTALS = Object.freeze({
+  LETTERS: ALPHABET.length,
+  SYLLABLES: BASIC_SYLLABLES.length,
+  COMPLEX_SYLLABLES: COMPLEX_SYLLABLES.length,
+  WORDS: BASIC_WORDS.length,
+  SENTENCES: BASIC_SENTENCES.length,
+});
+
+export const JOURNEY_TOTAL_TARGETS = Object.values(JOURNEY_TARGET_TOTALS)
+  .reduce((sum, total) => sum + total, 0);
 
 function isLetterKey(key) {
   return /^[A-Z]$/.test(String(key || '').toUpperCase());
@@ -52,7 +65,7 @@ export function getJourneyState(allProgress = [], alphabet = ALPHABET) {
   const summary = summarizeJourneyProgress(records);
   const letterProgress = records.filter((record) => isLetterKey(record?.letter));
 
-  if (summary.lettersMastered < 26) {
+  if (summary.lettersMastered < JOURNEY_TARGET_TOTALS.LETTERS) {
     const firstRun = letterProgress.length === 0;
     const targetLetter = firstRun
       ? getInitialLearningLetter(alphabet)
@@ -69,14 +82,14 @@ export function getJourneyState(allProgress = [], alphabet = ALPHABET) {
         : `Continue o Mundo das Letras com a letra ${targetLetter}.`,
       cta: firstRun ? 'Começar jornada' : `Continuar com ${targetLetter}`,
       current: summary.lettersMastered,
-      total: 26,
+      total: JOURNEY_TARGET_TOTALS.LETTERS,
       completed: false,
       firstRun,
       summary,
     };
   }
 
-  if (summary.syllablesMastered < 20) {
+  if (summary.syllablesMastered < JOURNEY_TARGET_TOTALS.SYLLABLES) {
     return {
       stage: JOURNEY_STAGES.SYLLABLES,
       worldId: 'syllables_basic',
@@ -85,15 +98,15 @@ export function getJourneyState(allProgress = [], alphabet = ALPHABET) {
       title: 'Missão: Sílabas Simples',
       description: 'Combine as letras dominadas e avance pelas primeiras sílabas.',
       cta: 'Continuar sílabas',
-      current: Math.min(summary.syllablesMastered, 20),
-      total: 20,
+      current: Math.min(summary.syllablesMastered, JOURNEY_TARGET_TOTALS.SYLLABLES),
+      total: JOURNEY_TARGET_TOTALS.SYLLABLES,
       completed: false,
       firstRun: false,
       summary,
     };
   }
 
-  if (summary.complexSyllablesMastered < 20) {
+  if (summary.complexSyllablesMastered < JOURNEY_TARGET_TOTALS.COMPLEX_SYLLABLES) {
     return {
       stage: JOURNEY_STAGES.COMPLEX_SYLLABLES,
       worldId: 'syllables_complex',
@@ -102,15 +115,15 @@ export function getJourneyState(allProgress = [], alphabet = ALPHABET) {
       title: 'Missão: Sílabas Complexas',
       description: 'Atravesse encontros como BRA, CRA e TRA para dominar combinações mais avançadas.',
       cta: 'Explorar combinações',
-      current: Math.min(summary.complexSyllablesMastered, 20),
-      total: 20,
+      current: Math.min(summary.complexSyllablesMastered, JOURNEY_TARGET_TOTALS.COMPLEX_SYLLABLES),
+      total: JOURNEY_TARGET_TOTALS.COMPLEX_SYLLABLES,
       completed: false,
       firstRun: false,
       summary,
     };
   }
 
-  if (summary.wordsMastered < 20) {
+  if (summary.wordsMastered < JOURNEY_TARGET_TOTALS.WORDS) {
     return {
       stage: JOURNEY_STAGES.WORDS,
       worldId: 'words_basic',
@@ -119,15 +132,15 @@ export function getJourneyState(allProgress = [], alphabet = ALPHABET) {
       title: 'Missão: Primeiras Palavras',
       description: 'Use letras e sílabas para conquistar palavras completas.',
       cta: 'Continuar palavras',
-      current: Math.min(summary.wordsMastered, 20),
-      total: 20,
+      current: Math.min(summary.wordsMastered, JOURNEY_TARGET_TOTALS.WORDS),
+      total: JOURNEY_TARGET_TOTALS.WORDS,
       completed: false,
       firstRun: false,
       summary,
     };
   }
 
-  if (summary.sentencesMastered < 20) {
+  if (summary.sentencesMastered < JOURNEY_TARGET_TOTALS.SENTENCES) {
     return {
       stage: JOURNEY_STAGES.SENTENCES,
       worldId: 'sentences',
@@ -136,8 +149,8 @@ export function getJourneyState(allProgress = [], alphabet = ALPHABET) {
       title: 'Missão: Frases Mágicas',
       description: 'Organize palavras para transformar ideias simples em frases completas.',
       cta: 'Montar frases',
-      current: Math.min(summary.sentencesMastered, 20),
-      total: 20,
+      current: Math.min(summary.sentencesMastered, JOURNEY_TARGET_TOTALS.SENTENCES),
+      total: JOURNEY_TARGET_TOTALS.SENTENCES,
       completed: false,
       firstRun: false,
       summary,
