@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { ALPHABET } from '../src/lib/alphabetData.js';
+import { BASIC_SENTENCES } from '../src/lib/sentencesData.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '../src/lib/syllablesData.js';
 import { JOURNEY_STAGES } from '../src/game/journeyEngine.js';
 import { getJourneyPracticeState, PRACTICE_MODES } from '../src/game/practiceEngine.js';
 
 const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-const masteredLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => ({
+const masteredLetters = ALPHABET.map(({ letter }) => ({
   letter,
   stability: 10,
   difficulty: 3,
@@ -17,23 +20,23 @@ const masteredLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => (
   last_grade: 4,
   stars_earned: 2,
 }));
-const simple = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SYL_${index}`,
+const simple = BASIC_SYLLABLES.map(({ syllable }) => ({
+  letter: `SYL_${syllable}`,
   total_attempts: 3,
   correct_attempts: 3,
 }));
-const complex = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SYLC_${index}`,
+const complex = COMPLEX_SYLLABLES.map(({ syllable }) => ({
+  letter: `SYLC_${syllable}`,
   total_attempts: 3,
   correct_attempts: 3,
 }));
-const words = Array.from({ length: 20 }, (_, index) => ({
-  letter: `WORD_${index}`,
+const words = BASIC_WORDS.map(({ word }) => ({
+  letter: `WORD_${word}`,
   total_attempts: 3,
   correct_attempts: 3,
 }));
-const sentences = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SENT_${String(index + 1).padStart(2, '0')}`,
+const sentences = BASIC_SENTENCES.map(({ id }) => ({
+  letter: `SENT_${id}`,
   total_attempts: 3,
   correct_attempts: 3,
 }));
@@ -123,4 +126,4 @@ assert.ok(ciSource.includes('Journey free practice contract'));
 assert.ok(ciSource.includes('node scripts/check-journey-free-practice.mjs'));
 assert.ok(ciSource.includes('Practice hub browser QA'));
 
-console.log('Lexia M17 Journey Free Practice contract: PASS (5-stage sequential unlocks, Journey Engine truth, sentence practice persistence-free)');
+console.log('Lexia M17/M27 Journey Free Practice contract: PASS (canonical stage fixtures, 5-stage sequential unlocks, Journey Engine truth)');
