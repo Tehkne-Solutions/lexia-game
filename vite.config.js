@@ -9,6 +9,21 @@ const releaseSha = process.env.VITE_LEXIA_RELEASE_SHA
   || '';
 const buildProvider = process.env.VITE_LEXIA_PLATFORM_PROVIDER || 'base44';
 const e2eMemoryPlatform = process.env.LEXIA_E2E_MEMORY_PLATFORM === 'true';
+const e2ePlatformPath = fileURLToPath(new URL('./scripts/fixtures/e2e-platform.js', import.meta.url));
+
+function e2ePlatformPlugin() {
+  if (!e2eMemoryPlatform) return null;
+  return {
+    name: 'lexia-m28c-e2e-platform',
+    enforce: 'pre',
+    resolveId(source) {
+      if (source === '@/platform' || source === '@/platform/index.js') {
+        return e2ePlatformPath;
+      }
+      return null;
+    },
+  };
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,15 +32,8 @@ export default defineConfig({
     'import.meta.env.VITE_LEXIA_RELEASE_SHA': JSON.stringify(releaseSha),
     'import.meta.env.VITE_LEXIA_BUILD_PROVIDER_MARKER': JSON.stringify(buildProvider),
   },
-  resolve: {
-    alias: e2eMemoryPlatform
-      ? [{
-        find: /^@\/platform$/,
-        replacement: fileURLToPath(new URL('./scripts/fixtures/e2e-platform.js', import.meta.url)),
-      }]
-      : [],
-  },
   plugins: [
+    e2ePlatformPlugin(),
     base44({
       // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
       // can be removed if the code has been updated to use the new SDK imports from @base44/sdk
@@ -36,5 +44,5 @@ export default defineConfig({
       visualEditAgent: true
     }),
     react(),
-  ]
+  ].filter(Boolean)
 });
