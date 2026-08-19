@@ -32,7 +32,7 @@ jobs:
       - name: Premium gameplay HUD contract
         run: node scripts/check-premium-gameplay-hud.mjs
       - name: Typecheck UI
-        run: npm run typecheck:ui
+        run: npm run typecheck
       - name: Typecheck core
         run: npm run typecheck:core
       - name: Build
