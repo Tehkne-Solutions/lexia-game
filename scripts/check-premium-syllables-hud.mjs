@@ -30,11 +30,12 @@ for (const expected of [
   assert.ok(playSource.includes(expected), `M37-B invariant missing: ${expected}`);
 }
 
-assert.ok(hudSource.includes("to={isReviewMode ? '/' : '/world'}"));
+assert.ok(hudSource.includes("const resolvedHomePath = homePath || (isReviewMode ? '/' : '/world')"));
+assert.ok(hudSource.includes('<Link to={resolvedHomePath}'));
 assert.ok(hudSource.includes('lexia-gameplay-hud'));
 assert.ok(hudSource.includes('lexia-gameplay-context-reward'));
 assert.ok(hudSource.includes('isPracticeMode'));
 assert.ok(hudSource.includes('isDailyMode'));
 assert.ok(hudSource.includes('isReviewMode'));
 
-console.log('Lexia M37-B Premium Syllables/Words HUD contract: PASS (simple + complex + words share premium HUD/actions; review/daily routing preserved)');
+console.log('Lexia M37-B/M37-C Premium Syllables/Words HUD contract: PASS (simple + complex + words keep premium HUD/actions; default review/daily routing preserved with optional homePath)');
