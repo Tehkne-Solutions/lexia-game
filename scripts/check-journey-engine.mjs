@@ -100,6 +100,10 @@ const playGame = await readFile(new URL('../src/pages/PlayGame.jsx', import.meta
 assert.ok(playGame.includes('isFetched: hasLoadedProgress'), 'guided activity must wait for learner progress before syncing mission');
 assert.ok(playGame.includes('setCurrentLetter(journey.target)'), 'PlayGame must start on the Journey Engine target for returning learners');
 assert.ok(playGame.includes("journey.stage === JOURNEY_STAGES.LETTERS"));
-assert.ok(playGame.includes('Ver jornada no mapa'));
+assert.ok(playGame.includes('GameplayResultActions'), 'PlayGame must delegate journey result actions through the semantic gameplay boundary');
+
+const gameplayResultActions = await readFile(new URL('../src/components/game/GameplayResultActions.jsx', import.meta.url), 'utf8');
+assert.ok(gameplayResultActions.includes('Ver jornada no mapa'), 'journey map handoff must remain available after UI extraction');
+assert.ok(gameplayResultActions.includes('to="/world"'), 'journey map handoff must preserve the canonical route');
 
 console.log(`Lexia Journey Engine M08/M29 contract: PASS (${JOURNEY_TOTAL_TARGETS} canonical targets → mastery + adaptive Home delegation)`);
