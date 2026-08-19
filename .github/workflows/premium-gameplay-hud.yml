@@ -1,0 +1,47 @@
+name: Lexia Premium Gameplay HUD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/pages/PlayGame.jsx'
+      - 'src/components/game/GameplayHud.jsx'
+      - 'src/components/game/GameplayResultActions.jsx'
+      - 'src/components/game/GameActionButton.jsx'
+      - 'src/styles/premium-game.css'
+      - 'scripts/check-premium-gameplay-hud.mjs'
+      - '.github/workflows/premium-gameplay-hud.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  premium-gameplay-hud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Premium gameplay HUD contract
+        run: node scripts/check-premium-gameplay-hud.mjs
+      - name: Typecheck UI
+        run: npm run typecheck:ui
+      - name: Typecheck core
+        run: npm run typecheck:core
+      - name: Build
+        run: npm run build
+      - name: Prepare Chrome runtime
+        run: bash tools/prepare_chrome_runtime.sh
+      - name: Browser layout regression
+        run: node scripts/check-browser-layout.mjs
+      - name: Daily challenge browser regression
+        run: node scripts/check-daily-challenge-browser.mjs
+      - name: Exact review browser regression
+        run: node scripts/check-exact-review-browser.mjs
