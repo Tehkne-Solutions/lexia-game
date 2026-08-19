@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const artifactsDir = path.join(root, 'artifacts', 'm28c');
 const distDir = path.join(root, 'dist-m28c');
+const platformIndexPath = path.join(root, 'src', 'platform', 'index.js');
 const previewPort = 4186;
 const debugPort = 9236;
 const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -112,12 +113,7 @@ async function waitFor(cdp, expression, label, timeoutMs = 12000) {
 }
 
 async function waitForText(cdp, text, timeoutMs = 12000) {
-  return waitFor(
-    cdp,
-    `document.body?.innerText?.includes(${JSON.stringify(text)})`,
-    `text ${JSON.stringify(text)}`,
-    timeoutMs,
-  );
+  return waitFor(cdp, `document.body?.innerText?.includes(${JSON.stringify(text)})`, `text ${JSON.stringify(text)}`, timeoutMs);
 }
 
 async function clickButton(cdp, text, exact = false) {
@@ -156,11 +152,18 @@ await rm(distDir, { recursive: true, force: true });
 await mkdir(artifactsDir, { recursive: true });
 
 const vite = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
-const build = spawnSync(process.execPath, [vite, 'build', '--outDir', distDir], {
-  cwd: root,
-  encoding: 'utf8',
-  env: { ...process.env, LEXIA_E2E_MEMORY_PLATFORM: 'true' },
-});
+const originalPlatformIndex = await readFile(platformIndexPath, 'utf8');
+let build;
+try {
+  await writeFile(platformIndexPath, "export * from '../../scripts/fixtures/e2e-platform.js';\n");
+  build = spawnSync(process.execPath, [vite, 'build', '--outDir', distDir], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env },
+  });
+} finally {
+  await writeFile(platformIndexPath, originalPlatformIndex);
+}
 if (build.status !== 0) {
   throw new Error(`M28-C E2E build failed:\n${build.stdout}\n${build.stderr}`);
 }
@@ -210,21 +213,9 @@ try {
   })()`);
   assert.ok(targetSyllable && targetSyllable.length >= 2, `expected a visible syllable target, got ${targetSyllable}`);
 
-  for (const character of [...targetSyllable]) {
-    await clickButton(cdp, character, true);
-  }
+  for (const character of [...targetSyllable]) await clickButton(cdp, character, true);
   await clickButton(cdp, 'Verificar');
   await waitForText(cdp, 'Correto!');
-  await waitFor(
-    cdp,
-    `(() => {
-      const rows = JSON.parse(localStorage.getItem(${JSON.stringify(storageKey)}) || '[]');
-      const row = rows.find((item) => item.letter === ${JSON.stringify(`SYL_${'${targetSyllable}'}`)}.replace('\${targetSyllable}', ${JSON.stringify('')}));
-      return Boolean(row);
-    })()`,
-    'persisted syllable record',
-    3000,
-  ).catch(() => {});
 
   const afterAnswer = await snapshot(cdp);
   const persisted = afterAnswer.progress.find((record) => record.letter === `SYL_${targetSyllable}`);
