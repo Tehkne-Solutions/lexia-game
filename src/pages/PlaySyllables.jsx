@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Home, Volume2, ChevronRight, CheckCircle, Sparkles, Compass } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { AnimatePresence } from 'framer-motion';
+import { Volume2, ChevronRight, CheckCircle } from 'lucide-react';
 import { lexiaPlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import MascotAvatar from '@/components/game/MascotAvatar';
@@ -10,6 +8,9 @@ import CelebrationOverlay from '@/components/game/CelebrationOverlay';
 import SessionQuestBar from '@/components/game/SessionQuestBar';
 import SessionQuestComplete from '@/components/game/SessionQuestComplete';
 import OnScreenKeyboard from '@/components/game/OnScreenKeyboard';
+import CurriculumGameplayHud from '@/components/game/CurriculumGameplayHud';
+import GameActionButton from '@/components/game/GameActionButton';
+import GamePanel from '@/components/game/GamePanel';
 import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '@/lib/syllablesData';
 import { JOURNEY_STAGES } from '@/game/journeyEngine';
 import { advanceSessionQuest, createSessionQuest } from '@/game/sessionQuestEngine';
@@ -304,6 +305,8 @@ export default function PlaySyllables() {
     }
   };
 
+  const panelTone = isReviewMode ? 'review' : isDailyMode ? 'reward' : 'paper';
+
   return (
     <div className="game-viewport flex flex-col bg-background">
       <SessionQuestComplete
@@ -311,85 +314,55 @@ export default function PlaySyllables() {
         onContinue={handleContinueAfterQuest}
       />
 
-      <div className="game-safe-top flex items-center justify-between px-3 py-2 border-b border-border bg-card/50 flex-shrink-0">
-        <Link to={isReviewMode ? '/' : '/world'}>
-          <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={playClickSound}>
-            <Home className="w-4 h-4" />
-          </Button>
-        </Link>
-        <div className="flex items-center gap-3 min-w-0">
-          {isPracticeMode && (
-            <span className="bg-secondary/20 text-secondary border border-secondary/40 rounded-full px-2 py-0.5 flex items-center gap-1 text-xs font-body font-bold">
-              <Sparkles className="w-3 h-3" /> Prática
-            </span>
-          )}
-          <span className="font-display text-sm sm:text-base text-foreground truncate">{CONFIG.title}</span>
-          <div className="flex items-center gap-1 bg-amber-100 rounded-full px-2 py-0.5 flex-shrink-0">
-            <span className="text-sm">⭐</span>
-            <span className="font-body font-bold text-sm text-amber-700">{totalStars}</span>
-          </div>
-          {streak > 0 && (
-            <div className="hidden sm:flex items-center gap-1 bg-red-100 rounded-full px-2 py-0.5">
-              <span className="text-sm">🔥</span>
-              <span className="font-body font-bold text-sm text-red-600">{streak}</span>
-            </div>
-          )}
-        </div>
-        <div className="w-8" />
-      </div>
-
-      {!isPracticeMode && !isReviewMode && (
-        <div className="px-3 py-1.5 border-b border-border/60 bg-card/70 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
-          <Compass className="w-3.5 h-3.5 text-primary" />
-          <span className="font-bold text-primary">Capítulo</span>
-          <span className="text-muted-foreground truncate">{CONFIG.missionLabel}</span>
-        </div>
-      )}
-
-      {isDailyMode && (
-        <div className="px-3 py-1.5 border-b border-amber-200 bg-amber-50 flex items-center justify-center gap-2 text-xs font-body flex-shrink-0">
-          <span aria-hidden="true">🏆</span>
-          <span className="font-bold text-amber-800">Desafio diário</span>
-          <span className="text-amber-700">alvo novo vale ⭐×2</span>
-        </div>
-      )}
+      <CurriculumGameplayHud
+        title={CONFIG.title}
+        missionLabel={CONFIG.missionLabel}
+        isPracticeMode={isPracticeMode}
+        isReviewMode={isReviewMode}
+        isDailyMode={isDailyMode}
+        totalStars={totalStars}
+        streak={streak}
+        onHome={playClickSound}
+      />
 
       <SessionQuestBar quest={sessionQuest} />
 
       <div className="game-scroll-y game-safe-bottom flex-1 flex flex-col items-center justify-center gap-3 px-4 py-3 max-w-md mx-auto w-full">
         <MascotAvatar className="game-compact-mascot" expression={mascotExpression} size="sm" message={mascotMessage} />
 
-        <motion.div
+        <GamePanel
           key={index}
+          tone={panelTone}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full bg-card rounded-3xl border-2 border-primary/20 shadow-xl p-4 sm:p-6 flex flex-col items-center gap-3"
+          className="w-full rounded-3xl p-4 sm:p-6 flex flex-col items-center gap-3"
         >
-          <motion.span
-            className="text-6xl sm:text-7xl"
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <span className="text-6xl sm:text-7xl" aria-hidden="true">
             {current.emoji}
-          </motion.span>
+          </span>
 
           <p className="font-body text-muted-foreground text-sm text-center">
             {MODE === 'words' ? current.hint : `${target} de ${current.word}`}
           </p>
 
-          <Button variant="ghost" size="sm" className="rounded-full gap-1 text-muted-foreground"
-            onClick={() => speak(`${CONFIG.spokenLabel}: ${target}. ${MODE === 'words' ? current.hint : current.word}!`)}>
+          <GameActionButton
+            gameVariant="neutral"
+            variant="ghost"
+            size="sm"
+            className="rounded-full gap-1 text-muted-foreground"
+            onClick={() => speak(`${CONFIG.spokenLabel}: ${target}. ${MODE === 'words' ? current.hint : current.word}!`)}
+          >
             <Volume2 className="w-4 h-4" />
             Ouvir
-          </Button>
+          </GameActionButton>
 
           <AnimatePresence mode="wait">
             {phase === 'type' && (
-              <motion.div key="type" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="w-full flex flex-col items-center gap-3">
+              <div className="w-full flex flex-col items-center gap-3">
                 <div className="flex gap-1.5 sm:gap-2 justify-center">
                   {target.split('').map((_, i) => (
-                    <div key={i}
+                    <div
+                      key={i}
                       className={`w-10 h-11 sm:w-12 sm:h-12 rounded-xl border-2 flex items-center justify-center font-display text-xl sm:text-2xl transition-all
                         ${typed[i] ? 'border-primary bg-primary/10 text-primary' : 'border-dashed border-muted-foreground/40 bg-muted/30 text-transparent'}`}
                     >
@@ -415,51 +388,64 @@ export default function PlaySyllables() {
                   onDelete={() => setTyped(p => p.slice(0, -1))}
                 />
 
-                <Button
+                <GameActionButton
+                  gameVariant="primary"
                   size="lg"
                   onClick={checkAnswer}
                   disabled={typed.length === 0}
-                  className="w-full rounded-2xl font-display text-lg gap-2 shadow-md"
+                  className="w-full font-display text-lg gap-2"
                 >
                   <CheckCircle className="w-5 h-5" />
                   Verificar
-                </Button>
-              </motion.div>
+                </GameActionButton>
+              </div>
             )}
 
             {phase === 'correct' && (
-              <motion.div key="correct" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="flex flex-col items-center gap-3">
-                <div className="bg-green-100 border-2 border-green-400 rounded-2xl px-6 py-3 text-center">
-                  <p className="font-display text-3xl text-green-700">{target}</p>
-                  <p className="font-body text-sm text-green-600">✅ Correto! +{lastStarMultiplier} ⭐</p>
-                </div>
-                <Button onClick={nextItem} disabled={saveMutation.isPending} className="rounded-2xl gap-2 font-display">
+              <div className="flex flex-col items-center gap-3">
+                <GamePanel tone="success" className="rounded-2xl px-6 py-3 text-center">
+                  <p className="font-display text-3xl text-secondary">{target}</p>
+                  <p className="font-body text-sm text-secondary">✅ Correto! +{lastStarMultiplier} ⭐</p>
+                </GamePanel>
+                <GameActionButton
+                  gameVariant="primary"
+                  onClick={nextItem}
+                  disabled={saveMutation.isPending}
+                  className="gap-2 font-display"
+                >
                   {isReviewMode ? 'Próxima revisão' : 'Próximo'} <ChevronRight className="w-4 h-4" />
-                </Button>
-              </motion.div>
+                </GameActionButton>
+              </div>
             )}
 
             {phase === 'wrong' && (
-              <motion.div key="wrong" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="flex flex-col items-center gap-3">
-                <div className="bg-red-50 border-2 border-red-300 rounded-2xl px-6 py-3 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="lexia-result-feedback-panel text-center">
                   <p className="font-body text-sm text-muted-foreground">Você digitou: <strong>{typed}</strong></p>
-                  <p className="font-display text-2xl text-red-500">Correto: {target}</p>
+                  <p className="font-display text-2xl text-destructive">Correto: {target}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => { setTyped(''); setPhase('type'); inputRef.current?.focus(); }}
-                    className="rounded-2xl gap-1">
+                <div className="flex flex-wrap justify-center gap-2">
+                  <GameActionButton
+                    gameVariant="secondary"
+                    variant="outline"
+                    onClick={() => { setTyped(''); setPhase('type'); inputRef.current?.focus(); }}
+                    className="gap-1"
+                  >
                     Tentar Novamente
-                  </Button>
-                  <Button onClick={nextItem} disabled={saveMutation.isPending} className="rounded-2xl gap-2 font-display">
+                  </GameActionButton>
+                  <GameActionButton
+                    gameVariant="primary"
+                    onClick={nextItem}
+                    disabled={saveMutation.isPending}
+                    className="gap-2 font-display"
+                  >
                     {isReviewMode ? 'Próxima revisão' : 'Próximo'} <ChevronRight className="w-4 h-4" />
-                  </Button>
+                  </GameActionButton>
                 </div>
-              </motion.div>
+              </div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </GamePanel>
       </div>
 
       <CelebrationOverlay show={showCelebration} stars={3} message={`Combo ${streak}x! 🔥`} onDone={nextItem} />
