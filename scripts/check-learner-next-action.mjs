@@ -61,7 +61,7 @@ const curriculumFallback = getLearnerNextAction(activeJourney, {
   hasDueReviews: false,
   totalDue: 0,
   nextPath: null,
-});
+}, { reviewCompleted: false });
 assert.equal(curriculumFallback.kind, LEARNER_NEXT_ACTION_KIND.CURRICULUM);
 assert.equal(curriculumFallback.path, '/play-syllables');
 assert.equal(curriculumFallback.cta, 'Continuar sílabas');
@@ -79,6 +79,25 @@ assert.equal(postReviewHandoff.reviewCompleted, true);
 assert.match(postReviewHandoff.description, /^Revisões concluídas\./);
 assert.match(postReviewHandoff.description, /Continue atravessando as pontes do som/);
 
+const originalLocation = globalThis.location;
+try {
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: { search: '?reviewComplete=1' },
+  });
+  const routeDerivedHandoff = getLearnerNextAction(activeJourney, {
+    hasDueReviews: false,
+    totalDue: 0,
+    nextPath: null,
+  });
+  assert.equal(routeDerivedHandoff.path, '/play-syllables');
+  assert.equal(routeDerivedHandoff.cta, 'Continuar missão');
+  assert.equal(routeDerivedHandoff.reviewCompleted, true);
+} finally {
+  if (originalLocation === undefined) delete globalThis.location;
+  else Object.defineProperty(globalThis, 'location', { configurable: true, value: originalLocation });
+}
+
 assert.throws(
   () => getLearnerNextAction({ firstRun: false }, null),
   /valid journey path and CTA/,
@@ -90,6 +109,6 @@ assert.ok(welcomeSource.includes('getLearnerNextAction'));
 assert.ok(welcomeSource.includes('primaryAction.path'));
 assert.ok(welcomeSource.includes('primaryAction.cta'));
 assert.ok(welcomeSource.includes("primaryAction.kind === 'review'"));
-assert.ok(welcomeSource.includes('{ reviewCompleted }'));
+assert.ok(welcomeSource.includes("get('reviewComplete') === '1'"));
 
-console.log('Lexia M31-A Learner Next Action contract: PASS (first-run priority, due-review priority, curriculum fallback, post-review Continue mission handoff)');
+console.log('Lexia M31-A Learner Next Action contract: PASS (first-run priority, due-review priority, route-derived post-review Continue mission handoff)');
