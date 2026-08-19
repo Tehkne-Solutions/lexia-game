@@ -132,6 +132,25 @@ async function clickButton(cdp, text, exact = false) {
   await sleep(500);
 }
 
+async function pressKeyboardKey(cdp, character) {
+  const pressed = await cdp.evaluate(`(() => {
+    const key = ${JSON.stringify(character)};
+    const button = [...document.querySelectorAll('button')]
+      .find((item) => item.innerText?.trim() === key);
+    if (!button) return false;
+    button.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+      isPrimary: true,
+    }));
+    return true;
+  })()`);
+  assert.equal(pressed, true, `on-screen keyboard key ${JSON.stringify(character)} must accept pointer input`);
+  await sleep(250);
+}
+
 async function capture(cdp, name) {
   const result = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false, fromSurface: true });
   await writeFile(path.join(artifactsDir, `${name}.png`), Buffer.from(result.data, 'base64'));
@@ -213,7 +232,7 @@ try {
   })()`);
   assert.ok(targetSyllable && targetSyllable.length >= 2, `expected a visible syllable target, got ${targetSyllable}`);
 
-  for (const character of [...targetSyllable]) await clickButton(cdp, character, true);
+  for (const character of [...targetSyllable]) await pressKeyboardKey(cdp, character);
   await clickButton(cdp, 'Verificar');
   await waitForText(cdp, 'Correto!');
 
