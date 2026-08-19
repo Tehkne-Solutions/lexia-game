@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/m28b-read-resilience-boundary
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
