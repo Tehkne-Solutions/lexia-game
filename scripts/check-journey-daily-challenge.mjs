@@ -5,6 +5,9 @@ import {
   buildDailyChallengeDefinition,
   getDailyChallengeType,
 } from '../src/game/dailyChallengeEngine.js';
+import { ALPHABET } from '../src/lib/alphabetData.js';
+import { BASIC_SENTENCES } from '../src/lib/sentencesData.js';
+import { BASIC_SYLLABLES, COMPLEX_SYLLABLES, BASIC_WORDS } from '../src/lib/syllablesData.js';
 import {
   getDailyChallenge,
   getSavedDailyChallenge,
@@ -12,7 +15,7 @@ import {
 import { decorateProgressWithDailyChallenge } from '../src/platform/decorators/dailyChallengeProgressDecorator.js';
 
 const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-const masteredLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => ({
+const masteredLetters = ALPHABET.map(({ letter }) => ({
   letter,
   stability: 10,
   difficulty: 3,
@@ -25,30 +28,16 @@ const masteredLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((letter) => (
   last_grade: 4,
   stars_earned: 2,
 }));
-const syllables = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SYL_${index}`,
+const mastered = (letter) => ({
+  letter,
   total_attempts: 3,
   correct_attempts: 3,
   stars_earned: 1,
-}));
-const complexSyllables = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SYLC_${index}`,
-  total_attempts: 3,
-  correct_attempts: 3,
-  stars_earned: 1,
-}));
-const words = Array.from({ length: 20 }, (_, index) => ({
-  letter: `WORD_${index}`,
-  total_attempts: 3,
-  correct_attempts: 3,
-  stars_earned: 1,
-}));
-const sentences = Array.from({ length: 20 }, (_, index) => ({
-  letter: `SENT_${String(index + 1).padStart(2, '0')}`,
-  total_attempts: 3,
-  correct_attempts: 3,
-  stars_earned: 1,
-}));
+});
+const syllables = BASIC_SYLLABLES.map((item) => mastered(`SYL_${item.syllable}`));
+const complexSyllables = COMPLEX_SYLLABLES.map((item) => mastered(`SYLC_${item.syllable}`));
+const words = BASIC_WORDS.map((item) => mastered(`WORD_${item.word}`));
+const sentences = BASIC_SENTENCES.map((item) => mastered(`SENT_${item.id}`));
 
 const stageCases = [
   {
@@ -248,4 +237,4 @@ assert.ok(ciSource.includes('Journey daily challenge contract'));
 assert.ok(ciSource.includes('node scripts/check-journey-daily-challenge.mjs'));
 assert.ok(ciSource.includes('Daily challenge browser QA'));
 
-console.log('Lexia M16 Journey Daily Challenge contract: PASS (5-stage daily missions, exact targets, provider-neutral x2, idempotent remote-safe completion)');
+console.log('Lexia M16/M27 Journey Daily Challenge contract: PASS (canonical stage fixtures, 5-stage missions, exact targets, provider-neutral x2)');
