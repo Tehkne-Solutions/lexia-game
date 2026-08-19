@@ -15,6 +15,7 @@ import { getJourneyState } from '@/game/journeyEngine';
 import { getJourneyWorldExperience } from '@/game/worldExperienceEngine';
 import { buildLearnerReviewQuest, getLearnerReviewQuestLabel } from '@/game/learnerReviewQuestEngine';
 import { getLearnerNextAction } from '@/game/learnerNextActionEngine';
+import { buildLearnerDailyPlan } from '@/game/learnerDailyPlanEngine';
 
 const reviewCompleted = new URLSearchParams(window.location.search).get('reviewComplete') === '1';
 
@@ -53,6 +54,10 @@ export default function Welcome() {
   );
   const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
   const dailyCompletedCount = getChallengeCompletedCount(dailyChallenge);
+  const dailyPlan = useMemo(
+    () => buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, dailyCompletedCount }),
+    [journey, reviewQuest, dailyChallenge, dailyCompletedCount],
+  );
 
   useEffect(() => {
     if (!canLoadProgress || isFetching) return;
@@ -143,6 +148,7 @@ export default function Welcome() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
+            aria-label="Plano de aventura"
           >
             <div className="flex items-center gap-2 mb-2">
               <BookOpen className="w-4 h-4 text-primary" />
@@ -150,19 +156,24 @@ export default function Welcome() {
                 {activeExperience.chapter} · {activeExperience.title}
               </span>
             </div>
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex items-center gap-2 mb-1">
               <Compass className="w-5 h-5 text-primary" />
-              <span className="font-body text-xs font-bold uppercase tracking-wide text-primary">Missão atual</span>
+              <span className="font-body text-xs font-bold uppercase tracking-wide text-primary">Plano de aventura</span>
             </div>
-            <h2 className="font-display text-lg text-foreground">{journey.title}</h2>
-            <p className="font-body text-sm text-muted-foreground mt-1">{journey.description}</p>
-            <div className="mt-3 flex items-center gap-3">
-              <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+            <h2 className="font-display text-lg text-foreground">{dailyPlan.headline}</h2>
+            <p className="font-body text-xs font-semibold text-muted-foreground mt-1">{dailyPlan.summary}</p>
+
+            <div className="mt-3 border-t border-border/70 pt-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-body text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Missão atual</span>
+                <span className="font-body text-xs font-bold text-muted-foreground">
+                  {journey.current}/{journey.total}
+                </span>
+              </div>
+              <p className="font-display text-sm text-foreground mt-0.5 truncate">{journey.title}</p>
+              <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${missionPct}%` }} />
               </div>
-              <span className="font-body text-xs font-bold text-muted-foreground">
-                {journey.current}/{journey.total}
-              </span>
             </div>
           </motion.div>
 
