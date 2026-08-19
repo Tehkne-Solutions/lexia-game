@@ -1,0 +1,33 @@
+name: Lexia Learner Daily Plan
+
+on:
+  push:
+    branches:
+      - main
+      - 'integration/**'
+      - 'agent/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  daily-plan-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Learner daily plan contract
+        run: node scripts/check-learner-daily-plan.mjs
+      - name: Core typecheck
+        run: npm run typecheck:core
