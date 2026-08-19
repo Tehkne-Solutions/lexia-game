@@ -18,10 +18,11 @@ const firstRunWithImpossibleReviewDebt = getLearnerNextAction(firstRunJourney, {
   totalDue: 3,
   nextPath: '/play?review=1&reviewTarget=A',
   nextEntityKey: 'A',
-});
+}, { reviewCompleted: true });
 assert.equal(firstRunWithImpossibleReviewDebt.kind, LEARNER_NEXT_ACTION_KIND.CURRICULUM);
 assert.equal(firstRunWithImpossibleReviewDebt.path, '/play');
 assert.equal(firstRunWithImpossibleReviewDebt.cta, 'Começar com a letra I');
+assert.equal(firstRunWithImpossibleReviewDebt.reviewCompleted, false);
 
 const activeJourney = {
   firstRun: false,
@@ -37,13 +38,14 @@ const dueReview = getLearnerNextAction(activeJourney, {
   nextPath: '/play?review=1&reviewTarget=B',
   nextEntityKey: 'B',
   nextChapter: { id: 'letters', title: 'Letras' },
-});
+}, { reviewCompleted: true });
 assert.equal(dueReview.kind, LEARNER_NEXT_ACTION_KIND.REVIEW);
 assert.equal(dueReview.path, '/play?review=1&reviewTarget=B');
 assert.equal(dueReview.cta, 'Revisar agora');
 assert.equal(dueReview.title, 'Letras');
 assert.equal(dueReview.totalDue, 4);
 assert.equal(dueReview.entityKey, 'B');
+assert.equal(dueReview.reviewCompleted, false);
 assert.match(dueReview.description, /4 revisões prontas/);
 
 const singleDueReview = getLearnerNextAction(activeJourney, {
@@ -63,6 +65,19 @@ const curriculumFallback = getLearnerNextAction(activeJourney, {
 assert.equal(curriculumFallback.kind, LEARNER_NEXT_ACTION_KIND.CURRICULUM);
 assert.equal(curriculumFallback.path, '/play-syllables');
 assert.equal(curriculumFallback.cta, 'Continuar sílabas');
+assert.equal(curriculumFallback.reviewCompleted, false);
+
+const postReviewHandoff = getLearnerNextAction(activeJourney, {
+  hasDueReviews: false,
+  totalDue: 0,
+  nextPath: null,
+}, { reviewCompleted: true });
+assert.equal(postReviewHandoff.kind, LEARNER_NEXT_ACTION_KIND.CURRICULUM);
+assert.equal(postReviewHandoff.path, '/play-syllables');
+assert.equal(postReviewHandoff.cta, 'Continuar missão');
+assert.equal(postReviewHandoff.reviewCompleted, true);
+assert.match(postReviewHandoff.description, /^Revisões concluídas\./);
+assert.match(postReviewHandoff.description, /Continue atravessando as pontes do som/);
 
 assert.throws(
   () => getLearnerNextAction({ firstRun: false }, null),
@@ -75,5 +90,6 @@ assert.ok(welcomeSource.includes('getLearnerNextAction'));
 assert.ok(welcomeSource.includes('primaryAction.path'));
 assert.ok(welcomeSource.includes('primaryAction.cta'));
 assert.ok(welcomeSource.includes("primaryAction.kind === 'review'"));
+assert.ok(welcomeSource.includes('{ reviewCompleted }'));
 
-console.log('Lexia M29-B Learner Next Action contract: PASS (first-run priority, due-review priority, curriculum fallback, Home integration)');
+console.log('Lexia M31-A Learner Next Action contract: PASS (first-run priority, due-review priority, curriculum fallback, post-review Continue mission handoff)');
