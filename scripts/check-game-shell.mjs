@@ -20,8 +20,12 @@ assert.equal(welcome.includes('min-h-screen'), false, 'Welcome must not rely on 
 const playGame = await readFile(new URL('../src/pages/PlayGame.jsx', import.meta.url), 'utf8');
 assert.ok(playGame.includes('game-viewport flex flex-col'));
 assert.ok(playGame.includes('game-scroll-y game-safe-bottom flex-1'), 'only PlayGame content region should scroll when required');
-assert.ok(playGame.includes('game-safe-top'));
+assert.ok(playGame.includes('<GameplayHud'), 'PlayGame must delegate its top safe-area shell to GameplayHud');
 assert.equal(playGame.includes('min-h-screen'), false, 'PlayGame must not exceed the dynamic viewport shell');
+
+const gameplayHud = await readFile(new URL('../src/components/game/GameplayHud.jsx', import.meta.url), 'utf8');
+assert.ok(gameplayHud.includes('game-safe-top'), 'delegated gameplay HUD must retain top safe-area protection');
+assert.ok(gameplayHud.includes('flex-shrink-0'), 'delegated gameplay HUD must remain outside the scrolling content region');
 
 const worldMap = await readFile(new URL('../src/pages/WorldMap.jsx', import.meta.url), 'utf8');
 assert.ok(worldMap.includes('game-viewport flex flex-col'));
@@ -35,4 +39,4 @@ assert.ok(drawing.includes('game-drawing-board'));
 assert.ok(drawing.includes('game-drawing-actions'));
 assert.equal(drawing.includes("maxWidth: '260px'"), false, 'drawing board must not retain fixed inline width');
 
-console.log('Lexia Game Shell M07-G contract: PASS (100dvh, safe areas, bounded scrolling, responsive drawing surface)');
+console.log('Lexia Game Shell M07-G/M37-A contract: PASS (100dvh, delegated safe-area HUD, bounded scrolling, responsive drawing surface)');
