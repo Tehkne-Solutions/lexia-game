@@ -3,27 +3,46 @@ export const LEARNER_NEXT_ACTION_KIND = Object.freeze({
   REVIEW: 'review',
 });
 
-function resolveReviewCompleted(options = {}) {
-  if (typeof options?.reviewCompleted === 'boolean') return options.reviewCompleted;
+function resolveCompletionContext(options = {}) {
+  if (typeof options?.reviewCompleted === 'boolean' || typeof options?.dailyCompleted === 'boolean') {
+    return {
+      reviewCompleted: Boolean(options?.reviewCompleted),
+      dailyCompleted: Boolean(options?.dailyCompleted),
+    };
+  }
+
   try {
     const search = globalThis?.location?.search || '';
-    return new URLSearchParams(search).get('reviewComplete') === '1';
+    const params = new URLSearchParams(search);
+    return {
+      reviewCompleted: params.get('reviewComplete') === '1',
+      dailyCompleted: params.get('dailyComplete') === '1',
+    };
   } catch {
-    return false;
+    return { reviewCompleted: false, dailyCompleted: false };
   }
 }
 
 function buildCurriculumAction(journey, options = {}) {
-  const reviewCompleted = resolveReviewCompleted(options);
+  const completion = resolveCompletionContext(options);
+  const hasCompletionHandoff = completion.reviewCompleted || completion.dailyCompleted;
+  const title = completion.dailyCompleted
+    ? 'Bônus concluído!'
+    : journey.title;
+  const description = completion.reviewCompleted
+    ? `Revisões concluídas. ${journey.description}`
+    : completion.dailyCompleted
+      ? `Desafio diário concluído. ${journey.description}`
+      : journey.description;
+
   return {
     kind: LEARNER_NEXT_ACTION_KIND.CURRICULUM,
     path: journey.path,
-    cta: reviewCompleted ? 'Continuar missão' : journey.cta,
-    title: journey.title,
-    description: reviewCompleted
-      ? `Revisões concluídas. ${journey.description}`
-      : journey.description,
-    reviewCompleted,
+    cta: hasCompletionHandoff ? 'Continuar missão' : journey.cta,
+    title,
+    description,
+    reviewCompleted: completion.reviewCompleted,
+    dailyCompleted: completion.dailyCompleted,
   };
 }
 
@@ -33,7 +52,7 @@ export function getLearnerNextAction(journey, reviewQuest, options = {}) {
   }
 
   if (journey.firstRun) {
-    return buildCurriculumAction(journey, { reviewCompleted: false });
+    return buildCurriculumAction(journey, { reviewCompleted: false, dailyCompleted: false });
   }
 
   if (reviewQuest?.hasDueReviews && reviewQuest?.nextPath) {
@@ -49,6 +68,7 @@ export function getLearnerNextAction(journey, reviewQuest, options = {}) {
       totalDue,
       entityKey: reviewQuest.nextEntityKey || null,
       reviewCompleted: false,
+      dailyCompleted: false,
     };
   }
 
