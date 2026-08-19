@@ -1,0 +1,44 @@
+name: Lexia Audio Assets Layer
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  audio-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Audio assets layer contract
+        run: node scripts/check-audio-assets-layer.mjs
+      - name: Audio runtime contract
+        run: node scripts/check-audio-runtime.mjs
+      - name: Typecheck UI
+        run: npm run typecheck
+      - name: Typecheck core
+        run: npm run typecheck:core
+      - name: Prepare Chrome runtime
+        shell: bash
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_BIN"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+      - name: Audio settings browser regression
+        run: node scripts/check-audio-settings-browser.mjs
+      - name: Upload audio evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lexia-m34b-audio-assets-layer
+          path: artifacts/m34a
+          if-no-files-found: warn
