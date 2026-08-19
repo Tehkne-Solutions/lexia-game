@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft, Lock, Star, Play, Keyboard, Compass } from 'lucide-react';
 import { buildStats } from '@/lib/achievements';
 import { WORLDS, isWorldUnlocked } from '@/lib/worldMap';
@@ -14,6 +13,8 @@ import {
   getWorldExperience,
   getWorldRelicProgress,
 } from '@/game/worldExperienceEngine';
+import GameActionButton from '@/components/game/GameActionButton';
+import GamePanel from '@/components/game/GamePanel';
 import WorldUnlockCelebration from '@/components/game/WorldUnlockCelebration';
 import WorldNarrativePanel from '@/components/game/WorldNarrativePanel';
 import WorldRelicBadge from '@/components/game/WorldRelicBadge';
@@ -67,19 +68,25 @@ export default function WorldMap() {
 
   return (
     <div className="game-viewport flex flex-col bg-background">
-      <div className="game-safe-top bg-card border-b border-border p-4 flex-shrink-0 z-10">
+      <header className="game-safe-top lexia-gameplay-hud p-3 flex-shrink-0 z-10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <Link to="/">
-            <Button variant="ghost" size="icon" className="rounded-xl" onClick={playClickSound}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
+          <Link to="/" aria-label="Voltar ao início">
+            <GameActionButton
+              gameVariant="neutral"
+              variant="ghost"
+              size="icon"
+              className="lexia-hud-icon h-9 w-9 rounded-xl"
+              onClick={playClickSound}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </GameActionButton>
           </Link>
           <div>
-            <h1 className="font-display text-2xl text-foreground">Mapa do Mundo</h1>
-            <p className="font-body text-sm text-muted-foreground">Sua jornada de aprendizado</p>
+            <h1 className="font-display text-xl sm:text-2xl text-foreground">Mapa do Mundo</h1>
+            <p className="font-body text-xs sm:text-sm text-muted-foreground">Sua jornada de aprendizado</p>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="game-scroll-y flex-1 relative">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -109,6 +116,7 @@ export default function WorldMap() {
               const isDone = pct >= 100;
               const isRecommended = journey.worldId === world.id;
               const worldExperience = getWorldExperience(world.id, stats);
+              const panelTone = isDone ? 'success' : isRecommended ? 'reward' : 'paper';
 
               return (
                 <motion.div
@@ -122,19 +130,18 @@ export default function WorldMap() {
                     <div className="absolute left-1/2 -translate-x-1/2 top-full w-1 h-4 bg-border rounded-full z-0" />
                   )}
 
-                  <div
-                    className={`relative rounded-2xl border-2 overflow-hidden shadow-lg transition-all
-                      ${!unlocked ? 'border-border opacity-60' : isRecommended ? 'border-primary ring-2 ring-primary/20' : isDone ? 'border-yellow-400' : 'border-primary/50'}
-                    `}
+                  <GamePanel
+                    tone={panelTone}
+                    className={`relative overflow-hidden p-0 ${unlocked ? '' : 'opacity-60'}`}
                   >
                     {isRecommended && (
-                      <div className="absolute top-2 right-2 z-10 bg-card text-primary border border-primary/30 rounded-full px-2 py-1 flex items-center gap-1 shadow-sm">
+                      <div className="absolute top-2 right-2 z-10 lexia-stat-chip">
                         <Compass className="w-3 h-3" />
                         <span className="font-body text-[10px] font-bold uppercase">Missão atual</span>
                       </div>
                     )}
 
-                    <div className={`bg-gradient-to-r ${world.bgColor} p-4 flex items-center gap-4`}>
+                    <div className="p-4 flex items-center gap-4">
                       <motion.div
                         className="text-5xl"
                         animate={isRecommended ? { scale: [1, 1.12, 1] } : isActive ? { scale: [1, 1.1, 1] } : {}}
@@ -143,26 +150,26 @@ export default function WorldMap() {
                         {world.emoji}
                       </motion.div>
 
-                      <div className="flex-1 text-white min-w-0">
-                        <p className="font-body text-[10px] uppercase tracking-[0.12em] opacity-75">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-body text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                           {worldExperience.chapter} · {worldExperience.title}
                         </p>
-                        <div className="flex items-center gap-2">
-                          <h2 className="font-display text-lg">{world.name}</h2>
+                        <div className="flex items-center gap-2 pr-20">
+                          <h2 className="font-display text-lg text-foreground">{world.name}</h2>
                           {isDone && <span className="text-lg">🏆</span>}
-                          {!unlocked && <Lock className="w-4 h-4 opacity-70" />}
+                          {!unlocked && <Lock className="w-4 h-4 text-muted-foreground" />}
                         </div>
-                        <p className="font-body text-sm opacity-90">{world.description}</p>
+                        <p className="font-body text-sm text-muted-foreground">{world.description}</p>
 
                         {unlocked && (
                           <div className="mt-2">
                             <div className="flex justify-between items-center mb-1">
-                              <span className="text-xs opacity-80">{completed}/{total} dominados</span>
-                              <span className="text-xs font-bold">{pct}%</span>
+                              <span className="text-xs text-muted-foreground">{completed}/{total} dominados</span>
+                              <span className="text-xs font-bold text-foreground">{pct}%</span>
                             </div>
-                            <div className="w-full h-2 bg-white/30 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-primary/15 rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-white rounded-full transition-all duration-700 ease-out"
+                                className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
@@ -174,45 +181,46 @@ export default function WorldMap() {
                         </div>
 
                         {!unlocked && (
-                          <p className="text-xs opacity-80 mt-1">{getUnlockHint(world)}</p>
+                          <p className="font-body text-xs text-muted-foreground mt-1">{getUnlockHint(world)}</p>
                         )}
                       </div>
 
                       {unlocked && world.playPath && (
                         <Link to={isRecommended ? journey.path : world.playPath}>
-                          <Button
+                          <GameActionButton
+                            gameVariant={isRecommended ? 'primary' : 'secondary'}
                             size="sm"
                             onClick={playClickSound}
-                            className="bg-white text-primary hover:bg-white/90 rounded-xl font-body font-bold gap-1 shadow-md"
+                            className="rounded-xl font-body font-bold gap-1"
                           >
                             {world.id === 'alphabet' || world.id === 'sentences'
                               ? <Play className="w-4 h-4" />
                               : <Keyboard className="w-4 h-4" />}
                             {isRecommended ? 'Continuar' : 'Jogar'}
-                          </Button>
+                          </GameActionButton>
                         </Link>
                       )}
                     </div>
 
                     {isDone && (
-                      <div className="bg-yellow-50 border-t border-yellow-200 px-4 py-2 flex items-center gap-1">
+                      <div className="border-t border-border px-4 py-2 flex items-center gap-1">
                         {[1, 2, 3].map(s => (
                           <Star key={s} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                         ))}
-                        <span className="text-xs font-body text-yellow-700 ml-1">
+                        <span className="text-xs font-body text-muted-foreground ml-1">
                           {worldExperience.relicUnlocked
                             ? `${worldExperience.relic.name} conquistada!`
                             : 'Mundo completo!'}
                         </span>
                       </div>
                     )}
-                  </div>
+                  </GamePanel>
                 </motion.div>
               );
             })}
           </div>
 
-          <div className="text-center py-4">
+          <GamePanel tone="paper" className="p-4 text-center">
             <p className="font-body text-sm text-muted-foreground">
               🦉 Continue aprendendo para desbloquear novos mundos e relíquias!
             </p>
@@ -220,7 +228,7 @@ export default function WorldMap() {
               Letras <strong>{stats.lettersMastered || 0}/26</strong> · Simples <strong>{stats.syllablesBasicMastered || 0}/20</strong> · Complexas <strong>{stats.syllablesComplexMastered || 0}/20</strong><br />
               Palavras <strong>{stats.wordsMastered || 0}/20</strong> · Frases <strong>{stats.sentencesMastered || 0}/20</strong> · Relíquias <strong>{relicProgress.unlocked}/{relicProgress.total}</strong>
             </p>
-          </div>
+          </GamePanel>
         </div>
       </div>
 
