@@ -3,8 +3,18 @@ export const LEARNER_NEXT_ACTION_KIND = Object.freeze({
   REVIEW: 'review',
 });
 
+function resolveReviewCompleted(options = {}) {
+  if (typeof options?.reviewCompleted === 'boolean') return options.reviewCompleted;
+  try {
+    const search = globalThis?.location?.search || '';
+    return new URLSearchParams(search).get('reviewComplete') === '1';
+  } catch {
+    return false;
+  }
+}
+
 function buildCurriculumAction(journey, options = {}) {
-  const reviewCompleted = Boolean(options?.reviewCompleted);
+  const reviewCompleted = resolveReviewCompleted(options);
   return {
     kind: LEARNER_NEXT_ACTION_KIND.CURRICULUM,
     path: journey.path,
