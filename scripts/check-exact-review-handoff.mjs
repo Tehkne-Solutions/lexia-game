@@ -51,7 +51,8 @@ for (const required of [
   '(isReviewMode && requestedReviewLetter)',
   '!isPracticeMode && !isReviewMode && journey.stage === JOURNEY_STAGES.LETTERS',
   'requestedReviewLetter || pickNextLetter(allProgress, currentLetter, ALPHABET)',
-  '!isPracticeMode && !isReviewMode && (',
+  'GameplayResultActions',
+  'isReviewMode={isReviewMode}',
 ]) {
   assert.ok(playSource.includes(required), `PlayGame exact-review invariant missing: ${required}`);
 }
@@ -63,6 +64,13 @@ assert.ok(
   'PlayGame route params must be evaluated per component mount so SPA navigation preserves exact targets',
 );
 
+const resultActionsSource = await readFile(new URL('../src/components/game/GameplayResultActions.jsx', import.meta.url), 'utf8');
+assert.ok(
+  resultActionsSource.includes('!isPracticeMode && !isReviewMode && ('),
+  'normal journey map action must remain excluded from exact review mode after UI extraction',
+);
+assert.ok(resultActionsSource.includes('to="/world"'), 'normal journey map action must preserve canonical /world route');
+
 const practiceSource = await readFile(new URL('../src/pages/PracticeHub.jsx', import.meta.url), 'utf8');
 assert.ok(practiceSource.includes('reviewChapter.reviewPath'));
 assert.ok(!practiceSource.includes('to={reviewChapter.path}'), 'per-chapter review CTA must not drop the exact target');
@@ -71,4 +79,4 @@ const ciSource = await readFile(new URL('../.github/workflows/ci.yml', import.me
 assert.ok(ciSource.includes('Exact review handoff contract'));
 assert.ok(ciSource.includes('Exact review browser QA'));
 
-console.log('Lexia M21 Exact Review Handoff contract: PASS (oldest due target encoded, letter mission override retired, exact per-chapter CTA)');
+console.log('Lexia M21/M37-A Exact Review Handoff contract: PASS (oldest due target encoded, SPA exact target preserved, delegated result actions keep review isolation)');
