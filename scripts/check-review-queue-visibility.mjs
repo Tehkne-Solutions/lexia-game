@@ -91,7 +91,7 @@ for (const required of [
   'getLearnerReviewRemaining()',
   'reviewQuest.totalDue',
   "'Última revisão pronta'",
-  '`${remaining} revisões na fila`',
+  '`${reviewRemaining} revisões na fila`',
   "reviewRemaining === 1 ? '1 restante' : `${reviewRemaining} restantes`",
 ]) {
   assert.ok(barSource.includes(required), `review queue banner invariant missing: ${required}`);
