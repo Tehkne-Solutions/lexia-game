@@ -49,4 +49,6 @@ assert.deepEqual(
   `Legacy Base44 facade imports are no longer allowed:\n${legacyFacadeConsumers.join('\n')}`
 );
 
-console.log('Lexia platform boundary: PASS (0 legacy facade consumers; vendor SDK isolated in adapter)');
+await import('./check-read-resilience.mjs');
+
+console.log('Lexia platform boundary: PASS (0 legacy facade consumers; vendor SDK isolated in adapter; read resilience contract verified)');
