@@ -4,9 +4,9 @@ import { isChallengeCompleted } from '@/lib/dailyChallenge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft, Star, Trophy, Flame, Target, Compass } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import GameActionButton from '@/components/game/GameActionButton';
 import { AVATARS, getAvatarById } from '@/lib/avatars';
 import { ALPHABET } from '@/lib/alphabetData';
 import { calculateMastery } from '@/lib/fsrs';
@@ -64,12 +64,19 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-card border-b border-border p-4 pt-[env(safe-area-inset-top)] sticky top-0 z-10">
+      <div className="lexia-gameplay-hud border-b border-border p-4 pt-[env(safe-area-inset-top)] sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <Link to="/">
-            <Button variant="ghost" size="icon" className="rounded-xl" onClick={playClickSound}>
+            <GameActionButton
+              gameVariant="neutral"
+              variant="ghost"
+              size="icon"
+              className="lexia-hud-icon rounded-xl"
+              onClick={playClickSound}
+              aria-label="Voltar ao início"
+            >
               <ArrowLeft className="w-5 h-5" />
-            </Button>
+            </GameActionButton>
           </Link>
           <h1 className="font-display text-2xl text-foreground">Meu Perfil</h1>
         </div>
@@ -79,7 +86,7 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl border-2 border-primary/20 p-5 flex items-center gap-4"
+          className="lexia-game-panel lexia-game-panel-reward rounded-2xl p-5 flex items-center gap-4"
         >
           <div className="text-6xl">{currentAvatar.emoji}</div>
           <div className="flex-1 min-w-0">
@@ -98,7 +105,7 @@ export default function Profile() {
             <div className="flex items-center gap-2 mt-2">
               <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-700 ease-out"
+                  className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
                   style={{ width: `${((5 - starsToNextLevel) / 5) * 100}%` }}
                 />
               </div>
