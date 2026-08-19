@@ -34,20 +34,19 @@ import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 
-const urlParams = new URLSearchParams(window.location.search);
-const isPracticeMode = urlParams.get('mode') === 'practice';
-const isDailyMode = urlParams.get('daily') === '1';
-const isReviewMode = urlParams.get('review') === '1';
-const requestedDailyTargetKey = urlParams.get('dailyTarget');
-const requestedDailyLetter = ALPHABET.some((item) => item.letter === requestedDailyTargetKey)
-  ? requestedDailyTargetKey
-  : null;
-const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
-const requestedReviewLetter = ALPHABET.some((item) => item.letter === requestedReviewTargetKey)
-  ? requestedReviewTargetKey
-  : null;
-
 export default function PlayGame() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPracticeMode = urlParams.get('mode') === 'practice';
+  const isDailyMode = urlParams.get('daily') === '1';
+  const isReviewMode = urlParams.get('review') === '1';
+  const requestedDailyTargetKey = urlParams.get('dailyTarget');
+  const requestedDailyLetter = ALPHABET.some((item) => item.letter === requestedDailyTargetKey)
+    ? requestedDailyTargetKey
+    : null;
+  const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
+  const requestedReviewLetter = ALPHABET.some((item) => item.letter === requestedReviewTargetKey)
+    ? requestedReviewTargetKey
+    : null;
   const [currentLetter, setCurrentLetter] = useState(() => requestedDailyLetter || requestedReviewLetter || getInitialLearningLetter(ALPHABET));
   const [phase, setPhase] = useState('draw');
   const [aiResult, setAiResult] = useState(null);

@@ -56,6 +56,13 @@ for (const required of [
   assert.ok(playSource.includes(required), `PlayGame exact-review invariant missing: ${required}`);
 }
 
+const playComponentIndex = playSource.indexOf('export default function PlayGame()');
+const playRouteParamsIndex = playSource.indexOf('const urlParams = new URLSearchParams(window.location.search);');
+assert.ok(
+  playRouteParamsIndex > playComponentIndex,
+  'PlayGame route params must be evaluated per component mount so SPA navigation preserves exact targets',
+);
+
 const practiceSource = await readFile(new URL('../src/pages/PracticeHub.jsx', import.meta.url), 'utf8');
 assert.ok(practiceSource.includes('reviewChapter.reviewPath'));
 assert.ok(!practiceSource.includes('to={reviewChapter.path}'), 'per-chapter review CTA must not drop the exact target');
