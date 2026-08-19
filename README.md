@@ -1,39 +1,127 @@
-**Welcome to your Base44 project** 
+# Lexia Game
 
-**About**
+**Tehkné Solutions**
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+Lexia is an educational game focused on guided literacy learning, adaptive review, progression through curriculum worlds and persistent learner progress.
 
-This project contains everything you need to run your app locally.
+The application now runs behind an explicit platform boundary. Base44 is retained only as a temporary rollback/reference provider while the independent Supabase runtime is the production cutover target.
 
-**Edit the code in your local development environment**
+## Current architecture
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+- React 18 + Vite 6 frontend;
+- React Router 7 in declarative mode;
+- TanStack Query for client data orchestration;
+- platform abstraction in `src/platform`;
+- providers: `base44` and `supabase`;
+- Supabase Auth, progress persistence, Storage and Edge Functions behind the adapter boundary;
+- independent learning/journey engines and browser QA contracts;
+- dedicated critical learner journey E2E running in real Chrome.
 
-**Prerequisites:** 
+The selected platform provider is controlled by `VITE_LEXIA_PLATFORM_PROVIDER`. The current code defaults to `base44` when the variable is omitted so rollback remains possible until the controlled Supabase production cutover is completed.
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+## Prerequisites
 
+- Node.js 22;
+- npm;
+- environment variables for the provider you intend to run.
+
+Install dependencies with the lockfile:
+
+```bash
+npm ci
 ```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
 
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+## Local development
+
+Create `.env.local` and select the runtime provider.
+
+### Supabase runtime
+
+```dotenv
+VITE_LEXIA_PLATFORM_PROVIDER=supabase
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+VITE_LEXIA_SUPABASE_AUTH_READY=true
+VITE_LEXIA_SUPABASE_EDGE_READY=true
 ```
 
-Run the app: `npm run dev`
+Optional Edge Function overrides:
 
-**Publish your changes**
+```dotenv
+VITE_LEXIA_SUPABASE_AI_FUNCTION=lexia-ai
+VITE_LEXIA_SUPABASE_EMAIL_FUNCTION=lexia-email
+VITE_LEXIA_SUPABASE_UPLOAD_FUNCTION=lexia-upload
+```
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+Supabase is fail-closed: selecting it without the required URL, publishable key and readiness flags stops startup instead of silently falling back to another provider.
 
-**Docs & Support**
+### Temporary Base44 rollback/reference runtime
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+```dotenv
+VITE_LEXIA_PLATFORM_PROVIDER=base44
+VITE_BASE44_APP_ID=YOUR_APP_ID
+VITE_BASE44_APP_BASE_URL=YOUR_BASE44_URL
+```
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+Base44 is not the target architecture for new platform work.
+
+Start development:
+
+```bash
+npm run dev
+```
+
+Build the application:
+
+```bash
+npm run build
+```
+
+Preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## Validation baseline
+
+Run the primary local gates before proposing changes:
+
+```bash
+npm run typecheck
+npm run typecheck:core
+npm run lint
+npm run build
+npm audit --audit-level=high
+```
+
+GitHub Actions additionally validates the learning and journey contracts, platform boundary, Supabase schema/adapter, release controls and browser QA flows.
+
+The dedicated `Lexia Critical E2E` workflow proves the integrated learner path in real Chrome:
+
+`Home → Sílabas → teclado on-screen → resposta correta → persistência → reload → retomada da jornada`.
+
+## Runtime and release safety
+
+The repository includes explicit gates for:
+
+- Supabase Auth and private services smoke tests;
+- browser provider cutover;
+- deployed preview validation;
+- prebuilt Vercel preview;
+- production candidate attestation;
+- production post-switch smoke;
+- release control;
+- critical learner journey E2E.
+
+Do not switch the production provider only because a local build succeeds. Provider promotion must follow the repository release gates and live Supabase validation.
+
+## Fresh-start data policy
+
+The independent runtime follows a fresh-start policy: learner data from Base44 or previous environments is not migrated unless a future explicit product decision changes that policy. New learners start with canonical empty progress and enter the guided curriculum from the beginning.
+
+## Repository ownership
+
+Product, architecture, code, QA and release documentation are maintained under **Tehkné Solutions**.
+
+— Tehkné Solutions
