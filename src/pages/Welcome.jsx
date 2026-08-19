@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { getJourneyState } from '@/game/journeyEngine';
 import { getJourneyWorldExperience } from '@/game/worldExperienceEngine';
 import { buildLearnerReviewQuest, getLearnerReviewQuestLabel } from '@/game/learnerReviewQuestEngine';
+import { getLearnerNextAction } from '@/game/learnerNextActionEngine';
 
 const reviewCompleted = new URLSearchParams(window.location.search).get('reviewComplete') === '1';
 
@@ -46,6 +47,10 @@ export default function Welcome() {
     () => buildLearnerReviewQuest(visibleProgress),
     [visibleProgress],
   );
+  const primaryAction = useMemo(
+    () => getLearnerNextAction(journey, reviewQuest),
+    [journey, reviewQuest],
+  );
   const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
   const dailyCompletedCount = getChallengeCompletedCount(dailyChallenge);
 
@@ -59,10 +64,12 @@ export default function Welcome() {
       setShowMessage(true);
       speak(journey.firstRun
         ? `Olá! Eu sou a Corujinha! Sua primeira missão é descobrir a letra ${journey.target}.`
-        : 'Olá! Eu sou a Corujinha! Vamos continuar nossa jornada?');
+        : primaryAction.kind === 'review'
+          ? 'Você tem revisões prontas. Vamos reforçar o que já aprendeu antes de continuar?'
+          : 'Olá! Eu sou a Corujinha! Vamos continuar nossa jornada?');
     }, 800);
     return () => clearTimeout(timer);
-  }, [journey.firstRun, journey.target]);
+  }, [journey.firstRun, journey.target, primaryAction.kind]);
 
   function startDailyChallenge(_nextTarget, challenge) {
     const targetChallenge = challenge || dailyChallenge;
@@ -128,7 +135,7 @@ export default function Welcome() {
             className="game-compact-mascot"
             expression={showMessage ? 'excited' : 'happy'}
             size="xl"
-            message={showMessage ? (journey.firstRun ? `Sua primeira missão: letra ${journey.target}!` : journey.title) : undefined}
+            message={showMessage ? (journey.firstRun ? `Sua primeira missão: letra ${journey.target}!` : primaryAction.title) : undefined}
           />
 
           <motion.div
@@ -250,7 +257,7 @@ export default function Welcome() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.85 }}
           >
-            <Link to={journey.path} className="w-full">
+            <Link to={primaryAction.path} className="w-full">
               <Button
                 size="lg"
                 onClick={() => playClickSound()}
@@ -259,7 +266,7 @@ export default function Welcome() {
                   shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:shadow-primary/40"
               >
                 <Play className="w-6 h-6" />
-                {journey.cta}
+                {primaryAction.cta}
               </Button>
             </Link>
 
