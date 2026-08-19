@@ -1,0 +1,39 @@
+name: M28-B Lock Refresh
+
+on:
+  push:
+    branches:
+      - agent/m28b-read-resilience-boundary
+
+permissions:
+  contents: read
+
+jobs:
+  refresh-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Refresh compatible lockfile
+        run: npm update --package-lock-only --ignore-scripts
+
+      - name: Install refreshed dependency graph
+        run: npm ci
+
+      - name: Audit refreshed graph
+        run: npm audit --json || true
+
+      - name: Upload candidate lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: m28b-package-lock-candidate
+          path: package-lock.json
+          retention-days: 1
