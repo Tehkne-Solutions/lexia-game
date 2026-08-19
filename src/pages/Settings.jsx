@@ -4,20 +4,26 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Home, Eye, Type, Accessibility, Check, LogOut, ShieldCheck } from 'lucide-react';
+import { Home, Eye, Type, Accessibility, Check, LogOut, ShieldCheck, Volume2, Mic2 } from 'lucide-react';
 import { loadAccessibilitySettings, saveAccessibilitySettings, applyAccessibilitySettings } from '@/lib/accessibility';
 import { playClickSound } from '@/lib/sounds';
+import { loadAudioSettings, previewVoice, updateAudioSettings } from '@/audio/audioRuntime';
 import { useAuth } from '@/lib/AuthContext';
 import { activePlatformProvider } from '@/platform';
 
 export default function Settings() {
   const [settings, setSettings] = useState(loadAccessibilitySettings);
+  const [audioSettings, setAudioSettings] = useState(loadAudioSettings);
   const { logout } = useAuth();
 
   function update(newSettings) {
     setSettings(newSettings);
     saveAccessibilitySettings(newSettings);
     applyAccessibilitySettings(newSettings);
+  }
+
+  function updateAudio(patch) {
+    setAudioSettings(updateAudioSettings(patch));
   }
 
   function toggleDyslexiaFont() {
@@ -58,6 +64,77 @@ export default function Settings() {
           <Card>
             <CardHeader>
               <CardTitle className="font-display text-base flex items-center gap-2">
+                <Volume2 className="w-5 h-5 text-primary" />
+                Som e voz
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <span className="font-body text-sm font-bold text-foreground">Efeitos sonoros</span>
+                  <span className="font-body text-xs text-muted-foreground">{Math.round(audioSettings.sfxVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={Math.round(audioSettings.sfxVolume * 100)}
+                  onChange={(event) => updateAudio({ sfxVolume: Number(event.target.value) / 100 })}
+                  className="w-full accent-primary"
+                  aria-label="Volume dos efeitos sonoros"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <span className="font-body text-sm font-bold text-foreground">Volume da voz</span>
+                  <span className="font-body text-xs text-muted-foreground">{Math.round(audioSettings.voiceVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={Math.round(audioSettings.voiceVolume * 100)}
+                  onChange={(event) => updateAudio({ voiceVolume: Number(event.target.value) / 100 })}
+                  className="w-full accent-primary"
+                  aria-label="Volume da voz"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-border p-3">
+                <div className="min-w-0">
+                  <p className="font-body text-sm font-bold text-foreground">Narração da Corujinha</p>
+                  <p className="font-body text-xs text-muted-foreground mt-0.5">Falas, dicas e pronúncias em português.</p>
+                </div>
+                <Switch
+                  checked={audioSettings.voiceEnabled}
+                  onCheckedChange={(checked) => updateAudio({ voiceEnabled: checked })}
+                />
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!audioSettings.voiceEnabled || audioSettings.voiceVolume <= 0}
+                onClick={() => {
+                  playClickSound();
+                  previewVoice();
+                }}
+                className="w-full rounded-2xl gap-2 font-body font-bold"
+              >
+                <Mic2 className="w-4 h-4" />
+                Ouvir voz da Corujinha
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-base flex items-center gap-2">
                 <Type className="w-5 h-5 text-primary" />
                 Fonte Amigável para Dislexia
               </CardTitle>
@@ -73,7 +150,7 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card>
             <CardHeader>
               <CardTitle className="font-display text-base flex items-center gap-2">
@@ -92,7 +169,7 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card>
             <CardHeader>
               <CardTitle className="font-display text-base flex items-center gap-2">
@@ -125,7 +202,7 @@ export default function Settings() {
         </motion.div>
 
         {activePlatformProvider === 'supabase' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
             <Card>
               <CardHeader>
                 <CardTitle className="font-display text-base flex items-center gap-2">
