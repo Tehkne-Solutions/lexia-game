@@ -1,0 +1,66 @@
+name: Lexia Home Semantic Migration
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/Welcome.jsx'
+      - 'src/components/game/GamePanel.jsx'
+      - 'src/components/game/GameActionButton.jsx'
+      - 'scripts/check-home-semantic-migration.mjs'
+      - '.github/workflows/home-semantic-migration.yml'
+      - 'docs/M36B-HOME-SEMANTIC-MIGRATION.md'
+  workflow_dispatch:
+
+jobs:
+  home-semantic-migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Home semantic migration contract
+        run: node scripts/check-home-semantic-migration.mjs
+      - name: Premium game component contract
+        run: node scripts/check-premium-game-components.mjs
+      - name: Premium UI foundation contract
+        run: node scripts/check-premium-ui-foundation.mjs
+      - name: Typecheck UI
+        run: npm run typecheck
+      - name: Typecheck core
+        run: npm run typecheck:core
+      - name: Build
+        run: npm run build
+      - name: Prepare Chrome runtime
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          elif command -v chromium >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v chromium)" >> "$GITHUB_ENV"
+          else
+            sudo apt-get update
+            sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
+            echo "CHROME_BIN=$(command -v chromium-browser || command -v chromium)" >> "$GITHUB_ENV"
+          fi
+      - name: Adaptive Home browser regression
+        run: node scripts/check-adaptive-home-browser.mjs
+      - name: Premium UI browser regression
+        run: node scripts/check-premium-ui-browser.mjs
+      - name: Post review browser regression
+        run: node scripts/check-post-review-handoff-browser.mjs
+      - name: Upload M36-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m36b-home-semantic-migration
+          path: |
+            artifacts/m29
+            artifacts/m35b
+            artifacts/m31
+          if-no-files-found: warn
