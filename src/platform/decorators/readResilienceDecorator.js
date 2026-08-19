@@ -13,14 +13,17 @@ const TRANSIENT_ERROR_CODES = new Set([
   'READ_TIMEOUT',
 ]);
 
+/** @param {any} error */
 function readStatus(error) {
   return Number(error?.status || error?.statusCode || error?.response?.status || 0);
 }
 
+/** @param {any} error */
 function readCode(error) {
   return String(error?.code || error?.name || '').toUpperCase();
 }
 
+/** @param {any} error */
 export function isTransientReadError(error) {
   const status = readStatus(error);
   if (TRANSIENT_HTTP_STATUSES.has(status)) return true;
@@ -35,14 +38,21 @@ export function isTransientReadError(error) {
     || message.includes('timed out');
 }
 
+/** @param {number} timeoutMs */
 function createReadTimeoutError(timeoutMs) {
-  const error = new Error(`Read operation timed out after ${timeoutMs}ms`);
+  const error = /** @type {Error & { code?: string, status?: number }} */ (
+    new Error(`Read operation timed out after ${timeoutMs}ms`)
+  );
   error.name = 'ReadTimeoutError';
   error.code = 'READ_TIMEOUT';
   error.status = 408;
   return error;
 }
 
+/**
+ * @param {() => Promise<any>} operation
+ * @param {number} timeoutMs
+ */
 async function runAttempt(operation, timeoutMs) {
   let timer;
   try {
@@ -57,6 +67,15 @@ async function runAttempt(operation, timeoutMs) {
   }
 }
 
+/**
+ * @param {() => Promise<any>} operation
+ * @param {{
+ *   maxAttempts?: number,
+ *   timeoutMs?: number,
+ *   baseDelayMs?: number,
+ *   sleep?: (delayMs: number) => Promise<void>
+ * }} [options]
+ */
 export async function runResilientRead(operation, options = {}) {
   const maxAttempts = Math.max(1, Number(options.maxAttempts || DEFAULT_MAX_ATTEMPTS));
   const timeoutMs = Math.max(1, Number(options.timeoutMs || DEFAULT_TIMEOUT_MS));
@@ -78,6 +97,15 @@ export async function runResilientRead(operation, options = {}) {
   throw lastError;
 }
 
+/**
+ * @param {any} platform
+ * @param {{
+ *   maxAttempts?: number,
+ *   timeoutMs?: number,
+ *   baseDelayMs?: number,
+ *   sleep?: (delayMs: number) => Promise<void>
+ * }} [options]
+ */
 export function decoratePlatformWithReadResilience(platform, options = {}) {
   return {
     ...platform,
