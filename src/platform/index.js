@@ -2,6 +2,7 @@ import { base44Adapter } from '@/platform/adapters/base44Adapter';
 import { createSupabaseAdapter } from '@/platform/adapters/supabaseAdapter';
 import { assertPlatformContract, platformContract } from '@/platform/contracts';
 import { decorateProgressWithDailyChallenge } from '@/platform/decorators/dailyChallengeProgressDecorator';
+import { decoratePlatformWithReadResilience } from '@/platform/decorators/readResilienceDecorator';
 import { getSupabaseProviderConfig, resolvePlatformProvider } from '@/platform/providerConfig';
 
 const supabaseAdapter = createSupabaseAdapter(getSupabaseProviderConfig(import.meta.env));
@@ -17,9 +18,10 @@ if (requestedProvider === 'supabase' && !supabaseAdapter.readiness.ready) {
   throw new Error(`Supabase provider requested but not release-ready: ${supabaseAdapter.readiness.missing.join(', ')}`);
 }
 
+const resilientProvider = decoratePlatformWithReadResilience(selectedProvider);
 const decoratedProvider = {
-  ...selectedProvider,
-  progress: decorateProgressWithDailyChallenge(selectedProvider.progress),
+  ...resilientProvider,
+  progress: decorateProgressWithDailyChallenge(resilientProvider.progress),
 };
 
 export const lexiaPlatform = assertPlatformContract(decoratedProvider);
