@@ -4,7 +4,7 @@ import { isChallengeCompleted } from '@/lib/dailyChallenge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Star, Trophy, Flame, Target, Compass } from 'lucide-react';
+import { ArrowLeft, Compass } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import GameActionButton from '@/components/game/GameActionButton';
 import { AVATARS, getAvatarById } from '@/lib/avatars';
@@ -15,6 +15,8 @@ import { buildParentJourneyInsights } from '@/game/parentInsightsEngine';
 import { getJourneyWorldExperience, getWorldRelicProgress } from '@/game/worldExperienceEngine';
 import { playClickSound } from '@/lib/sounds';
 import DeleteAccountButton from '@/components/profile/DeleteAccountButton';
+import ProfileStats from '@/components/profile/ProfileStats';
+import ProfileTabs from '@/components/profile/ProfileTabs';
 import StickerAlbum from '@/components/game/StickerAlbum';
 import MascotCustomizer from '@/components/game/MascotCustomizer';
 
@@ -155,41 +157,15 @@ export default function Profile() {
           </Card>
         </motion.div>
 
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { icon: Star, label: 'Estrelas', value: totalStars, color: 'text-yellow-500' },
-            { icon: Trophy, label: 'Jornada', value: `${journeyInsights.totalMastered}/${journeyInsights.totalTargets}`, color: 'text-purple-500' },
-            { icon: Flame, label: 'Sequência', value: stats.maxStreak, color: 'text-red-500' },
-            { icon: Target, label: 'Precisão', value: `${stats.accuracy}%`, color: 'text-green-500' },
-          ].map(s => (
-            <Card key={s.label} className="text-center">
-              <CardContent className="p-3">
-                <s.icon className={`w-5 h-5 mx-auto mb-1 ${s.color}`} />
-                <p className="font-display text-lg text-foreground">{s.value}</p>
-                <p className="text-xs font-body text-muted-foreground">{s.label}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <ProfileStats
+          totalStars={totalStars}
+          journeyMastered={journeyInsights.totalMastered}
+          journeyTotal={journeyInsights.totalTargets}
+          maxStreak={stats.maxStreak}
+          accuracy={stats.accuracy}
+        />
 
-        <div className="flex gap-2 overflow-x-auto sm:overflow-visible pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[
-            { id: 'avatar', label: '🐾 Avatar' },
-            { id: 'mascot', label: '🎨 Corujinha' },
-            { id: 'letters', label: '🔤 Letras' },
-            { id: 'stickers', label: '🏆 Adesivos' },
-            { id: 'badges', label: '🏅 Insígnias' },
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => { playClickSound(); setTab(t.id); }}
-              className={`flex-none min-w-[92px] sm:flex-1 sm:min-w-0 py-2 px-3 rounded-xl font-body font-bold text-sm transition-all
-                ${tab === t.id ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <ProfileTabs activeTab={tab} onChange={setTab} />
 
         <AnimatePresence mode="wait">
           {tab === 'avatar' && (

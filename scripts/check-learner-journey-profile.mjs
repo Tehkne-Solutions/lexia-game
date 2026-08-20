@@ -60,16 +60,28 @@ for (const required of [
   assert.ok(achievementsSource.includes(required), `achievement compatibility/delegation missing: ${required}`);
 }
 
-const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
+const [profile, profileStats] = await Promise.all([
+  readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/components/profile/ProfileStats.jsx', import.meta.url), 'utf8'),
+]);
+
 for (const required of [
   'buildParentJourneyInsights',
   'getJourneyWorldExperience',
   'getWorldRelicProgress',
-  "label: 'Jornada'",
   'journeyInsights.totalMastered',
   'journeyInsights.totalTargets',
+  "import ProfileStats from '@/components/profile/ProfileStats'",
 ]) {
   assert.ok(profile.includes(required), `learner journey Profile surface missing: ${required}`);
+}
+
+for (const required of [
+  "label: 'Jornada'",
+  'journeyMastered',
+  'journeyTotal',
+]) {
+  assert.ok(profileStats.includes(required), `learner journey ProfileStats surface missing: ${required}`);
 }
 
 console.log(`Lexia M13/M27 Learner Journey Profile contract: PASS (${JOURNEY_TOTAL_TARGETS}-target learner profile)`);
