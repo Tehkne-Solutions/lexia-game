@@ -280,6 +280,39 @@ html:not(.high-contrast) .lexia-keyboard-delete:active {
   box-shadow: 0 1px 0 hsl(var(--destructive) / 0.72);
 }
 
+/* M38-R: sentence-builder word tokens as tactile game pieces. */
+html:not(.high-contrast) .lexia-sentence-token {
+  box-shadow:
+    0 1px 0 hsl(var(--card) / 0.75) inset,
+    0 3px 0 hsl(var(--lexia-paper-deep)),
+    0 7px 12px hsl(var(--lexia-shadow) / 0.08);
+}
+
+html:not(.high-contrast) .lexia-sentence-token-available {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--lexia-panel-edge)) !important;
+  color: hsl(var(--foreground));
+}
+
+html:not(.high-contrast) .lexia-sentence-token-available:hover {
+  border-color: hsl(var(--primary) / 0.55) !important;
+}
+
+html:not(.high-contrast) .lexia-sentence-token-selected {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--lexia-primary-depth)) !important;
+  color: hsl(var(--primary-foreground));
+  box-shadow:
+    0 1px 0 hsl(var(--primary) / 0.88) inset,
+    0 3px 0 hsl(var(--lexia-primary-depth)),
+    0 7px 12px hsl(var(--lexia-shadow) / 0.1);
+}
+
+html:not(.high-contrast) .lexia-sentence-token:active {
+  transform: translateY(2px) scale(0.95);
+  box-shadow: 0 1px 0 hsl(var(--lexia-primary-depth) / 0.72);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r,
   html:not(.high-contrast) .lexia-primary-action {
