@@ -1,0 +1,36 @@
+name: Lexia Premium Letter Selector
+
+on:
+  pull_request:
+    paths:
+      - 'src/components/game/LetterSelector.jsx'
+      - 'src/components/game/GameActionButton.jsx'
+      - 'src/styles/premium-game.css'
+      - 'scripts/check-premium-letter-selector.mjs'
+      - '.github/workflows/premium-letter-selector.yml'
+  workflow_dispatch:
+
+jobs:
+  premium-letter-selector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Typecheck UI
+        run: npm run typecheck
+      - name: Typecheck core
+        run: npm run typecheck:core
+      - name: No-gradient learner chrome audit
+        run: node scripts/check-no-gradient-learner-chrome.mjs
+      - name: Premium action primitive audit
+        run: node scripts/check-premium-action-primitives.mjs
+      - name: Premium letter selector contract
+        run: node scripts/check-premium-letter-selector.mjs
