@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import GamePanel from '@/components/game/GamePanel';
 import GameActionButton from '@/components/game/GameActionButton';
 import { Compass, Map, Play, Star } from 'lucide-react';
 
@@ -9,12 +10,13 @@ export default function SessionQuestComplete({ quest, onContinue }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 bg-background/92 backdrop-blur-sm flex items-center justify-center p-5"
+      className="fixed inset-0 z-50 bg-background/92 flex items-center justify-center p-5"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
-      <motion.div
-        className="w-full max-w-sm rounded-3xl border-2 border-primary/25 bg-card shadow-2xl p-6 text-center"
+      <GamePanel
+        tone="reward"
+        className="w-full max-w-sm p-6 text-center"
         initial={{ opacity: 0, y: 24, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: 'spring', stiffness: 180, damping: 18 }}
@@ -34,7 +36,7 @@ export default function SessionQuestComplete({ quest, onContinue }) {
           </div>
           <div className="h-8 w-px bg-border" />
           <div>
-            <p className="font-display text-xl text-amber-600 flex items-center justify-center gap-1">
+            <p className="font-display text-xl text-accent flex items-center justify-center gap-1">
               <Star className="w-4 h-4 fill-current" /> {quest.stars}
             </p>
             <p className="text-[11px] text-muted-foreground">estrelas ganhas</p>
@@ -55,7 +57,7 @@ export default function SessionQuestComplete({ quest, onContinue }) {
             <Play className="w-4 h-4" /> Continuar treinando
           </GameActionButton>
         </div>
-      </motion.div>
+      </GamePanel>
     </motion.div>
   );
 }
