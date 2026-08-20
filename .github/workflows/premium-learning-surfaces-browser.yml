@@ -12,7 +12,9 @@ on:
       - 'src/components/game/GameActionButton.jsx'
       - 'src/components/game/ProgressBar.jsx'
       - 'src/components/game/MascotAvatar.jsx'
+      - 'src/components/game/OnScreenKeyboard.jsx'
       - 'src/styles/premium-game.css'
+      - 'scripts/check-premium-onscreen-keyboard.mjs'
       - 'scripts/check-premium-learning-surfaces-browser.mjs'
       - '.github/workflows/premium-learning-surfaces-browser.yml'
   workflow_dispatch:
@@ -37,6 +39,8 @@ jobs:
         run: npm run typecheck:core
       - name: Premium UI foundation contract
         run: node scripts/check-premium-ui-foundation.mjs
+      - name: Premium on-screen keyboard contract
+        run: node scripts/check-premium-onscreen-keyboard.mjs
       - name: Journey engine contract
         run: node scripts/check-journey-engine.mjs
       - name: Session quest contract
