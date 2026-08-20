@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, Flame } from 'lucide-react';
+import '@/styles/premium-gameplay-indicators.css';
 
 export default function ProgressBar({ current, total, streak, stars }) {
   const pct = total > 0 ? Math.min(100, (current / total) * 100) : 0;
@@ -13,7 +14,7 @@ export default function ProgressBar({ current, total, streak, stars }) {
       </div>
 
       {/* Progress track */}
-      <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden border border-border shadow-inner relative">
+      <div className="lexia-progress-track flex-1 h-4 bg-muted rounded-full overflow-hidden border border-border relative">
         <div
           className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
           style={{ width: `${pct}%` }}
