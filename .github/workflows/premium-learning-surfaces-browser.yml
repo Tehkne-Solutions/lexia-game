@@ -10,6 +10,8 @@ on:
       - 'src/components/game/CurriculumGameplayHud.jsx'
       - 'src/components/game/GamePanel.jsx'
       - 'src/components/game/GameActionButton.jsx'
+      - 'src/components/game/ProgressBar.jsx'
+      - 'src/components/game/MascotAvatar.jsx'
       - 'src/styles/premium-game.css'
       - 'scripts/check-premium-learning-surfaces-browser.mjs'
       - '.github/workflows/premium-learning-surfaces-browser.yml'
