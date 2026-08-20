@@ -1,11 +1,12 @@
 import React from 'react';
 import { BookOpen, Compass, LockKeyhole, Sparkles } from 'lucide-react';
+import GamePanel from '@/components/game/GamePanel';
 
 export default function WorldNarrativePanel({ experience, journey }) {
   if (!experience) return null;
 
   return (
-    <section className="rounded-3xl border-2 border-primary/20 bg-card p-4 shadow-sm" aria-label="Capítulo atual da jornada">
+    <GamePanel tone="paper" className="rounded-3xl p-4" aria-label="Capítulo atual da jornada">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-2xl border border-primary/20 bg-primary/10 flex items-center justify-center flex-shrink-0">
           <BookOpen className="w-5 h-5 text-primary" />
@@ -31,7 +32,7 @@ export default function WorldNarrativePanel({ experience, journey }) {
       <div className="mt-3 rounded-2xl border border-border bg-muted/35 px-3 py-2.5 flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-background border border-border flex items-center justify-center">
           {experience.relicUnlocked
-            ? <Sparkles className="w-4 h-4 text-amber-600" />
+            ? <Sparkles className="w-4 h-4 text-accent" />
             : <LockKeyhole className="w-4 h-4 text-muted-foreground" />}
         </div>
         <div className="min-w-0">
@@ -42,6 +43,6 @@ export default function WorldNarrativePanel({ experience, journey }) {
           </p>
         </div>
       </div>
-    </section>
+    </GamePanel>
   );
 }
