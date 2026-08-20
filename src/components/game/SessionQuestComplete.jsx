@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import GameActionButton from '@/components/game/GameActionButton';
 import { Compass, Map, Play, Star } from 'lucide-react';
 
 export default function SessionQuestComplete({ quest, onContinue }) {
@@ -43,13 +43,17 @@ export default function SessionQuestComplete({ quest, onContinue }) {
 
         <div className="mt-5 grid gap-2">
           <Link to="/world" className="w-full">
-            <Button className="w-full rounded-2xl gap-2 font-display py-5">
+            <GameActionButton gameVariant="primary" className="w-full gap-2 font-display py-5">
               <Map className="w-4 h-4" /> Voltar ao mapa
-            </Button>
+            </GameActionButton>
           </Link>
-          <Button variant="outline" className="w-full rounded-2xl gap-2 font-body font-bold" onClick={onContinue}>
+          <GameActionButton
+            gameVariant="secondary"
+            className="w-full gap-2 font-body font-bold"
+            onClick={onContinue}
+          >
             <Play className="w-4 h-4" /> Continuar treinando
-          </Button>
+          </GameActionButton>
         </div>
       </motion.div>
     </motion.div>
