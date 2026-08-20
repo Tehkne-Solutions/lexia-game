@@ -10,7 +10,7 @@ const ROWS = [
 
 export default function OnScreenKeyboard({ onKey, onDelete }) {
   return (
-    <div className="lexia-onscreen-keyboard flex flex-col gap-1 w-full" aria-label="Teclado virtual">
+    <div className="lexia-onscreen-keyboard flex flex-col gap-1 w-full" role="group" aria-label="Teclado virtual">
       {ROWS.map((row, ri) => (
         <div key={ri} className="flex justify-center gap-1">
           {row.map(k => (
