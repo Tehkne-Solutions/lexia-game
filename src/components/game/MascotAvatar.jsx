@@ -34,7 +34,7 @@ export default function MascotAvatar({ expression = 'happy', size = 'md', messag
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
       <motion.div
-        className={`${sizes[size]} rounded-full bg-gradient-to-br from-primary/20 via-accent/20 to-secondary/20 
+        className={`${sizes[size]} rounded-full bg-card
           flex items-center justify-center relative border-4 border-primary/30 shadow-lg`}
         animate={
           expression === 'celebrating'
@@ -93,7 +93,7 @@ export default function MascotAvatar({ expression = 'happy', size = 'md', messag
           className="bg-card border-2 border-primary/20 rounded-2xl px-4 py-2 max-w-[200px]
             text-center text-sm font-body font-semibold text-foreground shadow-md relative"
         >
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-card border-l-2 border-t-2 
+          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-card border-l-2 border-t-2
             border-primary/20 rotate-45" />
           <span className="relative z-10">{message}</span>
         </motion.div>
