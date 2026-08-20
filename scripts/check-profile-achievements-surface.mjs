@@ -26,10 +26,11 @@ for (const required of [
   'Insígnias · {earnedBadges.length}/{ACHIEVEMENTS.length} conquistadas',
   'ACHIEVEMENTS.map((achievement, index)',
   'earnedBadges.some((item) => item.id === achievement.id)',
+  'const visual = getAchievementVisual(achievement)',
   "transition={{ delay: index * 0.05, type: 'spring', stiffness: 200, damping: 15 }}",
   'whileHover={earned ? { scale: 1.04 } : {}}',
-  "earned ? achievement.color : 'bg-muted/50 border-border opacity-50 grayscale'",
-  "earned ? achievement.textColor : 'text-muted-foreground'",
+  "earned ? visual.tile : 'bg-muted/50 border-border opacity-50 grayscale'",
+  "earned ? visual.text : 'text-muted-foreground'",
   "animate={earned ? { rotate: [0, -10, 10, 0] } : {}}",
   'transition={{ duration: 0.6, delay: 0.3 + index * 0.05 }}',
   '{achievement.emoji}',
@@ -39,8 +40,15 @@ for (const required of [
   assert.ok(surface.includes(required), `ProfileAchievements must preserve ${required}`);
 }
 
-for (const forbidden of ['bg-gradient', 'backdrop-blur', 'shadow-md', 'shadow-lg']) {
-  assert.ok(!surface.includes(forbidden), `ProfileAchievements must not include legacy visual token ${forbidden}`);
+for (const forbidden of [
+  'achievement.color',
+  'achievement.textColor',
+  'bg-gradient',
+  'backdrop-blur',
+  'shadow-md',
+  'shadow-lg',
+]) {
+  assert.ok(!surface.includes(forbidden), `ProfileAchievements must not include legacy presentation token ${forbidden}`);
 }
 
-console.log('Lexia M38-AC Profile Achievements Surface: PASS (presentation extracted; earned state, motion and semantic palette preserved)');
+console.log('Lexia M38-AC Profile Achievements Surface: PASS (presentation extracted; earned state, motion and semantic boundary preserved)');
