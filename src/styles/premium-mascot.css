@@ -1,0 +1,15 @@
+/* Lexia mascot materials — Tehkné Solutions */
+
+html:not(.high-contrast) .lexia-mascot-body {
+  box-shadow:
+    0 1px 0 hsl(var(--card)) inset,
+    0 5px 0 hsl(var(--lexia-paper-deep)),
+    0 12px 22px hsl(var(--lexia-shadow) / 0.12);
+}
+
+html:not(.high-contrast) .lexia-mascot-message {
+  box-shadow:
+    0 1px 0 hsl(var(--card)) inset,
+    0 3px 0 hsl(var(--lexia-paper-deep)),
+    0 8px 14px hsl(var(--lexia-shadow) / 0.09);
+}
