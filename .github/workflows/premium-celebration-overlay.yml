@@ -2,18 +2,24 @@ name: Lexia Premium Celebration Overlay
 
 on:
   pull_request:
+    branches: [main]
     paths:
       - 'src/components/game/CelebrationOverlay.jsx'
       - 'src/components/game/GamePanel.jsx'
       - 'src/components/game/GameActionButton.jsx'
+      - 'src/styles/premium-celebration.css'
       - 'scripts/check-premium-celebration-overlay.mjs'
+      - 'scripts/check-browser-layout.mjs'
       - '.github/workflows/premium-celebration-overlay.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   premium-celebration-overlay:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,3 +40,22 @@ jobs:
         run: node scripts/check-premium-action-primitives.mjs
       - name: Premium celebration overlay contract
         run: node scripts/check-premium-celebration-overlay.mjs
+      - name: Build
+        run: npm run build
+      - name: Prepare Chrome browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ldconfig -p | grep -q 'libXtst.so.6'; then
+            sudo apt-get update -y
+            sudo apt-get install -y libxtst6
+          fi
+          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "No Chrome/Chromium executable found" >&2
+            exit 1
+          fi
+          echo "CHROME_BIN=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+      - name: Browser layout regression
+        run: node scripts/check-browser-layout.mjs

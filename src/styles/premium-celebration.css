@@ -1,0 +1,7 @@
+.lexia-celebration-backdrop {
+  background: hsl(var(--background) / 0.94);
+}
+
+.high-contrast .lexia-celebration-backdrop {
+  background: hsl(var(--background));
+}
