@@ -171,6 +171,12 @@ try {
   await cdp.send('Runtime.enable');
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
 
+  await navigate(cdp, baseUrl);
+  await waitFor(
+    cdp,
+    `location.origin === ${JSON.stringify(new URL(baseUrl).origin)}`,
+    'M33 preview origin',
+  );
   await cdp.evaluate(`localStorage.removeItem(${JSON.stringify(storageKey)})`);
   await cdp.send('Page.reload');
   await waitForText(cdp, 'Continuar sílabas');
