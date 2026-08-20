@@ -26,8 +26,8 @@ const sharedFiles = [
 ];
 
 const extensions = new Set(['.js', '.jsx', '.ts', '.tsx', '.css']);
-const forbidden = [
-  { label: 'Tailwind gradient utility', pattern: /\bbg-gradient(?:-[a-z0-9-]+)?\b/gi },
+const utilityRule = { label: 'Tailwind gradient utility', pattern: /\bbg-gradient(?:-[a-z0-9-]+)?\b/gi };
+const cssFunctionRules = [
   { label: 'CSS linear-gradient', pattern: /\blinear-gradient\s*\(/gi },
   { label: 'CSS radial-gradient', pattern: /\bradial-gradient\s*\(/gi },
   { label: 'CSS conic-gradient', pattern: /\bconic-gradient\s*\(/gi },
@@ -47,6 +47,18 @@ function lineNumberAt(content, offset) {
   return content.slice(0, offset).split('\n').length;
 }
 
+function recordMatches(violations, relativePath, content, rule) {
+  rule.pattern.lastIndex = 0;
+  for (const match of content.matchAll(rule.pattern)) {
+    violations.push({
+      file: relativePath,
+      line: lineNumberAt(content, match.index || 0),
+      rule: rule.label,
+      token: match[0],
+    });
+  }
+}
+
 const files = [
   ...learnerPages,
   ...sharedFiles,
@@ -58,17 +70,13 @@ const violations = [];
 
 for (const relativePath of uniqueFiles) {
   const content = await readFile(path.join(root, relativePath), 'utf8');
-  for (const rule of forbidden) {
-    rule.pattern.lastIndex = 0;
-    for (const match of content.matchAll(rule.pattern)) {
-      violations.push({
-        file: relativePath,
-        line: lineNumberAt(content, match.index || 0),
-        rule: rule.label,
-        token: match[0],
-      });
-    }
-  }
+  const extension = path.extname(relativePath);
+
+  // In source components/pages, gradient utility classes are forbidden.
+  // In CSS, class selectors such as `.bg-gradient-to-r` may exist only as
+  // compatibility neutralizers, so we prohibit actual gradient functions there.
+  if (extension !== '.css') recordMatches(violations, relativePath, content, utilityRule);
+  for (const rule of cssFunctionRules) recordMatches(violations, relativePath, content, rule);
 }
 
 if (violations.length > 0) {
