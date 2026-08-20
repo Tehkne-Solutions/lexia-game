@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Eraser, Loader2, CheckCircle } from 'lucide-react';
+import GamePanel from '@/components/game/GamePanel';
 import GameActionButton from '@/components/game/GameActionButton';
 import { playDrawSound, playClickSound } from '@/lib/sounds';
 
@@ -110,9 +110,11 @@ export default function DrawingCanvas({ targetLetter, onEvaluate, disabled }) {
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
-      <motion.div
-        className="game-drawing-board relative rounded-2xl overflow-hidden border-4 border-primary/30 bg-white shadow-xl flex-shrink-0"
+      <GamePanel
+        tone="paper"
+        className="game-drawing-board relative rounded-2xl overflow-hidden border-2 border-primary/30 bg-card flex-shrink-0"
         whileTap={!isEvaluating ? { scale: 0.99 } : {}}
+        aria-label={`Área de desenho da letra ${targetLetter}`}
       >
         <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-primary/40 rounded-tl-md z-10" />
         <div className="absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-primary/40 rounded-tr-md z-10" />
@@ -132,24 +134,20 @@ export default function DrawingCanvas({ targetLetter, onEvaluate, disabled }) {
         />
 
         {isEvaluating && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-20"
-          >
+          <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center gap-2 z-20" role="status" aria-live="polite">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <p className="font-body font-bold text-primary text-xs">Avaliando... ✨</p>
-          </motion.div>
+          </div>
         )}
 
         {!hasContent && !isEvaluating && (
           <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
-            <p className="text-xs font-body text-muted-foreground bg-white/90 rounded-full px-2.5 py-0.5 shadow-sm">
+            <p className="text-xs font-body text-muted-foreground bg-background border border-border rounded-full px-2.5 py-0.5">
               ✏️ Desenhe aqui!
             </p>
           </div>
         )}
-      </motion.div>
+      </GamePanel>
 
       <div className="game-drawing-actions flex gap-2">
         <GameActionButton
