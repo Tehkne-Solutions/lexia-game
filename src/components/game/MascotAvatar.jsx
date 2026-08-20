@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { loadMascotAccessories, getEquippedAccessories } from '@/lib/accessories';
+import '@/styles/premium-mascot.css';
 
 const EXPRESSIONS = {
   happy: { eyes: '✨', mouth: '😊' },
@@ -34,8 +35,8 @@ export default function MascotAvatar({ expression = 'happy', size = 'md', messag
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
       <motion.div
-        className={`${sizes[size]} rounded-full bg-card
-          flex items-center justify-center relative border-4 border-primary/30 shadow-lg`}
+        className={`lexia-mascot-body ${sizes[size]} rounded-full bg-card
+          flex items-center justify-center relative border-4 border-primary/30`}
         animate={
           expression === 'celebrating'
             ? { rotate: [0, -5, 5, -5, 5, 0], scale: [1, 1.1, 1] }
@@ -90,8 +91,8 @@ export default function MascotAvatar({ expression = 'happy', size = 'md', messag
         <motion.div
           initial={{ opacity: 0, y: 10, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="bg-card border-2 border-primary/20 rounded-2xl px-4 py-2 max-w-[200px]
-            text-center text-sm font-body font-semibold text-foreground shadow-md relative"
+          className="lexia-mascot-message bg-card border-2 border-primary/20 rounded-2xl px-4 py-2 max-w-[200px]
+            text-center text-sm font-body font-semibold text-foreground relative"
         >
           <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-card border-l-2 border-t-2
             border-primary/20 rotate-45" />
