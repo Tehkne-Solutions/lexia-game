@@ -10,6 +10,7 @@ on:
       - 'src/components/game/GameActionButton.jsx'
       - 'src/styles/premium-game.css'
       - 'scripts/check-premium-profile-navigation-stats.mjs'
+      - 'scripts/check-premium-profile-hero-avatar.mjs'
       - 'scripts/check-premium-profile-browser.mjs'
       - '.github/workflows/premium-profile-browser.yml'
   workflow_dispatch:
@@ -41,6 +42,8 @@ jobs:
         run: node scripts/check-learner-journey-profile.mjs
       - name: Premium profile navigation and stats contract
         run: node scripts/check-premium-profile-navigation-stats.mjs
+      - name: Premium profile hero and avatar contract
+        run: node scripts/check-premium-profile-hero-avatar.mjs
       - name: No-gradient learner chrome audit
         run: node scripts/check-no-gradient-learner-chrome.mjs
       - name: Premium action primitive audit

@@ -97,7 +97,7 @@ export default function Profile() {
               {dailyDone && (
                 <motion.span
                   initial={{ scale: 0 }} animate={{ scale: 1 }}
-                  className="bg-amber-100 border border-amber-400 rounded-full px-2 py-0.5 text-xs font-body font-bold text-amber-700 flex items-center gap-1"
+                  className="rounded-full border border-accent/45 bg-accent/15 px-2 py-0.5 text-xs font-body font-bold text-accent-foreground flex items-center gap-1"
                 >
                   🏆 Desafio Diário!
                 </motion.span>
@@ -183,7 +183,7 @@ export default function Profile() {
                           whileTap={!locked ? { scale: 0.9 } : {}}
                           onClick={() => selectAvatar(av)}
                           className={`flex flex-col items-center gap-1 p-2 rounded-2xl border-2 transition-all
-                            ${selected ? 'border-primary bg-primary/10 shadow-md' : 'border-border bg-muted/30'}
+                            ${selected ? 'border-primary bg-primary/10 ring-1 ring-primary/25' : 'border-border bg-muted/30'}
                             ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'}`}
                         >
                           <span className="text-3xl">{av.emoji}</span>
