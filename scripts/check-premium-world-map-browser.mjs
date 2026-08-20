@@ -90,7 +90,7 @@ async function navigate(cdp, url) {
 async function waitForText(cdp, text, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (await cdp.evaluate(`document.body?.innerText?.includes(${JSON.stringify(text)})`)) return;
+    if (await cdp.evaluate(`document.body?.innerText?.toLocaleLowerCase('pt-BR').includes(${JSON.stringify(text.toLocaleLowerCase('pt-BR'))})`)) return;
     await sleep(150);
   }
   const body = await cdp.evaluate('document.body?.innerText?.slice(0, 2200) || ""');
@@ -119,7 +119,7 @@ async function snapshot(cdp) {
       neutralActions: document.querySelectorAll('button.lexia-neutral-action').length,
       gradientClasses: [...document.querySelectorAll('[class]')].filter((node) => String(node.className).includes('bg-gradient')).length,
       lockedHints: [...document.querySelectorAll('p')].filter((node) => node.innerText?.includes('🔒')).length,
-      missionCurrent: document.body?.innerText?.includes('Missão atual') || false,
+      missionCurrent: document.body?.innerText?.toLocaleLowerCase('pt-BR').includes('missão atual') || false,
       scrollClientHeight: scroll?.clientHeight || 0,
       scrollHeight: scroll?.scrollHeight || 0,
     };
