@@ -10,6 +10,7 @@ on:
       - 'src/components/game/GamePanel.jsx'
       - 'src/styles/premium-game.css'
       - 'scripts/check-premium-sentences-hud.mjs'
+      - 'scripts/check-premium-sentence-tokens.mjs'
       - '.github/workflows/premium-sentences-hud.yml'
 
 permissions:
@@ -31,6 +32,8 @@ jobs:
         run: npm audit --audit-level=high
       - name: Premium sentences HUD contract
         run: node scripts/check-premium-sentences-hud.mjs
+      - name: Premium sentence tokens contract
+        run: node scripts/check-premium-sentence-tokens.mjs
       - name: Typecheck UI
         run: npm run typecheck
       - name: Typecheck core
