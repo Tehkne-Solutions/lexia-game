@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { playCelebrationSound } from '@/lib/sounds';
+import '@/styles/premium-celebration.css';
 import MascotAvatar from './MascotAvatar';
 import GamePanel from './GamePanel';
 import GameActionButton from './GameActionButton';
@@ -47,7 +48,7 @@ export default function CelebrationOverlay({ show, stars, message, onDone }) {
     <AnimatePresence>
       {show && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+          className="lexia-celebration-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
