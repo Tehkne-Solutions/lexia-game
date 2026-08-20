@@ -133,7 +133,7 @@ const surfaces = [
   {
     id: 'letters',
     path: '/play',
-    texts: ['Missão atual'],
+    texts: ['Desenhe a letra'],
     expectDrawingBoard: true,
     minPanels: 0,
     minPrimary: 0,
