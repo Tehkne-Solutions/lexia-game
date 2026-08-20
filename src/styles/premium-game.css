@@ -249,6 +249,37 @@ html:not(.high-contrast) .lexia-letter-selector-legend {
   box-shadow: 0 -3px 0 hsl(var(--lexia-paper-deep) / 0.72);
 }
 
+/* M38-Q: tactile on-screen keyboard keys for syllable/word typing. */
+html:not(.high-contrast) .lexia-keyboard-key {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--lexia-panel-edge)) !important;
+  color: hsl(var(--foreground));
+  box-shadow:
+    0 1px 0 hsl(var(--card)) inset,
+    0 3px 0 hsl(var(--lexia-paper-deep)),
+    0 7px 12px hsl(var(--lexia-shadow) / 0.08);
+}
+
+html:not(.high-contrast) .lexia-keyboard-key:active {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--lexia-primary-depth)) !important;
+  color: hsl(var(--primary-foreground));
+  transform: translateY(2px) scale(0.95);
+  box-shadow: 0 1px 0 hsl(var(--lexia-primary-depth));
+}
+
+html:not(.high-contrast) .lexia-keyboard-delete {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+html:not(.high-contrast) .lexia-keyboard-delete:active {
+  background-color: hsl(var(--destructive));
+  border-color: hsl(var(--destructive) / 0.72) !important;
+  color: hsl(var(--destructive-foreground));
+  box-shadow: 0 1px 0 hsl(var(--destructive) / 0.72);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r,
   html:not(.high-contrast) .lexia-primary-action {
