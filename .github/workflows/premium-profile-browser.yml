@@ -7,6 +7,7 @@ on:
       - 'src/pages/Profile.jsx'
       - 'src/components/profile/ProfileAchievements.jsx'
       - 'src/components/profile/ProfileAvatarPicker.jsx'
+      - 'src/components/profile/ProfileHero.jsx'
       - 'src/components/profile/ProfileJourneyCard.jsx'
       - 'src/components/profile/ProfileLetterHistory.jsx'
       - 'src/components/profile/ProfileMascotCustomizer.jsx'
@@ -26,6 +27,7 @@ on:
       - 'scripts/check-profile-mascot-surface.mjs'
       - 'scripts/check-profile-sticker-album-surface.mjs'
       - 'scripts/check-profile-journey-surface.mjs'
+      - 'scripts/check-profile-hero-surface.mjs'
       - 'scripts/check-premium-profile-browser.mjs'
       - '.github/workflows/premium-profile-browser.yml'
   workflow_dispatch:
@@ -75,6 +77,8 @@ jobs:
         run: node scripts/check-profile-sticker-album-surface.mjs
       - name: Profile journey surface contract
         run: node scripts/check-profile-journey-surface.mjs
+      - name: Profile hero surface contract
+        run: node scripts/check-profile-hero-surface.mjs
       - name: No-gradient learner chrome audit
         run: node scripts/check-no-gradient-learner-chrome.mjs
       - name: Premium action primitive audit
