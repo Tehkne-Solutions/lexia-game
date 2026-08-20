@@ -17,6 +17,8 @@ for (const token of [
   'playClickSound();',
   'onSelect(item.letter);',
   'onClick={onClose}',
+  'bg-background flex flex-col',
+  'border-t border-border bg-card',
   "mastered: 'bg-secondary/20 border-secondary text-secondary ring-2 ring-secondary/30'",
   "learning: 'bg-accent/20 border-accent text-accent-foreground ring-2 ring-accent/30'",
   "started: 'bg-primary/10 border-primary/30 text-primary'",
@@ -60,4 +62,4 @@ assert.ok(
   'Letter tiles must use authored physical depth rather than generic utility shadows',
 );
 
-console.log('Lexia M38-P Premium Letter Selector: PASS (semantic selector material, authored tiles, mastery behavior and motion preserved)');
+console.log('Lexia M38-P Premium Letter Selector: PASS (semantic selector material, authored tiles, high-contrast fallback, mastery behavior and motion preserved)');
