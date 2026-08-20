@@ -1,0 +1,54 @@
+name: Lexia Premium Profile Browser
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/Profile.jsx'
+      - 'src/components/game/GameActionButton.jsx'
+      - 'src/styles/premium-game.css'
+      - 'scripts/check-premium-profile-browser.mjs'
+      - '.github/workflows/premium-profile-browser.yml'
+  workflow_dispatch:
+
+jobs:
+  premium-profile-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Typecheck UI
+        run: npm run typecheck
+      - name: Typecheck core
+        run: npm run typecheck:core
+      - name: Premium UI foundation contract
+        run: node scripts/check-premium-ui-foundation.mjs
+      - name: Learner journey profile contract
+        run: node scripts/check-learner-journey-profile.mjs
+      - name: Prepare Chrome runtime
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          elif command -v chromium >/dev/null 2>&1; then
+            echo "CHROME_BIN=$(command -v chromium)" >> "$GITHUB_ENV"
+          else
+            sudo apt-get update
+            sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
+            echo "CHROME_BIN=$(command -v chromium-browser || command -v chromium)" >> "$GITHUB_ENV"
+          fi
+      - name: Premium learner profile browser QA
+        run: node scripts/check-premium-profile-browser.mjs
+      - name: Upload M38-A evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m38a-premium-profile-browser
+          path: artifacts/m38a-profile
+          if-no-files-found: warn
