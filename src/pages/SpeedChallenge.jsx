@@ -166,8 +166,8 @@ export default function SpeedChallenge() {
 
             {bestScore > 0 && (
               <GamePanel tone="reward" className="px-4 py-2 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-600" />
-                <span className="font-body font-bold text-amber-700">Recorde deste nível: {bestScore}</span>
+                <Trophy className="w-5 h-5 text-accent" />
+                <span className="font-body font-bold text-foreground">Recorde deste nível: {bestScore}</span>
               </GamePanel>
             )}
 
@@ -183,8 +183,8 @@ export default function SpeedChallenge() {
           <div className="w-full flex flex-col items-center gap-3">
             <div className="w-full flex justify-between items-center gap-3">
               <span className={`lexia-stat-chip gap-1 px-3 py-1.5 ${timeLeft <= 10 ? 'animate-pulse' : ''}`}>
-                <Timer className={`w-4 h-4 ${timeLeft <= 10 ? 'text-red-500' : 'text-muted-foreground'}`} />
-                <span className={`font-display text-xl ${timeLeft <= 10 ? 'text-red-500' : 'text-foreground'}`}>{timeLeft}s</span>
+                <Timer className={`w-4 h-4 ${timeLeft <= 10 ? 'text-destructive' : 'text-muted-foreground'}`} />
+                <span className={`font-display text-xl ${timeLeft <= 10 ? 'text-destructive' : 'text-foreground'}`}>{timeLeft}s</span>
               </span>
               <div className="flex items-center gap-2">
                 <span className="lexia-stat-chip"><span aria-hidden="true">⭐</span><span className="font-display text-lg">{score}</span></span>
@@ -201,8 +201,8 @@ export default function SpeedChallenge() {
               <motion.span className="text-6xl" animate={{ y: [0, -6, 0] }} transition={{ duration: 1.5, repeat: Infinity }} aria-hidden="true">{currentItem.emoji}</motion.span>
 
               <AnimatePresence>
-                {feedback === 'correct' && <motion.div key="ok" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="text-green-500 font-display text-2xl">✓</motion.div>}
-                {feedback === 'wrong' && <motion.div key="no" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="text-red-500 font-display text-2xl">✗</motion.div>}
+                {feedback === 'correct' && <motion.div key="ok" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="text-secondary font-display text-2xl">✓</motion.div>}
+                {feedback === 'wrong' && <motion.div key="no" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="text-destructive font-display text-2xl">✗</motion.div>}
               </AnimatePresence>
 
               <div className="flex gap-1.5 justify-center flex-wrap">
@@ -226,7 +226,7 @@ export default function SpeedChallenge() {
             <GamePanel tone={score >= bestScore && score > 0 ? 'reward' : 'paper'} className="p-5">
               <h2 className="font-display text-3xl text-foreground">Tempo Esgotado!</h2>
               <p className="font-body text-lg text-muted-foreground mt-2">Você acertou <span className="font-display text-2xl text-primary">{score}</span> vezes!</p>
-              {score >= bestScore && score > 0 && <motion.p initial={{ scale: 0 }} animate={{ scale: 1 }} className="font-display text-lg text-amber-500 mt-2">🏆 Novo Recorde deste nível!</motion.p>}
+              {score >= bestScore && score > 0 && <motion.p initial={{ scale: 0 }} animate={{ scale: 1 }} className="font-display text-lg text-accent mt-2">🏆 Novo Recorde deste nível!</motion.p>}
               {bestScore > score && <p className="font-body text-sm text-muted-foreground mt-2">Recorde deste nível: {bestScore}</p>}
             </GamePanel>
             <div className="flex gap-3">
