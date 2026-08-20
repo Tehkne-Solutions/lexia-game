@@ -6,6 +6,7 @@ import {
   getEarnedStickers,
   getJourneyStickers,
 } from '@/lib/stickers';
+import '@/styles/premium-collectibles.css';
 
 function SmallStickerGrid({ stickers, earnedStickers, startDelay = 0 }) {
   return (
@@ -18,8 +19,8 @@ function SmallStickerGrid({ stickers, earnedStickers, startDelay = 0 }) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: startDelay + index * 0.015 }}
-            className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 p-1
-              ${earned ? 'bg-primary/5 border-primary/35 shadow-sm' : 'bg-muted/30 border-border opacity-45'}`}
+            className={`lexia-collectible-tile aspect-square rounded-2xl border-2 flex flex-col items-center justify-center gap-0.5 p-1
+              ${earned ? 'lexia-collectible-tile-earned bg-primary/5 border-primary/35' : 'bg-muted/30 border-border opacity-45'}`}
           >
             <span className={`text-2xl ${earned ? '' : 'grayscale'}`}>{earned ? sticker.emoji : '🔒'}</span>
             <span className="text-[10px] font-body font-semibold text-center leading-tight">
@@ -56,8 +57,8 @@ export default function StickerAlbum({ allProgress, stats }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.04 }}
-              className={`min-h-[132px] rounded-2xl border-2 p-3 flex flex-col
-                ${sticker.unlocked ? 'bg-primary/5 border-primary/35 shadow-sm' : 'bg-muted/30 border-border'}`}
+              className={`lexia-collectible-tile min-h-[132px] rounded-2xl border-2 p-3 flex flex-col
+                ${sticker.unlocked ? 'lexia-collectible-tile-earned bg-primary/5 border-primary/35' : 'bg-muted/30 border-border'}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <span className={`text-3xl ${sticker.unlocked ? '' : 'grayscale opacity-45'}`} aria-hidden="true">
