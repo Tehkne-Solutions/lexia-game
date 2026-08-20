@@ -27,7 +27,7 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center p-4"
     >
       <GamePanel
         tone="reward"
@@ -44,7 +44,7 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
             🏆
           </motion.span>
           <div className="min-w-0">
-            <p className="font-body text-[10px] text-amber-700 font-bold uppercase tracking-[0.12em]">
+            <p className="font-body text-[10px] text-accent-foreground font-bold uppercase tracking-[0.12em]">
               Missão especial · {challenge.typeLabel}
             </p>
             <h2 className="font-display text-xl text-foreground">{challenge.title}</h2>
@@ -65,14 +65,14 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.06 }}
                 className={`rounded-2xl border p-3 flex items-center gap-3
-                  ${done ? 'bg-green-50 border-green-300' : 'bg-muted/30 border-border'}`}
+                  ${done ? 'bg-secondary/15 border-secondary/40' : 'bg-muted/30 border-border'}`}
               >
                 <span className="text-2xl flex-none" aria-hidden="true">{target.emoji}</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-display text-base text-foreground leading-tight break-words">{target.display}</p>
                   <p className="font-body text-[11px] text-muted-foreground truncate">{target.hint}</p>
                 </div>
-                {done && <CheckCircle2 className="w-5 h-5 text-green-600 flex-none" aria-label="Concluído" />}
+                {done && <CheckCircle2 className="w-5 h-5 text-secondary-foreground flex-none" aria-label="Concluído" />}
               </motion.div>
             );
           })}
@@ -81,7 +81,7 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
         <div className="flex items-center gap-2 mb-4">
           <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-amber-500 rounded-full"
+              className="h-full bg-primary rounded-full"
               animate={{ width: `${targetCount > 0 ? (completedCount / targetCount) * 100 : 0}%` }}
               transition={{ duration: 0.5 }}
             />
@@ -91,7 +91,7 @@ export default function DailyChallengeCard({ challenge, onStart, onClose }) {
 
         {challenge.completed ? (
           <div className="text-center">
-            <p className="font-display text-xl text-green-600 mb-2">🎉 Desafio completo!</p>
+            <p className="font-display text-xl text-secondary-foreground mb-2">🎉 Desafio completo!</p>
             <GameActionButton
               gameVariant="primary"
               onClick={() => { playClickSound(); onClose(); }}
