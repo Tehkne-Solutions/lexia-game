@@ -1,32 +1,33 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import GamePanel from './GamePanel';
 
 const GRADE_CONFIG = {
   1: {
     emoji: '🌱',
     label: 'Vamos tentar de novo!',
-    bg: 'bg-red-50 border-red-200',
-    bar: 'bg-red-400',
-    text: 'text-red-600',
+    tone: 'review',
+    bar: 'bg-destructive',
+    text: 'text-destructive',
   },
   2: {
     emoji: '💪',
     label: 'Quase lá!',
-    bg: 'bg-amber-50 border-amber-200',
-    bar: 'bg-amber-400',
-    text: 'text-amber-600',
+    tone: 'paper',
+    bar: 'bg-accent',
+    text: 'text-accent-foreground',
   },
   3: {
     emoji: '😄',
     label: 'Muito bom!',
-    bg: 'bg-green-50 border-green-200',
-    bar: 'bg-green-400',
-    text: 'text-green-600',
+    tone: 'success',
+    bar: 'bg-secondary',
+    text: 'text-secondary',
   },
   4: {
     emoji: '🌟',
     label: 'Perfeito!',
-    bg: 'bg-purple-50 border-purple-200',
+    tone: 'reward',
     bar: 'bg-primary',
     text: 'text-primary',
   },
@@ -38,25 +39,32 @@ export default function AiResultBadge({ grade, score, feedback, recognizedAs, ta
   const matched = recognizedAs?.trim().toUpperCase() === targetLetter?.toUpperCase();
 
   return (
-    <motion.div
+    <GamePanel
+      tone={cfg.tone}
       initial={{ scale: 0.5, opacity: 0, y: 10 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-      className={`relative w-full max-w-[320px] rounded-2xl border-2 p-5 flex flex-col items-center gap-3 shadow-lg overflow-hidden ${cfg.bg}`}
+      className="relative w-full max-w-[320px] p-5 flex flex-col items-center gap-3 overflow-hidden"
     >
-      {/* Sparkle decorations for grade 4 */}
       {grade === 4 && (
         <>
-          <motion.span className="absolute top-2 right-3 text-xl pointer-events-none"
-            animate={{ scale: [0, 1.2, 0], rotate: [0, 180, 360] }}
-            transition={{ duration: 1.5, repeat: Infinity }}>✨</motion.span>
-          <motion.span className="absolute bottom-2 left-3 text-lg pointer-events-none"
-            animate={{ scale: [0, 1.2, 0], rotate: [0, -180, -360] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}>⭐</motion.span>
+          <motion.span
+            className="absolute top-2 right-3 text-xl pointer-events-none"
+            animate={{ scale: [0.85, 1.15, 0.85], rotate: [0, 12, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            ✨
+          </motion.span>
+          <motion.span
+            className="absolute bottom-2 left-3 text-lg pointer-events-none"
+            animate={{ scale: [0.9, 1.15, 0.9], rotate: [0, -10, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+          >
+            ⭐
+          </motion.span>
         </>
       )}
 
-      {/* Grade emoji with gentle bounce */}
       <motion.span
         className="text-5xl"
         animate={{ rotate: [0, -8, 8, -8, 0], scale: [1, 1.15, 1] }}
@@ -65,19 +73,15 @@ export default function AiResultBadge({ grade, score, feedback, recognizedAs, ta
         {cfg.emoji}
       </motion.span>
 
-      {/* Label */}
       <p className={`font-display text-2xl ${cfg.text}`}>{cfg.label}</p>
-
-      {/* Feedback from AI */}
       <p className="font-body font-semibold text-foreground text-center text-sm">{feedback}</p>
 
-      {/* Score bar */}
       <div className="w-full">
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs font-body text-muted-foreground">Precisão</span>
           <span className={`text-xs font-body font-bold ${cfg.text}`}>{pct}%</span>
         </div>
-        <div className="w-full h-3 bg-white/60 rounded-full overflow-hidden border border-border">
+        <div className="w-full h-3 bg-background/60 rounded-full overflow-hidden border border-border">
           <motion.div
             className={`h-full rounded-full ${cfg.bar}`}
             initial={{ width: 0 }}
@@ -87,7 +91,6 @@ export default function AiResultBadge({ grade, score, feedback, recognizedAs, ta
         </div>
       </div>
 
-      {/* Recognition note */}
       {recognizedAs && !matched && grade < 3 && (
         <p className="text-xs font-body text-muted-foreground text-center">
           A corujinha leu como <strong>"{recognizedAs}"</strong> — continue tentando! 🦉
@@ -98,6 +101,6 @@ export default function AiResultBadge({ grade, score, feedback, recognizedAs, ta
           A corujinha reconheceu a letra <strong>{targetLetter}</strong>! ✅
         </p>
       )}
-    </motion.div>
+    </GamePanel>
   );
 }
