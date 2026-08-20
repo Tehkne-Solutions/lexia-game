@@ -7,13 +7,14 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Compass } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import GameActionButton from '@/components/game/GameActionButton';
-import { AVATARS, getAvatarById } from '@/lib/avatars';
+import { getAvatarById } from '@/lib/avatars';
 import { getEarnedAchievements, buildStats } from '@/lib/achievements';
 import { buildParentJourneyInsights } from '@/game/parentInsightsEngine';
 import { getJourneyWorldExperience, getWorldRelicProgress } from '@/game/worldExperienceEngine';
 import { playClickSound } from '@/lib/sounds';
 import DeleteAccountButton from '@/components/profile/DeleteAccountButton';
 import ProfileAchievements from '@/components/profile/ProfileAchievements';
+import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
 import ProfileLetterHistory from '@/components/profile/ProfileLetterHistory';
 import ProfileStats from '@/components/profile/ProfileStats';
 import ProfileTabs from '@/components/profile/ProfileTabs';
@@ -170,35 +171,7 @@ export default function Profile() {
         <AnimatePresence mode="wait">
           {tab === 'avatar' && (
             <motion.div key="avatar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Card>
-                <CardHeader><CardTitle className="font-display text-base">Escolha seu Avatar</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-3">
-                    {AVATARS.map(av => {
-                      const locked = av.unlockStars > totalStars;
-                      const selected = profile.avatarId === av.id || (!profile.avatarId && av.id === 'owl');
-                      return (
-                        <motion.button
-                          key={av.id}
-                          whileTap={!locked ? { scale: 0.9 } : {}}
-                          onClick={() => selectAvatar(av)}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-2xl border-2 transition-all
-                            ${selected ? 'border-primary bg-primary/10 ring-1 ring-primary/25' : 'border-border bg-muted/30'}
-                            ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'}`}
-                        >
-                          <span className="text-3xl">{av.emoji}</span>
-                          <span className="text-xs font-body font-semibold text-foreground leading-tight text-center">{av.name}</span>
-                          {locked && <span className="text-xs text-muted-foreground">🔒 {av.unlockStars}⭐</span>}
-                          {selected && <span className="text-xs text-primary">✓</span>}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground font-body text-center mt-3">
-                    Você tem {totalStars} ⭐ — ganhe mais para desbloquear avatares!
-                  </p>
-                </CardContent>
-              </Card>
+              <ProfileAvatarPicker profile={profile} totalStars={totalStars} onSelect={selectAvatar} />
             </motion.div>
           )}
 
