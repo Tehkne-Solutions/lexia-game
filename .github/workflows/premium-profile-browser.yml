@@ -8,9 +8,11 @@ on:
       - 'src/components/profile/ProfileStats.jsx'
       - 'src/components/profile/ProfileTabs.jsx'
       - 'src/components/game/GameActionButton.jsx'
+      - 'src/lib/achievements.js'
       - 'src/styles/premium-game.css'
       - 'scripts/check-premium-profile-navigation-stats.mjs'
       - 'scripts/check-premium-profile-hero-avatar.mjs'
+      - 'scripts/check-semantic-achievement-palette.mjs'
       - 'scripts/check-premium-profile-browser.mjs'
       - '.github/workflows/premium-profile-browser.yml'
   workflow_dispatch:
@@ -44,6 +46,8 @@ jobs:
         run: node scripts/check-premium-profile-navigation-stats.mjs
       - name: Premium profile hero and avatar contract
         run: node scripts/check-premium-profile-hero-avatar.mjs
+      - name: Semantic achievement palette contract
+        run: node scripts/check-semantic-achievement-palette.mjs
       - name: No-gradient learner chrome audit
         run: node scripts/check-no-gradient-learner-chrome.mjs
       - name: Premium action primitive audit
