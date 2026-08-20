@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Compass } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import GameActionButton from '@/components/game/GameActionButton';
 import { getAvatarById } from '@/lib/avatars';
 import { getEarnedAchievements, buildStats } from '@/lib/achievements';
@@ -18,8 +18,8 @@ import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
 import ProfileLetterHistory from '@/components/profile/ProfileLetterHistory';
 import ProfileMascotCustomizer from '@/components/profile/ProfileMascotCustomizer';
 import ProfileStats from '@/components/profile/ProfileStats';
+import ProfileStickerAlbum from '@/components/profile/ProfileStickerAlbum';
 import ProfileTabs from '@/components/profile/ProfileTabs';
-import StickerAlbum from '@/components/game/StickerAlbum';
 
 const PROFILE_KEY = 'lexia_profile';
 
@@ -189,12 +189,7 @@ export default function Profile() {
 
           {tab === 'stickers' && (
             <motion.div key="stickers" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Card>
-                <CardHeader><CardTitle className="font-display text-base">Álbum de Adesivos</CardTitle></CardHeader>
-                <CardContent>
-                  <StickerAlbum allProgress={allProgress} stats={stats} />
-                </CardContent>
-              </Card>
+              <ProfileStickerAlbum allProgress={allProgress} stats={stats} />
             </motion.div>
           )}
 
