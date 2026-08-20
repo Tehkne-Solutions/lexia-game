@@ -8,6 +8,7 @@ on:
       - 'src/components/profile/ProfileAchievements.jsx'
       - 'src/components/profile/ProfileAvatarPicker.jsx'
       - 'src/components/profile/ProfileLetterHistory.jsx'
+      - 'src/components/profile/ProfileMascotCustomizer.jsx'
       - 'src/components/profile/ProfileStats.jsx'
       - 'src/components/profile/ProfileTabs.jsx'
       - 'src/components/game/GameActionButton.jsx'
@@ -20,6 +21,7 @@ on:
       - 'scripts/check-achievement-tone-boundary.mjs'
       - 'scripts/check-profile-letter-history-surface.mjs'
       - 'scripts/check-profile-avatar-picker-surface.mjs'
+      - 'scripts/check-profile-mascot-surface.mjs'
       - 'scripts/check-premium-profile-browser.mjs'
       - '.github/workflows/premium-profile-browser.yml'
   workflow_dispatch:
@@ -63,6 +65,8 @@ jobs:
         run: node scripts/check-profile-letter-history-surface.mjs
       - name: Profile avatar picker surface contract
         run: node scripts/check-profile-avatar-picker-surface.mjs
+      - name: Profile mascot surface contract
+        run: node scripts/check-profile-mascot-surface.mjs
       - name: No-gradient learner chrome audit
         run: node scripts/check-no-gradient-learner-chrome.mjs
       - name: Premium action primitive audit
