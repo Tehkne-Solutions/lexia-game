@@ -16,10 +16,10 @@ import DeleteAccountButton from '@/components/profile/DeleteAccountButton';
 import ProfileAchievements from '@/components/profile/ProfileAchievements';
 import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
 import ProfileLetterHistory from '@/components/profile/ProfileLetterHistory';
+import ProfileMascotCustomizer from '@/components/profile/ProfileMascotCustomizer';
 import ProfileStats from '@/components/profile/ProfileStats';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import StickerAlbum from '@/components/game/StickerAlbum';
-import MascotCustomizer from '@/components/game/MascotCustomizer';
 
 const PROFILE_KEY = 'lexia_profile';
 
@@ -177,12 +177,7 @@ export default function Profile() {
 
           {tab === 'mascot' && (
             <motion.div key="mascot" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Card>
-                <CardHeader><CardTitle className="font-display text-base">Personalize sua Corujinha</CardTitle></CardHeader>
-                <CardContent>
-                  <MascotCustomizer totalStars={totalStars} />
-                </CardContent>
-              </Card>
+              <ProfileMascotCustomizer totalStars={totalStars} />
             </motion.div>
           )}
 
