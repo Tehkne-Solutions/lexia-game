@@ -34,7 +34,7 @@ export default function LetterSelector({ open, onSelect, onClose, progressMap })
   return (
     <AnimatePresence>
       <motion.div
-        className="lexia-letter-selector-surface fixed inset-0 z-40 flex flex-col"
+        className="lexia-letter-selector-surface fixed inset-0 z-40 bg-background flex flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -80,7 +80,7 @@ export default function LetterSelector({ open, onSelect, onClose, progressMap })
           </div>
         </div>
 
-        <div className="lexia-letter-selector-legend flex justify-center gap-4 p-4 border-t border-border">
+        <div className="lexia-letter-selector-legend flex justify-center gap-4 p-4 border-t border-border bg-card">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-secondary" />
             <span className="text-xs font-body text-muted-foreground">Dominada</span>
