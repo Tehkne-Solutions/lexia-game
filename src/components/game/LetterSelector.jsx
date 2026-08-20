@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ALPHABET } from '@/lib/alphabetData';
-import { Button } from '@/components/ui/button';
+import GameActionButton from '@/components/game/GameActionButton';
 import { X } from 'lucide-react';
 import { playClickSound } from '@/lib/sounds';
 
@@ -41,9 +41,15 @@ export default function LetterSelector({ open, onSelect, onClose, progressMap })
       >
         <div className="flex items-center justify-between p-4">
           <h2 className="font-display text-2xl text-foreground">Escolha uma Letra</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <GameActionButton
+            gameVariant="neutral"
+            size="icon"
+            onClick={onClose}
+            aria-label="Fechar seletor de letras"
+            className="rounded-xl"
+          >
             <X className="w-6 h-6" />
-          </Button>
+          </GameActionButton>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-8">
@@ -73,7 +79,6 @@ export default function LetterSelector({ open, onSelect, onClose, progressMap })
           </div>
         </div>
 
-        {/* Legend */}
         <div className="flex justify-center gap-4 p-4 border-t border-border bg-card/50">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-secondary" />
