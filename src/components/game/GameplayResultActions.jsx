@@ -24,7 +24,7 @@ export default function GameplayResultActions({
             size="sm"
             onClick={() => onManualOverride(false)}
             disabled={isWorking}
-            className="lexia-result-correction lexia-result-correction-negative flex-1 rounded-xl gap-1 text-xs"
+            className="lexia-result-correction lexia-result-correction-negative flex-1 rounded-xl gap-1 text-xs text-destructive border-destructive/40 hover:bg-destructive/10"
           >
             <ThumbsDown className="w-3 h-3" /> Estava errado
           </GameActionButton>
@@ -34,7 +34,7 @@ export default function GameplayResultActions({
             size="sm"
             onClick={() => onManualOverride(true)}
             disabled={isWorking}
-            className="lexia-result-correction lexia-result-correction-positive flex-1 rounded-xl gap-1 text-xs"
+            className="lexia-result-correction lexia-result-correction-positive flex-1 rounded-xl gap-1 text-xs text-secondary border-secondary/40 hover:bg-secondary/10"
           >
             <ThumbsUp className="w-3 h-3" /> Estava certo!
           </GameActionButton>
