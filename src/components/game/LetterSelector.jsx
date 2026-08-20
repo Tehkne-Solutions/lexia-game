@@ -34,7 +34,7 @@ export default function LetterSelector({ open, onSelect, onClose, progressMap })
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-40 bg-background/90 backdrop-blur-md flex flex-col"
+        className="lexia-letter-selector-surface fixed inset-0 z-40 bg-background flex flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -66,20 +66,21 @@ export default function LetterSelector({ open, onSelect, onClose, progressMap })
                     playClickSound();
                     onSelect(item.letter);
                   }}
-                  className={`aspect-square rounded-2xl border-2 flex flex-col items-center justify-center 
-                    gap-0.5 transition-all hover:scale-105 active:scale-95 shadow-sm
+                  className={`lexia-letter-tile aspect-square rounded-2xl border-2 flex flex-col items-center justify-center
+                    gap-0.5 transition-all hover:scale-105 active:scale-95
                     ${statusStyles[status]}`}
+                  aria-label={`${item.letter}, ${status === 'mastered' ? 'dominada' : status === 'learning' ? 'aprendendo' : status === 'started' ? 'iniciada' : 'nova'}`}
                 >
                   <span className="font-display text-2xl">{item.letter}</span>
                   <span className="text-lg">{item.emoji}</span>
-                  {status === 'mastered' && <span className="text-xs">⭐</span>}
+                  {status === 'mastered' && <span className="text-xs" aria-hidden="true">⭐</span>}
                 </motion.button>
               );
             })}
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 p-4 border-t border-border bg-card/50">
+        <div className="lexia-letter-selector-legend flex justify-center gap-4 p-4 border-t border-border bg-card">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-secondary" />
             <span className="text-xs font-body text-muted-foreground">Dominada</span>
