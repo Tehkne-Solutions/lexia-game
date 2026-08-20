@@ -15,14 +15,9 @@ export default function ProgressBar({ current, total, streak, stars }) {
       {/* Progress track */}
       <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden border border-border shadow-inner relative">
         <div
-          className="h-full bg-gradient-to-r from-primary via-secondary to-accent rounded-full transition-all duration-700 ease-out relative"
+          className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
           style={{ width: `${pct}%` }}
-        >
-          {/* Shimmer effect */}
-          <div className="absolute inset-0 overflow-hidden rounded-full">
-            <div className="absolute inset-y-0 -left-full w-1/2 bg-white/30 skew-x-12 animate-[shimmer_2.5s_infinite]" />
-          </div>
-        </div>
+        />
       </div>
 
       {/* Streak */}
