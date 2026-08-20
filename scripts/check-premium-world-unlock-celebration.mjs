@@ -19,6 +19,10 @@ const requiredTokens = [
   "shapes: ['star']",
   '}, 600)',
   '}, 1200)',
+  'initial={{ opacity: 0, y: 15 }}',
+  'transition={{ delay: 1 }}',
+  'whileHover={{ scale: 1.05 }}',
+  'whileTap={{ scale: 0.95 }}',
   'onClick={onDone}',
   'onDone?.()',
 ];
@@ -53,4 +57,4 @@ assert.ok(
   'WorldUnlockCelebration must preserve timer cleanup',
 );
 
-console.log('Lexia M38-M Premium World Unlock Celebration: PASS (premium materials, authored palette, canonical action, timing and behavior preserved)');
+console.log('Lexia M38-M Premium World Unlock Celebration: PASS (premium materials, authored palette, canonical action, timing and motion preserved)');
