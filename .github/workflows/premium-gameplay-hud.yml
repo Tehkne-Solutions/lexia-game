@@ -10,6 +10,7 @@ on:
       - 'src/components/game/GameActionButton.jsx'
       - 'src/styles/premium-game.css'
       - 'scripts/check-premium-gameplay-hud.mjs'
+      - 'scripts/check-premium-result-feedback-controls.mjs'
       - '.github/workflows/premium-gameplay-hud.yml'
 
 permissions:
@@ -31,6 +32,8 @@ jobs:
         run: npm audit --audit-level=high
       - name: Premium gameplay HUD contract
         run: node scripts/check-premium-gameplay-hud.mjs
+      - name: Premium result feedback controls contract
+        run: node scripts/check-premium-result-feedback-controls.mjs
       - name: Typecheck UI
         run: npm run typecheck
       - name: Typecheck core
