@@ -118,7 +118,7 @@ async function waitForText(cdp, text) {
 async function primaryAction(cdp, label) {
   return cdp.evaluate(`(() => {
     const buttons = [...document.querySelectorAll('button')].filter((node) =>
-      node.innerText?.trim() === ${JSON.stringify(label)} && String(node.className).includes('bg-gradient-to-r'));
+      node.innerText?.trim() === ${JSON.stringify(label)} && String(node.className).includes('lexia-primary-action'));
     const button = buttons[0];
     return {
       count: buttons.length,

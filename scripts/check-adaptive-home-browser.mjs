@@ -125,7 +125,7 @@ async function waitForText(cdp, text, timeoutMs = 12000) {
 async function clickAdaptivePrimary(cdp) {
   const clicked = await cdp.evaluate(`(() => {
     const buttons = [...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora');
-    const primary = buttons.find((button) => String(button.className).includes('bg-gradient-to-r'));
+    const primary = buttons.find((button) => String(button.className).includes('lexia-primary-action'));
     if (!primary) return false;
     primary.click();
     return true;
@@ -218,7 +218,7 @@ try {
 
   const reviewHome = await snapshot(cdp);
   const reviewButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora').length`);
-  const primaryReviewButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora' && String(button.className).includes('bg-gradient-to-r')).length`);
+  const primaryReviewButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Revisar agora' && String(button.className).includes('lexia-primary-action')).length`);
   assert.ok(reviewButtons >= 2, 'due-review Home must expose both review card action and adaptive primary CTA');
   assert.equal(primaryReviewButtons, 1, 'due-review Home must expose exactly one primary review CTA');
   assert.ok(reviewHome.body.toLocaleLowerCase('pt-BR').includes('1 revisão pronta'), 'Home must explain the due review count');
@@ -246,7 +246,7 @@ try {
   await navigate(cdp, baseUrl);
   await waitForText(cdp, 'Continuar sílabas');
   const resumed = await snapshot(cdp);
-  const primaryCurriculumButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Continuar sílabas' && String(button.className).includes('bg-gradient-to-r')).length`);
+  const primaryCurriculumButtons = await cdp.evaluate(`[...document.querySelectorAll('button')].filter((button) => button.innerText?.trim() === 'Continuar sílabas' && String(button.className).includes('lexia-primary-action')).length`);
   assert.equal(primaryCurriculumButtons, 1, 'when review debt is cleared, curriculum must resume as the primary action');
   assert.ok(!resumed.body.toLocaleLowerCase('pt-BR').includes('1 revisão pronta'), 'cleared review debt must disappear from Home');
   assert.ok(resumed.scrollWidth <= resumed.width + 1, 'resumed Home must not overflow horizontally');

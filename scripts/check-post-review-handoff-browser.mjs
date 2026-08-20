@@ -118,10 +118,10 @@ async function waitForText(cdp, text) {
 async function primaryAction(cdp, label) {
   return cdp.evaluate(`(() => {
     const button = [...document.querySelectorAll('button')].find((node) =>
-      node.innerText?.trim() === ${JSON.stringify(label)} && String(node.className).includes('bg-gradient-to-r'));
+      node.innerText?.trim() === ${JSON.stringify(label)} && String(node.className).includes('lexia-primary-action'));
     return {
       count: [...document.querySelectorAll('button')].filter((node) =>
-        node.innerText?.trim() === ${JSON.stringify(label)} && String(node.className).includes('bg-gradient-to-r')).length,
+        node.innerText?.trim() === ${JSON.stringify(label)} && String(node.className).includes('lexia-primary-action')).length,
       href: button?.closest('a')?.getAttribute('href') || null,
     };
   })()`);
