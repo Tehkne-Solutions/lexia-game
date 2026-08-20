@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ACCESSORIES, isAccessoryUnlocked, loadMascotAccessories, saveMascotAccessories } from '@/lib/accessories';
 import { playClickSound } from '@/lib/sounds';
 import MascotAvatar from './MascotAvatar';
+import '@/styles/premium-collectibles.css';
 
 const CATEGORIES = [
   { id: 'hat', label: '🎩 Chapéus' },
@@ -48,8 +49,10 @@ export default function MascotCustomizer({ totalStars }) {
                     key={a.id}
                     whileTap={unlocked ? { scale: 0.9 } : {}}
                     onClick={() => toggle(a)}
-                    className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all
-                      ${selected ? 'border-primary bg-primary/10 shadow-md' : 'border-border bg-muted/30'}
+                    aria-pressed={selected}
+                    aria-disabled={!unlocked}
+                    className={`lexia-collectible-tile flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all
+                      ${selected ? 'lexia-collectible-tile-selected border-primary bg-primary/10' : 'border-border bg-muted/30'}
                       ${!unlocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-primary/50'}`}
                   >
                     <span className="text-2xl">{unlocked ? a.emoji : '🔒'}</span>

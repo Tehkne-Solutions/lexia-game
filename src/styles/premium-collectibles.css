@@ -1,0 +1,28 @@
+/* Lexia collectible materials — Tehkné Solutions */
+
+html:not(.high-contrast) .lexia-collectible-tile {
+  box-shadow:
+    0 1px 0 hsl(var(--card) / 0.72) inset,
+    0 3px 0 hsl(var(--lexia-paper-deep)),
+    0 7px 12px hsl(var(--lexia-shadow) / 0.08);
+}
+
+html:not(.high-contrast) .lexia-collectible-tile-earned {
+  box-shadow:
+    0 1px 0 hsl(var(--card) / 0.8) inset,
+    0 3px 0 hsl(var(--primary) / 0.14),
+    0 8px 14px hsl(var(--lexia-shadow) / 0.09);
+}
+
+html:not(.high-contrast) .lexia-collectible-tile-selected {
+  border-color: hsl(var(--primary)) !important;
+  box-shadow:
+    0 1px 0 hsl(var(--card) / 0.82) inset,
+    0 4px 0 hsl(var(--primary) / 0.2),
+    0 9px 16px hsl(var(--lexia-shadow) / 0.1);
+}
+
+html:not(.high-contrast) .lexia-collectible-tile:active {
+  transform: translateY(2px) scale(0.96);
+  box-shadow: 0 1px 0 hsl(var(--lexia-primary-depth) / 0.35);
+}
