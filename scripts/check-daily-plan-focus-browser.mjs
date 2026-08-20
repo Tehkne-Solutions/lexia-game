@@ -101,6 +101,12 @@ async function waitFor(cdp, expression, label, timeoutMs = 12000) {
   throw new Error(`Timed out waiting for ${label}. Body: ${JSON.stringify(body)}`);
 }
 
+async function navigate(cdp, url) {
+  await cdp.send('Page.navigate', { url });
+  await waitFor(cdp, `location.origin === ${JSON.stringify(baseUrl)}`, `preview origin ${baseUrl}`);
+  await waitFor(cdp, `document.readyState === 'complete'`, 'preview document ready');
+}
+
 async function waitForText(cdp, text) {
   const needle = String(text).toLocaleLowerCase('pt-BR');
   await waitFor(
@@ -143,7 +149,7 @@ try {
   await rm(profileDir, { recursive: true, force: true });
   chrome = spawn(findChrome(), [
     '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--mute-audio',
-    `--remote-debugging-port=${debugPort}`, `--user-data-dir=${profileDir}`, baseUrl,
+    `--remote-debugging-port=${debugPort}`, `--user-data-dir=${profileDir}`, 'about:blank',
   ], { stdio: ['ignore', 'pipe', 'pipe'] });
 
   await waitForHttp(`http://127.0.0.1:${debugPort}/json/version`);
@@ -154,6 +160,7 @@ try {
   await cdp.send('Runtime.enable');
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
 
+  await navigate(cdp, baseUrl);
   await cdp.evaluate(`localStorage.removeItem(${JSON.stringify(storageKey)})`);
   await cdp.send('Page.reload');
   await waitForText(cdp, 'Continuar sílabas');
