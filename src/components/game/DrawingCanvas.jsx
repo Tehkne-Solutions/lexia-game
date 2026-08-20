@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Eraser, Loader2, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import GameActionButton from '@/components/game/GameActionButton';
 import { playDrawSound, playClickSound } from '@/lib/sounds';
 
 export default function DrawingCanvas({ targetLetter, onEvaluate, disabled }) {
@@ -152,24 +152,27 @@ export default function DrawingCanvas({ targetLetter, onEvaluate, disabled }) {
       </motion.div>
 
       <div className="game-drawing-actions flex gap-2">
-        <Button
-          variant="outline" size="sm"
+        <GameActionButton
+          gameVariant="secondary"
+          variant="outline"
+          size="sm"
           onClick={clearCanvas}
           disabled={isEvaluating || !hasContent}
           className="rounded-xl font-body font-bold gap-1.5 flex-1"
         >
           <Eraser className="w-4 h-4" />
           Limpar
-        </Button>
-        <Button
+        </GameActionButton>
+        <GameActionButton
+          gameVariant="primary"
           size="sm"
           onClick={handleVerify}
           disabled={isEvaluating || !hasContent || disabled}
-          className="rounded-xl font-body font-bold gap-1.5 flex-1 bg-primary hover:bg-primary/90"
+          className="rounded-xl font-body font-bold gap-1.5 flex-1"
         >
           {isEvaluating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
           Verificar
-        </Button>
+        </GameActionButton>
       </div>
     </div>
   );
