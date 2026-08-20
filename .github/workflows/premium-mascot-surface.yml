@@ -1,0 +1,59 @@
+name: Lexia Premium Mascot Surface
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/game/MascotAvatar.jsx'
+      - 'src/styles/premium-mascot.css'
+      - 'scripts/check-premium-mascot-surface.mjs'
+      - 'scripts/check-browser-layout.mjs'
+      - '.github/workflows/premium-mascot-surface.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  premium-mascot-surface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
+      - name: Premium mascot surface contract
+        run: node scripts/check-premium-mascot-surface.mjs
+      - name: No-gradient learner chrome audit
+        run: node scripts/check-no-gradient-learner-chrome.mjs
+      - name: Premium action primitive audit
+        run: node scripts/check-premium-action-primitives.mjs
+      - name: Typecheck UI
+        run: npm run typecheck
+      - name: Typecheck core
+        run: npm run typecheck:core
+      - name: Build
+        run: npm run build
+      - name: Prepare Chrome browser runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ldconfig -p | grep -q 'libXtst.so.6'; then
+            sudo apt-get update -y
+            sudo apt-get install -y libxtst6
+          fi
+          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "No Chrome/Chromium executable found" >&2
+            exit 1
+          fi
+          echo "CHROME_BIN=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+      - name: Browser layout regression
+        run: node scripts/check-browser-layout.mjs
