@@ -343,7 +343,8 @@ export default function PlaySentences() {
                 key={token.id}
                 type="button"
                 onClick={() => removeToken(token.id)}
-                className="rounded-xl border border-primary/30 bg-primary text-primary-foreground px-3 py-2 font-body font-bold text-sm shadow-sm active:scale-95 transition-transform"
+                className="lexia-sentence-token lexia-sentence-token-selected rounded-xl border border-primary/30 bg-primary text-primary-foreground px-3 py-2 font-body font-bold text-sm active:scale-95 transition-transform"
+                aria-label={`Remover ${token.word} da frase`}
               >
                 {token.word}
               </button>
@@ -359,7 +360,8 @@ export default function PlaySentences() {
                       key={token.id}
                       type="button"
                       onClick={() => addToken(token.id)}
-                      className="rounded-xl border-2 border-border bg-background px-3 py-2 font-body font-bold text-sm shadow-sm hover:border-primary/50 active:scale-95 transition-all"
+                      className="lexia-sentence-token lexia-sentence-token-available rounded-xl border-2 border-border bg-background px-3 py-2 font-body font-bold text-sm active:scale-95 transition-all"
+                      aria-label={`Adicionar ${token.word} à frase`}
                     >
                       {token.word}
                     </button>
