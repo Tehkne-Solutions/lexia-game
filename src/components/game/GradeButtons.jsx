@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import GameActionButton from '@/components/game/GameActionButton';
 import { RotateCcw, Frown, Smile, PartyPopper } from 'lucide-react';
 
 const grades = [
-  { value: 1, label: 'Repetir', icon: RotateCcw, color: 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' },
-  { value: 2, label: 'Difícil', icon: Frown, color: 'bg-accent hover:bg-accent/90 text-accent-foreground' },
-  { value: 3, label: 'Bom!', icon: Smile, color: 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' },
-  { value: 4, label: 'Fácil!', icon: PartyPopper, color: 'bg-primary hover:bg-primary/90 text-primary-foreground' },
+  { value: 1, label: 'Repetir', icon: RotateCcw, gameVariant: 'secondary', color: 'bg-destructive hover:bg-destructive/90 text-destructive-foreground border-destructive/50' },
+  { value: 2, label: 'Difícil', icon: Frown, gameVariant: 'secondary', color: 'bg-accent hover:bg-accent/90 text-accent-foreground border-accent/50' },
+  { value: 3, label: 'Bom!', icon: Smile, gameVariant: 'secondary', color: 'bg-secondary hover:bg-secondary/90 text-secondary-foreground border-secondary/50' },
+  { value: 4, label: 'Fácil!', icon: PartyPopper, gameVariant: 'primary', color: 'bg-primary hover:bg-primary/90 text-primary-foreground' },
 ];
 
 export default function GradeButtons({ onGrade, disabled }) {
@@ -28,15 +28,15 @@ export default function GradeButtons({ onGrade, disabled }) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: i * 0.08 }}
         >
-          <Button
-            variant="ghost"
+          <GameActionButton
+            gameVariant={g.gameVariant}
             onClick={() => onGrade(g.value)}
             disabled={disabled}
             className={`w-full rounded-xl font-body font-bold text-sm py-5 gap-2 ${g.color} shadow-sm`}
           >
             <g.icon className="w-4 h-4" />
             {g.label}
-          </Button>
+          </GameActionButton>
         </motion.div>
       ))}
     </motion.div>
