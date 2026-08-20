@@ -117,16 +117,25 @@ export default function WorldUnlockCelebration({ show, world, onDone }) {
               ))}
             </motion.div>
 
-            <GameActionButton
-              gameVariant="primary"
-              className="relative z-10 mt-2 px-8 py-3 font-display text-lg"
-              onClick={(event) => {
-                event.stopPropagation();
-                onDone?.();
-              }}
+            <motion.div
+              className="relative z-10 mt-2"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              Continuar Aventura! 🚀
-            </GameActionButton>
+              <GameActionButton
+                gameVariant="primary"
+                className="px-8 py-3 font-display text-lg"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDone?.();
+                }}
+              >
+                Continuar Aventura! 🚀
+              </GameActionButton>
+            </motion.div>
           </GamePanel>
         </motion.div>
       )}
