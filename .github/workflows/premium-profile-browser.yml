@@ -2,13 +2,20 @@ name: Lexia Premium Profile Browser
 
 on:
   pull_request:
+    branches: [main]
     paths:
       - 'src/pages/Profile.jsx'
+      - 'src/components/profile/ProfileStats.jsx'
+      - 'src/components/profile/ProfileTabs.jsx'
       - 'src/components/game/GameActionButton.jsx'
       - 'src/styles/premium-game.css'
+      - 'scripts/check-premium-profile-navigation-stats.mjs'
       - 'scripts/check-premium-profile-browser.mjs'
       - '.github/workflows/premium-profile-browser.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   premium-profile-browser:
@@ -32,6 +39,12 @@ jobs:
         run: node scripts/check-premium-ui-foundation.mjs
       - name: Learner journey profile contract
         run: node scripts/check-learner-journey-profile.mjs
+      - name: Premium profile navigation and stats contract
+        run: node scripts/check-premium-profile-navigation-stats.mjs
+      - name: No-gradient learner chrome audit
+        run: node scripts/check-no-gradient-learner-chrome.mjs
+      - name: Premium action primitive audit
+        run: node scripts/check-premium-action-primitives.mjs
       - name: Prepare Chrome runtime
         run: |
           if command -v google-chrome >/dev/null 2>&1; then
