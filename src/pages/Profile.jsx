@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { isChallengeCompleted } from '@/lib/dailyChallenge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
-import GameActionButton from '@/components/game/GameActionButton';
 import { getAvatarById } from '@/lib/avatars';
 import { getEarnedAchievements, buildStats } from '@/lib/achievements';
 import { buildParentJourneyInsights } from '@/game/parentInsightsEngine';
@@ -14,6 +11,7 @@ import { playClickSound } from '@/lib/sounds';
 import DeleteAccountButton from '@/components/profile/DeleteAccountButton';
 import ProfileAchievements from '@/components/profile/ProfileAchievements';
 import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
+import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileHero from '@/components/profile/ProfileHero';
 import ProfileJourneyCard from '@/components/profile/ProfileJourneyCard';
 import ProfileLetterHistory from '@/components/profile/ProfileLetterHistory';
@@ -68,23 +66,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="lexia-gameplay-hud border-b border-border p-4 pt-[env(safe-area-inset-top)] sticky top-0 z-10">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <Link to="/">
-            <GameActionButton
-              gameVariant="neutral"
-              variant="ghost"
-              size="icon"
-              className="lexia-hud-icon rounded-xl"
-              onClick={playClickSound}
-              aria-label="Voltar ao início"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </GameActionButton>
-          </Link>
-          <h1 className="font-display text-2xl text-foreground">Meu Perfil</h1>
-        </div>
-      </div>
+      <ProfileHeader onBackClick={playClickSound} />
 
       <div className="max-w-lg mx-auto p-4 space-y-4">
         <ProfileHero
