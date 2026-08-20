@@ -217,6 +217,38 @@ html:not(.high-contrast) .lexia-result-feedback-panel {
   box-shadow: 0 4px 0 hsl(var(--lexia-paper-deep));
 }
 
+/* M38-P: full-screen alphabet selector and physical choice tiles. */
+html:not(.high-contrast) .lexia-letter-selector-surface {
+  background-color: hsl(var(--background) / 0.98);
+}
+
+html:not(.high-contrast) .lexia-letter-tile {
+  box-shadow:
+    0 1px 0 hsl(var(--card) / 0.7) inset,
+    0 4px 0 hsl(var(--lexia-paper-deep)),
+    0 9px 16px hsl(var(--lexia-shadow) / 0.1);
+}
+
+html:not(.high-contrast) .lexia-letter-tile:hover {
+  box-shadow:
+    0 1px 0 hsl(var(--card) / 0.7) inset,
+    0 5px 0 hsl(var(--lexia-paper-deep)),
+    0 11px 18px hsl(var(--lexia-shadow) / 0.12);
+}
+
+html:not(.high-contrast) .lexia-letter-tile:active {
+  box-shadow:
+    0 1px 0 hsl(var(--card) / 0.7) inset,
+    0 2px 0 hsl(var(--lexia-paper-deep)),
+    0 5px 10px hsl(var(--lexia-shadow) / 0.08);
+}
+
+html:not(.high-contrast) .lexia-letter-selector-legend {
+  border-color: hsl(var(--lexia-panel-edge) / 0.8) !important;
+  background-color: hsl(var(--card));
+  box-shadow: 0 -3px 0 hsl(var(--lexia-paper-deep) / 0.72);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:not(.high-contrast) .game-viewport-scroll a > button.bg-gradient-to-r,
   html:not(.high-contrast) .lexia-primary-action {
