@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { playCelebrationSound } from '@/lib/sounds';
+import '@/styles/premium-celebration.css';
 import MascotAvatar from './MascotAvatar';
 import GamePanel from './GamePanel';
 import GameActionButton from './GameActionButton';
-import { playCelebrationSound } from '@/lib/sounds';
 
 const celebrationPalette = ['#24445c', '#2f7d67', '#c6933f', '#d7c8aa', '#7a9a87'];
 
@@ -42,7 +43,7 @@ export default function WorldUnlockCelebration({ show, world, onDone }) {
     <AnimatePresence>
       {show && world && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4"
+          className="lexia-celebration-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
