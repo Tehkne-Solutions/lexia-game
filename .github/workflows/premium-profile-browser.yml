@@ -15,6 +15,7 @@ on:
       - 'scripts/check-premium-profile-hero-avatar.mjs'
       - 'scripts/check-semantic-achievement-palette.mjs'
       - 'scripts/check-profile-achievements-surface.mjs'
+      - 'scripts/check-achievement-tone-boundary.mjs'
       - 'scripts/check-premium-profile-browser.mjs'
       - '.github/workflows/premium-profile-browser.yml'
   workflow_dispatch:
@@ -52,6 +53,8 @@ jobs:
         run: node scripts/check-semantic-achievement-palette.mjs
       - name: Profile achievements surface contract
         run: node scripts/check-profile-achievements-surface.mjs
+      - name: Achievement tone boundary contract
+        run: node scripts/check-achievement-tone-boundary.mjs
       - name: No-gradient learner chrome audit
         run: node scripts/check-no-gradient-learner-chrome.mjs
       - name: Premium action primitive audit
