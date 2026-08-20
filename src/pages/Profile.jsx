@@ -10,11 +10,12 @@ import GameActionButton from '@/components/game/GameActionButton';
 import { AVATARS, getAvatarById } from '@/lib/avatars';
 import { ALPHABET } from '@/lib/alphabetData';
 import { calculateMastery } from '@/lib/fsrs';
-import { ACHIEVEMENTS, getEarnedAchievements, buildStats } from '@/lib/achievements';
+import { getEarnedAchievements, buildStats } from '@/lib/achievements';
 import { buildParentJourneyInsights } from '@/game/parentInsightsEngine';
 import { getJourneyWorldExperience, getWorldRelicProgress } from '@/game/worldExperienceEngine';
 import { playClickSound } from '@/lib/sounds';
 import DeleteAccountButton from '@/components/profile/DeleteAccountButton';
+import ProfileAchievements from '@/components/profile/ProfileAchievements';
 import ProfileStats from '@/components/profile/ProfileStats';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import StickerAlbum from '@/components/game/StickerAlbum';
@@ -289,45 +290,7 @@ export default function Profile() {
 
           {tab === 'badges' && (
             <motion.div key="badges" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-display text-base">
-                    Insígnias · {earnedBadges.length}/{ACHIEVEMENTS.length} conquistadas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    {ACHIEVEMENTS.map((a, i) => {
-                      const earned = earnedBadges.some(e => e.id === a.id);
-                      return (
-                        <motion.div
-                          key={a.id}
-                          initial={{ opacity: 0, scale: 0.8, y: 10 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          transition={{ delay: i * 0.05, type: 'spring', stiffness: 200, damping: 15 }}
-                          whileHover={earned ? { scale: 1.04 } : {}}
-                          className={`rounded-2xl border-2 p-3 flex items-center gap-3 transition-all
-                            ${earned ? a.color : 'bg-muted/50 border-border opacity-50 grayscale'}`}
-                        >
-                          <motion.span
-                            className="text-3xl"
-                            animate={earned ? { rotate: [0, -10, 10, 0] } : {}}
-                            transition={{ duration: 0.6, delay: 0.3 + i * 0.05 }}
-                          >
-                            {a.emoji}
-                          </motion.span>
-                          <div>
-                            <p className={`font-body font-bold text-sm ${earned ? a.textColor : 'text-muted-foreground'}`}>
-                              {a.title}
-                            </p>
-                            <p className="text-xs font-body text-muted-foreground">{a.description}</p>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+              <ProfileAchievements earnedBadges={earnedBadges} />
             </motion.div>
           )}
         </AnimatePresence>
