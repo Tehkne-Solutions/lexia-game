@@ -11,6 +11,7 @@ for (const token of [
   'lexia-onscreen-keyboard',
   'lexia-keyboard-key',
   'lexia-keyboard-delete',
+  'role="group"',
   'onPointerDown={(e) => { e.preventDefault(); onKey(k); playClickSound(); }}',
   'onPointerDown={(e) => { e.preventDefault(); onDelete(); playClickSound(); }}',
   'aria-label={`Tecla ${k}`}',
@@ -62,4 +63,4 @@ assert.ok(
   'Keyboard must retain solid high-contrast fallback surfaces in JSX',
 );
 
-console.log('Lexia M38-Q Premium On-Screen Keyboard: PASS (semantic tactile keys, pointer behavior, sound, delete and high-contrast fallbacks preserved)');
+console.log('Lexia M38-Q Premium On-Screen Keyboard: PASS (semantic tactile keys, grouped accessibility, pointer behavior, sound, delete and high-contrast fallbacks preserved)');
