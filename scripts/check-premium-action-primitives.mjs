@@ -19,6 +19,9 @@ const learnerPages = [
 
 const sharedRoots = ['src/components/game'];
 const extensions = new Set(['.js', '.jsx', '.ts', '.tsx']);
+const allowedRawButtonFiles = new Set([
+  'src/components/game/GameActionButton.jsx',
+]);
 
 async function collectFiles(relativePath) {
   const absolutePath = path.join(root, relativePath);
@@ -44,6 +47,7 @@ const rawButtonImport = /from\s+['"]@\/components\/ui\/button['"]/g;
 const rawButtonRequire = /require\(\s*['"]@\/components\/ui\/button['"]\s*\)/g;
 
 for (const relativePath of uniqueFiles) {
+  if (allowedRawButtonFiles.has(relativePath)) continue;
   const content = await readFile(path.join(root, relativePath), 'utf8');
   for (const pattern of [rawButtonImport, rawButtonRequire]) {
     pattern.lastIndex = 0;
@@ -70,4 +74,4 @@ assert.equal(
   `learner-facing gameplay must use GameActionButton instead of raw UI Button (${violations.length} violation${violations.length === 1 ? '' : 's'})`,
 );
 
-console.log(`Lexia M38-F Premium Action Primitive Audit: PASS (${uniqueFiles.length} learner/shared files scanned; zero raw UI Button dependencies)`);
+console.log(`Lexia M38-F Premium Action Primitive Audit: PASS (${uniqueFiles.length} learner/shared files scanned; raw UI Button allowed only inside GameActionButton)`);
