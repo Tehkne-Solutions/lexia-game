@@ -52,8 +52,8 @@ export default function GameplayHud({
               onClick={onOpenDailyChallenge}
               aria-label="Abrir desafio diário"
             >
-              <Zap className="w-4 h-4 text-amber-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />
+              <Zap className="w-4 h-4 text-accent" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
             </GameActionButton>
           )}
           {!isReviewMode && (
