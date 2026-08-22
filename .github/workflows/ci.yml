@@ -112,6 +112,9 @@ jobs:
       - name: Input isolation contract
         run: node scripts/check-input-isolation.mjs
 
+      - name: Typed answer boundary contract
+        run: node scripts/check-typed-answer-boundary.mjs
+
       - name: Journey engine contract
         run: node scripts/check-journey-engine.mjs
 

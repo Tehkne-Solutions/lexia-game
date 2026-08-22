@@ -19,6 +19,15 @@ const GENERIC_WRONG_MESSAGES = [
   'Tudo bem errar! Vamos de novo!',
 ];
 
+export function normalizeTypedAnswer(value, maxLength) {
+  return String(value || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z]/g, '')
+    .slice(0, maxLength);
+}
+
 // Analyze the typed answer vs the target and give a specific, encouraging hint
 function getSpecificHint(typed, target) {
   const t = (typed || '').toUpperCase().trim();

@@ -22,7 +22,7 @@ import {
   getNextChallengeTarget,
 } from '@/lib/dailyChallenge';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
-import { getTypingFeedback, getTypingMascotMessage } from '@/lib/typingFeedback';
+import { getTypingFeedback, getTypingMascotMessage, normalizeTypedAnswer } from '@/lib/typingFeedback';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -376,7 +376,7 @@ export default function PlaySyllables() {
                   ref={inputRef}
                   type="text"
                   value={typed}
-                  onChange={(e) => setTyped(e.target.value.toUpperCase().slice(0, target.length))}
+                  onChange={(e) => setTyped(normalizeTypedAnswer(e.target.value, target.length))}
                   onKeyDown={handleKeyDown}
                   maxLength={target.length}
                   className="opacity-0 absolute pointer-events-none"
@@ -385,7 +385,7 @@ export default function PlaySyllables() {
                 />
 
                 <OnScreenKeyboard
-                  onKey={(k) => setTyped(p => (p + k).slice(0, target.length))}
+                  onKey={(k) => setTyped((p) => normalizeTypedAnswer(p + k, target.length))}
                   onDelete={() => setTyped(p => p.slice(0, -1))}
                 />
 
