@@ -32,7 +32,7 @@ Depois da maestria da jornada, o desafio diário continua útil por rotação de
 
 O bônus não é implementado separadamente em cada página.
 
-`lexiaPlatform.progress` é decorado por `dailyChallengeProgressDecorator`, portanto Base44 e Supabase recebem exatamente a mesma regra:
+`lexiaPlatform.progress` é decorado por `dailyChallengeProgressDecorator`, portanto o runtime Supabase recebe exatamente a mesma regra:
 
 1. a página calcula e grava a recompensa base;
 2. a camada de plataforma detecta um primeiro acerto de alvo diário;

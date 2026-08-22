@@ -2,7 +2,7 @@
 
 **Tehkné Solutions**
 
-> Historical note: this document originated in M05. Its old ownership/import procedure was superseded by **M06 Fresh Start**. No Base44 learner history and no previous Supabase learner history may be migrated into the current Lexia runtime.
+> Historical note: this document originated in M05. Its old ownership/import procedure was superseded by **M06 Fresh Start**. No historical learner data may be migrated into the current Lexia runtime.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ The destination Supabase runtime starts new learner identities from zero.
 
 Forbidden during cutover:
 
-- importing Base44 progress;
+- importing historical progress;
 - attaching anonymous history to a new account;
 - importing previous Supabase learner history;
 - reconciling historical provider identities into a destination learner;
@@ -126,7 +126,7 @@ Only after the M10 attestation is green:
 
 If the Supabase provider causes auth, progress, upload, AI, e-mail or gameplay regression:
 
-1. set `VITE_LEXIA_PLATFORM_PROVIDER=base44`;
+1. set `VITE_LEXIA_PLATFORM_PROVIDER=supabase`;
 2. redeploy the **same application commit**;
 3. capture failing deployment/log evidence;
 4. preserve any legitimate new Supabase learner data created after launch;

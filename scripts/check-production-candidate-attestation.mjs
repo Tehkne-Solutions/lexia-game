@@ -5,7 +5,7 @@ import { resolvePlatformProvider } from '../src/platform/providerConfig.js';
 const workflow = await readFile(new URL('../.github/workflows/production-candidate-attestation.yml', import.meta.url), 'utf8');
 const attestation = await readFile(new URL('./run-m10d-production-candidate-attestation.mjs', import.meta.url), 'utf8');
 
-assert.equal(resolvePlatformProvider({}), 'base44', 'M10-D must not change the safe runtime default');
+assert.equal(resolvePlatformProvider({}), 'supabase', 'production candidate must default to Supabase');
 assert.ok(workflow.includes('name: Lexia Production Candidate Attestation'));
 assert.ok(workflow.includes('workflow_dispatch:'));
 assert.ok(workflow.includes('environment: lexia-release-approval'));

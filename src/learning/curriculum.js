@@ -1,7 +1,7 @@
 // Lexia Learning Engine 2.0 — pedagogical curriculum layer.
 // The first four legacy groups preserve the strongest curriculum decisions from
 // the original Tehkné implementation, while the active phases extend coverage
-// to all 26 letters used by the Base44 game.
+// to all 26 letters used by the Lexia game.
 
 export const LEGACY_CURRICULUM = Object.freeze({
   I: { legacyLevel: 1, anchorWord: 'Igreja', anchorEmoji: '⛪' },

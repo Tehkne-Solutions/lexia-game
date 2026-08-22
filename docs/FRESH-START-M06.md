@@ -6,7 +6,7 @@
 
 Lexia starts from zero for learner accounts and learner progress.
 
-No Base44 or previous Supabase user/progress history will be migrated into the independent runtime. Historical migration code remains recoverable through Git history only and is not part of the active product architecture.
+No historical user/progress history will be migrated into the independent runtime. Historical migration code remains recoverable through Git history only and is not part of the active product architecture.
 
 ## Canonical clean state
 
@@ -25,8 +25,8 @@ The live Supabase `lexia-game` project is the canonical independent backend and 
 2. The Learning Engine determines the first guided learning item from an empty progress set.
 3. `SYL_*` and `WORD_*` progress remains isolated from letter scheduling.
 4. Provider-internal IDs are never treated as learner identity outside the provider adapter.
-5. Base44 data is not a migration source from M06 onward.
-6. Base44 may remain temporarily available only as an application-level rollback/reference while the Supabase runtime cutover is validated.
+5. Historical data is not a migration source from M06 onward.
+6. Supabase is the only active application provider.
 
 ## Retired M04 migration subsystem
 
@@ -63,7 +63,7 @@ Because no data migration is required, provider cutover is now blocked only by r
 3. configure Vercel public Supabase URL/key and readiness flags;
 4. run authenticated browser E2E for Auth, progress RLS, upload, AI, e-mail and gameplay;
 5. switch `VITE_LEXIA_PLATFORM_PROVIDER=supabase` in a controlled preview/cohort;
-6. keep Base44 provider selection available for immediate rollback until Supabase runtime stability is proven.
+6. keep Supabase provider selection explicit and fail-closed until runtime stability is proven.
 
 No legacy user ownership decision or historical progress reconciliation is required.
 

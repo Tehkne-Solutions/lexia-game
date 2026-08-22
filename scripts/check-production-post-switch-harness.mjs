@@ -6,7 +6,7 @@ const workflow = await readFile(new URL('../.github/workflows/live-production-su
 const precheck = await readFile(new URL('./verify-m10d-production-candidate-run.mjs', import.meta.url), 'utf8');
 const browserProof = await readFile(new URL('./run-live-deployed-supabase-preview-smoke.mjs', import.meta.url), 'utf8');
 
-assert.equal(resolvePlatformProvider({}), 'base44', 'M10-E harness must not change provider by itself');
+assert.equal(resolvePlatformProvider({}), 'supabase', 'M10-E harness must preserve the Supabase provider');
 assert.ok(workflow.includes('name: Lexia Live Production Supabase Post-Switch'));
 assert.ok(workflow.includes('workflow_dispatch:'));
 assert.ok(workflow.includes('environment: lexia-production-release'));

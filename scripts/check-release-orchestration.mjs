@@ -9,20 +9,20 @@ const browserWorkflow = await readFile(new URL('../.github/workflows/live-supaba
 const attestationWorkflow = await readFile(new URL('../.github/workflows/supabase-release-attestation.yml', import.meta.url), 'utf8');
 const attestation = await readFile(new URL('./run-m10-release-attestation.mjs', import.meta.url), 'utf8');
 
-assert.equal(resolvePlatformProvider({}), 'base44', 'M10 must preserve the existing provider as the safe default');
+assert.equal(resolvePlatformProvider({}), 'supabase', 'M10 must preserve Supabase as the runtime default');
 
 for (const phrase of [
   'old ownership/import procedure was superseded by **M06 Fresh Start**',
-  'No Base44 learner history and no previous Supabase learner history may be migrated',
-  'importing Base44 progress',
+  'No historical learner data may be migrated',
+  'importing historical progress',
   'successful M10 attestation produces a release-evidence artifact. It **does not deploy**',
 ]) {
   assert.ok(cutover.includes(phrase), `M10 cutover runbook must preserve Fresh Start/release semantics: ${phrase}`);
 }
 for (const stale of [
-  'Base44 source audit has 70 progress records',
+  'Historical source audit has 70 progress records',
   'destination ownership is explicitly resolved',
-  'select which Base44 ownership bucket(s) belong to that learner',
+  'select which historical ownership bucket(s) belong to that learner',
 ]) {
   assert.equal(cutover.includes(stale), false, `stale migration instruction must be retired: ${stale}`);
 }

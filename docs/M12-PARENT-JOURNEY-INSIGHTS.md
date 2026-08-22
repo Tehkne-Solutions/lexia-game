@@ -149,6 +149,6 @@ For the Parent Dashboard, the browser gate requires:
 
 M12 is independent of the external Supabase cutover blocker tracked by the operational release issue. It does not change providers, Auth, schema, secrets, Vercel configuration or M09–M11 release semantics.
 
-Fresh Start remains canonical: no Base44 or previous Supabase learner history is migrated.
+Fresh Start remains canonical: no historical learner history is migrated.
 
 — Tehkné Solutions

@@ -4,7 +4,7 @@
 
 ## Goal
 
-Make learner progress portable between Base44 and the independent provider without carrying vendor-specific identifiers into the destination, while handling mixed anonymous/authenticated source ownership safely.
+Make learner progress portable between historical systems and the independent provider without carrying vendor-specific identifiers into the destination, while handling mixed anonymous/authenticated source ownership safely.
 
 ## Snapshot format
 
@@ -14,7 +14,7 @@ A snapshot has the stable envelope:
 {
   "schema": "lexia-progress-snapshot",
   "version": 1,
-  "sourceProvider": "base44",
+  "sourceProvider": "historical",
   "exportedAt": "2026-08-18T12:00:00.000Z",
   "records": []
 }
@@ -37,7 +37,7 @@ Keys such as `A`, `SYL_BA` and `WORD_CASA` remain valid, so migration covers the
 
 ## Ownership reconciliation
 
-Base44 source history can contain multiple ownership buckets, including `anonymous` and registered accounts. M04-E adds an explicit reconciliation stage before the portable snapshot is created.
+Historical source history can contain multiple ownership buckets, including `anonymous` and registered accounts. M04-E adds an explicit reconciliation stage before the portable snapshot is created.
 
 The migration operator must provide `selectedOwnerRefs`. The reconciler never assumes anonymous history belongs to a registered account. When explicitly selected owner buckets contain the same progress key, the stronger record is retained using the same conservative progress comparison used during destination import.
 
@@ -64,7 +64,7 @@ Portable snapshots contain no provider user ID, authentication token or e-mail a
 
 When a real Supabase project is connected:
 
-1. audit Base44 ownership buckets;
+1. audit historical ownership buckets;
 2. explicitly confirm source-owner-to-destination-user mapping;
 3. reconcile selected source ownership buckets;
 4. generate and validate the portable snapshot;

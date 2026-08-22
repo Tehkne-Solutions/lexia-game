@@ -4,13 +4,13 @@
 
 ## Current status
 
-M04-A staged data/RLS, M04-B staged independent authentication, M04-C added the server-side Edge Functions, M04-D added portable progress snapshots, M04-E added Base44 ownership reconciliation, and M04-F has now bootstrapped the real `lexia-game` Supabase project.
+M04-A staged data/RLS, M04-B staged independent authentication, M04-C added the server-side Edge Functions, M04-D added portable progress snapshots, M04-E documented historical ownership reconciliation, and M04-F bootstrapped the real `lexia-game` Supabase project.
 
-Base44 deliberately remains the default runtime until user ownership, Auth redirects, upstream secrets, data import and authenticated browser E2E are complete.
+Supabase is the only runtime; authenticated browser E2E and release readiness remain mandatory gates.
 
 ## Provider selection
 
-`VITE_LEXIA_PLATFORM_PROVIDER` accepts `base44` (default) or `supabase` (guarded). Supabase activation requires URL, publishable key, auth-ready and edge-ready flags.
+`VITE_LEXIA_PLATFORM_PROVIDER` accepts `supabase`. Activation requires URL, publishable key, auth-ready and edge-ready flags.
 
 ## Live M04-F infrastructure
 
@@ -78,11 +78,11 @@ Do not set `VITE_LEXIA_PLATFORM_PROVIDER=supabase` in production until:
 
 1. Auth site/redirect URLs and e-mail confirmation/recovery are validated;
 2. server-side AI/e-mail upstream secrets are configured;
-3. Base44 progress ownership is explicitly reconciled per learner;
+3. historical progress ownership is explicitly excluded per learner;
 4. destination Supabase identity exists;
 5. portable progress snapshot import is reconciled against source counts;
 6. Vercel public Supabase configuration/readiness flags are set;
 7. authenticated browser E2E passes against the real Supabase project;
-8. rollback to Base44 remains available for the first release cohort.
+8. rollback uses the documented Supabase release controls for the first release cohort.
 
 — Tehkné Solutions

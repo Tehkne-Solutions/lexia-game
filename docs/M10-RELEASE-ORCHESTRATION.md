@@ -14,8 +14,8 @@ M06 Fresh Start remains authoritative.
 
 M10 does not migrate:
 
-- Base44 learner history;
-- anonymous Base44 history;
+- historical learner history;
+- anonymous historical history;
 - previous Supabase learner history;
 - provider-owned user IDs or progress snapshots.
 

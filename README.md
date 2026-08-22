@@ -4,7 +4,7 @@
 
 Lexia is an educational game focused on guided literacy learning, adaptive review, progression through curriculum worlds and persistent learner progress.
 
-The application now runs behind an explicit platform boundary. Base44 is retained only as a temporary rollback/reference provider while the independent Supabase runtime is the production cutover target.
+The application runs on the independent Supabase runtime behind an explicit platform boundary.
 
 ## Current architecture
 
@@ -12,12 +12,12 @@ The application now runs behind an explicit platform boundary. Base44 is retaine
 - React Router 7 in declarative mode;
 - TanStack Query for client data orchestration;
 - platform abstraction in `src/platform`;
-- providers: `base44` and `supabase`;
+- provider: `supabase`;
 - Supabase Auth, progress persistence, Storage and Edge Functions behind the adapter boundary;
 - independent learning/journey engines and browser QA contracts;
 - dedicated critical learner journey E2E running in real Chrome.
 
-The selected platform provider is controlled by `VITE_LEXIA_PLATFORM_PROVIDER`. The current code defaults to `base44` when the variable is omitted so rollback remains possible until the controlled Supabase production cutover is completed.
+The selected platform provider is controlled by `VITE_LEXIA_PLATFORM_PROVIDER` and defaults to `supabase`. Supabase fails closed when its release configuration is incomplete.
 
 ## Prerequisites
 
@@ -54,16 +54,6 @@ VITE_LEXIA_SUPABASE_UPLOAD_FUNCTION=lexia-upload
 ```
 
 Supabase is fail-closed: selecting it without the required URL, publishable key and readiness flags stops startup instead of silently falling back to another provider.
-
-### Temporary Base44 rollback/reference runtime
-
-```dotenv
-VITE_LEXIA_PLATFORM_PROVIDER=base44
-VITE_BASE44_APP_ID=YOUR_APP_ID
-VITE_BASE44_APP_BASE_URL=YOUR_BASE44_URL
-```
-
-Base44 is not the target architecture for new platform work.
 
 Start development:
 
@@ -118,7 +108,7 @@ Do not switch the production provider only because a local build succeeds. Provi
 
 ## Fresh-start data policy
 
-The independent runtime follows a fresh-start policy: learner data from Base44 or previous environments is not migrated unless a future explicit product decision changes that policy. New learners start with canonical empty progress and enter the guided curriculum from the beginning.
+The independent runtime follows a fresh-start policy: historical learner data is not migrated unless a future explicit product decision changes that policy. New learners start with canonical empty progress and enter the guided curriculum from the beginning.
 
 ## Repository ownership
 

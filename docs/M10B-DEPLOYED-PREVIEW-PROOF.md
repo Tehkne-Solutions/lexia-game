@@ -42,7 +42,7 @@ Release SHA resolution order:
 3. GitHub `GITHUB_SHA`;
 4. empty value when no release identity exists.
 
-Provider marker comes from `VITE_LEXIA_PLATFORM_PROVIDER` and remains `base44` by default.
+Provider marker comes from `VITE_LEXIA_PLATFORM_PROVIDER` and defaults to `supabase`.
 
 A deployed preview that cannot identify the exact expected SHA or reports a provider other than `supabase` is rejected before credentials are created/entered.
 

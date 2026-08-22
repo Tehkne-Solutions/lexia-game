@@ -4,7 +4,7 @@
 
 ## Goal
 
-M09 separates what has already been proven on the live independent Supabase runtime from what must still be demonstrated before provider cutover. Fresh Start remains authoritative: no Base44 or previous Supabase learner history is migrated.
+M09 records what has been proven on the live independent Supabase runtime and what remains required for production readiness. Fresh Start remains authoritative: no historical learner history is migrated.
 
 ## Live project audited
 

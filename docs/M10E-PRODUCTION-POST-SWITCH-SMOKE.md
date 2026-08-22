@@ -99,6 +99,6 @@ These checks should be captured alongside M10-E evidence for the release record.
 
 ## Fresh Start / rollback
 
-M10-E does not migrate learner history. If production must roll back, provider selection returns to the safe provider without attaching historical Base44 or previous Supabase progress to current learners.
+M10-E does not migrate learner history. If production must roll back, deployment returns to the last known-good Supabase release without attaching historical progress to current learners.
 
 — Tehkné Solutions

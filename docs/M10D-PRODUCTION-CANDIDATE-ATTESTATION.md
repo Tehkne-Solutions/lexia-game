@@ -63,7 +63,7 @@ The production origin input is an attestation target only. M10-D does not modify
 
 An HTTPS rollback evidence reference is mandatory. It should point to the reviewed operational evidence showing that the candidate can return to the safe provider without rewriting learner history.
 
-The canonical rollback remains provider selection back to Base44 on the same application release family, followed by redeployment and evidence capture.
+The canonical rollback remains redeployment of the last known-good Supabase release, followed by evidence capture.
 
 ## Output
 
@@ -117,6 +117,6 @@ Until that smoke passes, launch is not considered closed.
 
 ## Fresh Start
 
-M10-D preserves M06 Fresh Start. Historical Base44 or previous Supabase learner progress must not be introduced as part of candidate attestation, deployment or rollback.
+M10-D preserves M06 Fresh Start. Historical learner progress must not be introduced as part of candidate attestation, deployment or rollback.
 
 — Tehkné Solutions

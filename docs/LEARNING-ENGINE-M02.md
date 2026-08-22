@@ -4,7 +4,7 @@
 
 ## Goal
 
-Unify the explicit pedagogical progression from the original repository with the broader Base44 game without reducing the current 26-letter, syllable, word, world-map or gamification scope.
+Unify the explicit pedagogical progression from the original repository with the broader Lexia game without reducing the current 26-letter, syllable, word, world-map or gamification scope.
 
 ## Architecture
 
@@ -25,7 +25,7 @@ The learning engine is intentionally separate from UI and persistence:
 5. Sons e Formas Avançadas — G, J, H, Q, X, Z
 6. Alfabeto Estendido — K, W, Y
 
-The original repository's anchor words and legacy levels are retained as metadata where they existed. Missing letters are completed using the Base44 A-Z catalog instead of being dropped.
+The original repository's anchor words and legacy levels are retained as metadata where they existed. Missing letters are completed using the canonical A-Z catalog instead of being dropped.
 
 ## Adaptive selection priority
 

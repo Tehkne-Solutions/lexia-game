@@ -1,10 +1,10 @@
-# Lexia M04-E — Base44 Data Audit & Ownership Reconciliation
+# Lexia M04-E — Historical Data Audit & Ownership Reconciliation
 
 **Tehkné Solutions**
 
 ## Audit scope
 
-Read-only audit of the original Lexia Base44 application before independent-provider migration. No learner e-mail, authentication token or provider user identifier is recorded in this document.
+Read-only audit of the original application before independent-provider migration. No learner e-mail, authentication token or provider user identifier is recorded in this document.
 
 Audit date: 2026-08-18.
 
@@ -29,7 +29,7 @@ The User entity currently contains one registered account with the admin role.
 `ChildProgress` records are not under one single source owner bucket:
 
 - **52 records** have source ownership `anonymous`
-- **18 records** are associated with the registered Base44 account
+- **18 records** are associated with the registered historical account
 
 All audited progress records use the same current `child_name` display value (`Jogador`), but that fact alone is not sufficient evidence to silently reassign anonymous records to the registered account.
 
@@ -53,6 +53,6 @@ For the current Lexia dataset, a migration can preserve all 70 records only afte
 
 ## Data quality observation
 
-The game contains a Word mode in code, but the original Base44 dataset currently has no `WORD_*` persistence history. This is not treated as data loss; it is recorded as the current source state.
+The game contains a Word mode in code, but the historical dataset currently has no `WORD_*` persistence history. This is not treated as data loss; it is recorded as the current source state.
 
 — Tehkné Solutions

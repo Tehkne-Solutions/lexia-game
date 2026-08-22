@@ -207,7 +207,7 @@ const report = {
     intended_production_origin: normalizedProductionOrigin,
   },
   runs: { auth, services, browser, release_attestation: releaseAttestation, deployed_preview: preview, production_candidate: candidate },
-  fresh_start_invariant: 'No Base44 or previous Supabase learner history is migrated.',
+  fresh_start_invariant: 'No historical learner history is migrated.',
   authorized_for_production_configuration: true,
   production_deploy_performed: false,
   production_provider_switch_performed: false,

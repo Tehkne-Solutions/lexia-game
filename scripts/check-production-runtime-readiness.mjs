@@ -7,7 +7,7 @@ import {
 } from '../src/platform/providerConfig.js';
 
 const safe = resolvePlatformProvider({});
-assert.equal(safe, 'base44', 'production provider must remain fail-safe until explicit cutover');
+assert.equal(safe, 'supabase', 'production provider must default to Supabase');
 
 const incomplete = getSupabaseProviderConfig({
   VITE_SUPABASE_URL: 'https://example.supabase.co',
@@ -50,7 +50,7 @@ assert.ok(login.includes('signInWithPassword'));
 assert.ok(login.includes('signUp'));
 
 const freshStart = await readFile(new URL('../scripts/check-fresh-start.mjs', import.meta.url), 'utf8');
-assert.ok(freshStart.includes('No Base44 or previous Supabase user/progress history will be migrated'));
+assert.ok(freshStart.includes('No historical user/progress history will be migrated'));
 
 const edgeContract = await readFile(new URL('../scripts/check-edge-functions.mjs', import.meta.url), 'utf8');
 for (const fn of ['lexia-ai', 'lexia-email', 'lexia-upload']) {

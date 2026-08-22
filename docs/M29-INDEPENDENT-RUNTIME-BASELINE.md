@@ -8,10 +8,9 @@ The repository entrypoint must describe the runtime that actually exists.
 
 ### Completed
 
-- replaced the stale Base44-generated README;
+- replaced the stale generated README;
 - documented the independent platform boundary;
-- documented Supabase as the controlled production cutover target;
-- documented Base44 only as temporary rollback/reference;
+- documented Supabase as the production runtime;
 - documented provider selection and Supabase fail-closed readiness;
 - documented Node/npm development commands and validation gates;
 - documented the Critical Learner Journey E2E path;

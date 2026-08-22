@@ -13,7 +13,7 @@ for (const fallback of [
 ]) {
   assert.ok(vite.includes(fallback), `deployed build identity must support ${fallback}`);
 }
-assert.ok(vite.includes("process.env.VITE_LEXIA_PLATFORM_PROVIDER || 'base44'"));
+assert.ok(vite.includes("process.env.VITE_LEXIA_PLATFORM_PROVIDER || 'supabase'"));
 assert.ok(vite.includes("'import.meta.env.VITE_LEXIA_RELEASE_SHA'"));
 assert.ok(vite.includes("'import.meta.env.VITE_LEXIA_BUILD_PROVIDER_MARKER'"));
 assert.ok(main.includes('document.documentElement.dataset.lexiaReleaseSha'));

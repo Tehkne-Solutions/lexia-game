@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { getSupabaseProviderConfig, getSupabaseReadiness, resolvePlatformProvider } from '../src/platform/providerConfig.js';
 
-assert.equal(resolvePlatformProvider({}), 'base44', 'Base44 must remain the safe default during M04');
+assert.equal(resolvePlatformProvider({}), 'supabase', 'Supabase must be the only default provider');
 assert.equal(resolvePlatformProvider({ VITE_LEXIA_PLATFORM_PROVIDER: 'supabase' }), 'supabase');
 assert.throws(() => resolvePlatformProvider({ VITE_LEXIA_PLATFORM_PROVIDER: 'unknown' }));
 
@@ -22,9 +22,8 @@ assert.equal(readyConfig.url, 'https://example.supabase.co');
 assert.equal(getSupabaseReadiness(readyConfig).ready, true);
 
 const platformIndex = await readFile(new URL('../src/platform/index.js', import.meta.url), 'utf8');
-assert.ok(platformIndex.includes("base44: base44Adapter"));
-assert.ok(platformIndex.includes("supabase: supabaseAdapter"));
-assert.ok(platformIndex.includes("requestedProvider === 'supabase'"));
+assert.ok(platformIndex.includes('const resilientProvider = decoratePlatformWithReadResilience(supabaseAdapter)'));
+assert.ok(platformIndex.includes('if (!supabaseAdapter.readiness.ready)'));
 
 const adapter = await readFile(new URL('../src/platform/adapters/supabaseAdapter.js', import.meta.url), 'utf8');
 assert.ok(adapter.includes('/auth/v1/token?grant_type=password'));
@@ -45,4 +44,4 @@ assert.ok(migration.includes('enable row level security'));
 assert.ok(migration.includes('auth.uid()'));
 assert.ok(migration.includes('unique (user_id, letter)'));
 
-console.log('Lexia independent provider M04-B contract: PASS (Supabase auth staged, Base44 default)');
+console.log('Lexia independent provider contract: PASS (Supabase-only runtime)');

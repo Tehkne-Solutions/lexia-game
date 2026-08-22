@@ -4,7 +4,7 @@
 
 ## Status
 
-The existing `lexia-game` Supabase project in São Paulo (`sa-east-1`) has been restored and bootstrapped for the independent provider track. Base44 remains the default application provider; this stage does not switch production traffic.
+The existing `lexia-game` Supabase project in São Paulo (`sa-east-1`) has been restored and bootstrapped as the application provider.
 
 ## Applied infrastructure
 
@@ -41,12 +41,12 @@ Remaining release work:
 
 1. configure Auth site/redirect URLs;
 2. configure server-side AI/e-mail upstream secrets;
-3. decide ownership mapping for Base44 source buckets (52 anonymous records + 18 registered-account records);
+3. document that historical source buckets (52 anonymous records + 18 registered-account records) are not imported;
 4. create/confirm destination Supabase user identity;
 5. import the portable progress snapshot and reconcile counts;
 6. configure Vercel public Supabase URL/publishable key plus readiness flags;
 7. execute authenticated browser E2E for login, progress, drawing upload, AI feedback and parent report;
-8. retain Base44 as rollback until the Supabase cohort is proven.
+8. retain release evidence and rollback procedures for the Supabase runtime.
 
 No production secrets are committed to the repository.
 

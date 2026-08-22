@@ -4,15 +4,15 @@
 
 ## Objective
 
-Remove Base44 SDK lock-in from application code before replacing the active backend provider.
+Remove vendor SDK lock-in from application code and use the independent Supabase runtime.
 
 ## Final boundary
 
-Only `src/platform/adapters/base44Adapter.js` may import `@base44/sdk`.
+The application imports no vendor SDK outside the Supabase boundary.
 
-All application modules now depend directly on `lexiaPlatform` from `src/platform`. The temporary `src/api/base44Client.js` compatibility facade used during M03 was retired after its consumer count reached zero.
+All application modules now depend directly on `lexiaPlatform` from `src/platform`. The temporary compatibility facade used during M03 was retired after its consumer count reached zero.
 
-The active provider is still Base44, but Base44 is now an implementation detail behind the platform contract rather than an application-level dependency.
+Supabase is the active provider behind the platform contract.
 
 ## Provider-neutral capabilities
 
@@ -30,9 +30,9 @@ These capabilities cover the current Lexia product flows including guided letter
 
 `scripts/check-platform-boundary.mjs` scans application source and fails CI when:
 
-- `@base44/sdk` is imported outside the Base44 adapter;
-- a concrete Base44 adapter is imported outside the platform registry;
-- any module imports the retired `@/api/base44Client` facade.
+- a retired vendor SDK is imported by application code;
+- a concrete adapter is imported outside the platform registry;
+- any module imports a retired compatibility facade.
 
 The release gate now requires **zero legacy facade consumers**.
 
@@ -47,10 +47,10 @@ M03 completed the six final legacy call sites:
 5. `src/pages/Profile.jsx`
 6. `src/pages/WorldMap.jsx`
 
-`SpeedChallenge` and the remaining local-only features already had no Base44 dependency.
+`SpeedChallenge` and the remaining local-only features already had no provider dependency.
 
 ## Next step — M04
 
-M04 can now add an independent provider (Supabase for auth/data plus independent storage/AI/email services) behind the same contract without rewriting gameplay screens. Base44 remains active until the replacement adapter is configured, migrated and passes the same release gates.
+The independent Supabase provider now supplies auth/data plus storage/AI/email services behind the same contract without rewriting gameplay screens.
 
 — Tehkné Solutions

@@ -204,7 +204,7 @@ The blocking Game Shell contract covers:
 
 The blocking Browser Layout QA adds real Chrome validation and screenshot evidence on mobile-short, mobile and desktop.
 
-Journey, Session Quest and World Experience engines remain in the blocking core typecheck. The inherited Base44-generated UI type debt remains separately visible as an advisory legacy typecheck.
+Journey, Session Quest and World Experience engines remain in the blocking core typecheck.
 
 ## M07 final state
 

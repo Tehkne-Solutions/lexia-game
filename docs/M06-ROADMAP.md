@@ -13,8 +13,8 @@ Establish the post-migration baseline for Lexia: a clean independent runtime wit
 - Fresh Start architecture contract blocking in CI;
 - Supabase schema and functional adapter contracts blocking;
 - core typecheck blocking;
-- inherited Base44-generated UI type debt remains visible as an advisory baseline;
-- Base44 retained only as temporary application rollback/reference.
+- inherited generated UI type debt remains visible as an advisory baseline;
+- the independent Supabase runtime is the only active provider.
 
 ## M06-B — Fresh-start onboarding — COMPLETE IN CODE
 
@@ -28,7 +28,7 @@ Establish the post-migration baseline for Lexia: a clean independent runtime wit
 
 ## Operational cutover gates — PENDING EXTERNAL CONFIGURATION
 
-These gates do not block continued product development, but they block switching production from Base44 to Supabase.
+These gates do not block continued product development, but they block production until the Supabase runtime is proven.
 
 ### Auth and live disposable-user validation
 
@@ -51,7 +51,7 @@ These gates do not block continued product development, but they block switching
 - reload/session refresh/logout;
 - RLS isolation;
 - upload/AI/e-mail flows;
-- Base44 fallback drill.
+- Supabase rollback drill.
 
 ### Controlled provider cutover
 
@@ -63,7 +63,7 @@ These gates do not block continued product development, but they block switching
 
 ## Fresh-start data policy
 
-The live Supabase project is currently clean: 0 Auth users, 0 progress rows and 0 Storage objects. No Base44 or previous Supabase learner data will be migrated.
+The live Supabase project is currently clean: 0 Auth users, 0 progress rows and 0 Storage objects. No historical learner data will be migrated.
 
 No user/progress migration is part of M06 or any subsequent release path unless a new explicit product decision replaces this policy.
 

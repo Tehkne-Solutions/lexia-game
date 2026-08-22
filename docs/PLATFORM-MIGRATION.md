@@ -4,13 +4,13 @@
 
 ## Objective
 
-Keep the Base44-exported Lexia gameplay and UX working while removing infrastructure lock-in incrementally.
+Keep the exported Lexia gameplay and UX working while removing infrastructure lock-in incrementally.
 
 ## M01 rule
 
 Application modules should depend on `lexiaPlatform` from `src/platform` instead of importing a vendor SDK directly.
 
-The first provider is `base44`. Future providers (for example Supabase-backed persistence and independent AI/storage services) must implement the same contract before they can be selected.
+The only provider is `supabase`, with independent persistence, AI, storage and email services behind the platform contract.
 
 ## Contract
 
@@ -22,19 +22,19 @@ The current contract exposes:
 - `ai`: model invocation
 - `email`: transactional send
 
-`src/api/base44Client.js` remains temporarily as a compatibility shim so the original export can be migrated page-by-page without a risky big-bang rewrite.
+Retired compatibility shims are not part of the active runtime.
 
 ## CI baseline
 
-The Base44 export currently contains pre-existing JavaScript type-inference errors in generated UI/component code. M01 keeps `npm run typecheck` visible as an advisory step so this debt cannot disappear silently, while `npm run lint` and `npm run build` remain blocking release gates. Typecheck becomes blocking after the legacy baseline is repaired in the consolidation track.
+The active export uses blocking typecheck, lint and build release gates.
 
 ## Migration sequence
 
-1. M01 — provider contract + Base44 adapter + CI.
+1. M01 — provider contract + independent adapter + CI.
 2. M02 — unified learning engine and pedagogical curriculum.
 3. M03 — migrate all remaining direct compatibility-shim call sites to provider-neutral services.
 4. M04 — add Supabase/independent service adapters and data migration.
-5. M05 — make Base44 optional and release the independent Lexia build.
+5. M05 — release the independent Lexia build.
 
 ## Non-regression rule
 

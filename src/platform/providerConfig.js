@@ -1,6 +1,6 @@
 export function resolvePlatformProvider(env = {}) {
-  const requested = String(env.VITE_LEXIA_PLATFORM_PROVIDER || 'base44').trim().toLowerCase();
-  if (requested === 'base44' || requested === 'supabase') return requested;
+  const requested = String(env.VITE_LEXIA_PLATFORM_PROVIDER || 'supabase').trim().toLowerCase();
+  if (requested === 'supabase') return requested;
   throw new Error(`Unsupported Lexia platform provider: ${requested}`);
 }
 

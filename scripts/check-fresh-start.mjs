@@ -37,7 +37,7 @@ for (const file of sourceFiles) {
 const policy = await readFile(new URL('../docs/FRESH-START-M06.md', import.meta.url), 'utf8');
 assert.ok(policy.includes('0 Supabase Auth users'));
 assert.ok(policy.includes('0 rows in `public.lexia_progress`'));
-assert.ok(policy.includes('No Base44 or previous Supabase user/progress history will be migrated'));
+assert.ok(policy.includes('No historical user/progress history will be migrated'));
 assert.ok(policy.includes('No legacy user ownership decision'));
 
 const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8');
