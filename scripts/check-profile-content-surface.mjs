@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
 const content = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
+const viewModel = await readFile(new URL('../src/hooks/useProfileViewModel.js', import.meta.url), 'utf8');
 
 for (const required of [
   "import ProfileContent from '@/components/profile/ProfileContent'",
@@ -14,7 +15,7 @@ for (const required of [
   'const stats = buildStats(allProgress)',
   'function selectAvatar(avatar) {',
 ]) {
-  assert.ok(profile.includes(required), `Profile must delegate content composition through ${required}`);
+  assert.ok(profile.includes(required) || viewModel.includes(required), `Profile must retain orchestration through ${required}`);
 }
 
 for (const forbidden of [
