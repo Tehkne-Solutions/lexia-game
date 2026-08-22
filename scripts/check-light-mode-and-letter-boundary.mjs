@@ -11,5 +11,8 @@ assert.ok(learning.includes("unlockedAlphabet.find((item) => item.letter !== cur
 assert.ok(playGame.includes('The child was asked to write the UPPERCASE letter "${currentLetter}"'), 'AI evaluation must use one explicit current uppercase letter target');
 assert.ok(playGame.includes('requestedDailyLetter = ALPHABET.some'), 'daily targets must be limited to canonical alphabet letters');
 assert.ok(playGame.includes('requestedReviewLetter = ALPHABET.some'), 'review targets must be limited to canonical alphabet letters');
+assert.ok(playGame.includes('function isCanonicalLetter(letter)'), 'manual target validation must have one canonical letter boundary');
+assert.ok(playGame.includes('if (!isCanonicalLetter(letter)) return;'), 'manual letter selection must reject non-canonical targets');
+assert.ok(playGame.includes('if (isCanonicalLetter(letter))'), 'challenge target selection must reject non-canonical targets');
 
 console.log('Lexia light mode and letter boundary contract: PASS (light first mode; canonical single-letter targets; no unnecessary next-letter repeat)');

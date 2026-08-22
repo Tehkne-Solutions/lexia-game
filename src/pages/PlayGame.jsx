@@ -34,6 +34,10 @@ import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 
+function isCanonicalLetter(letter) {
+  return ALPHABET.some((item) => item.letter === letter);
+}
+
 export default function PlayGame() {
   const urlParams = new URLSearchParams(window.location.search);
   const isPracticeMode = urlParams.get('mode') === 'practice';
@@ -367,6 +371,7 @@ Look carefully at the image. Return JSON:
   }, []);
 
   const handleLetterSelect = useCallback((letter) => {
+    if (!isCanonicalLetter(letter)) return;
     activeEncounterRef.current = null;
     setCurrentLetter(letter);
     setShowSelector(false);
@@ -374,7 +379,7 @@ Look carefully at the image. Return JSON:
 
   const handleStartChallenge = useCallback((letter) => {
     setShowDailyChallenge(false);
-    if (typeof letter === 'string' && letter.length === 1) {
+    if (isCanonicalLetter(letter)) {
       activeEncounterRef.current = null;
       setCurrentLetter(letter);
     }
