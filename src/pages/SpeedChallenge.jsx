@@ -10,6 +10,7 @@ import MascotAvatar from '@/components/game/MascotAvatar';
 import OnScreenKeyboard from '@/components/game/OnScreenKeyboard';
 import { buildStats } from '@/lib/achievements';
 import { getSpeedChallengeProfile } from '@/game/sideModesEngine';
+import { normalizeTypedAnswer } from '@/lib/typingFeedback';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 import confetti from 'canvas-confetti';
 
@@ -85,7 +86,7 @@ export default function SpeedChallenge() {
 
   const checkAnswer = useCallback(() => {
     if (!currentItem || typed.length === 0) return;
-    const answer = typed.trim().toUpperCase();
+    const answer = normalizeTypedAnswer(typed, currentItem.display.length);
     const correct = answer === currentItem.display;
     if (correct) {
       playCorrectSound();
@@ -213,9 +214,9 @@ export default function SpeedChallenge() {
                 ))}
               </div>
 
-              <input ref={inputRef} type="text" value={typed} onChange={(event) => setTyped(event.target.value.toUpperCase().slice(0, currentItem.display.length))} maxLength={currentItem.display.length} className="opacity-0 absolute pointer-events-none" autoComplete="off" />
+              <input ref={inputRef} type="text" value={typed} onChange={(event) => setTyped(normalizeTypedAnswer(event.target.value, currentItem.display.length))} maxLength={currentItem.display.length} className="opacity-0 absolute pointer-events-none" autoComplete="off" />
 
-              <OnScreenKeyboard onKey={(key) => setTyped((previous) => (previous + key).slice(0, currentItem.display.length))} onDelete={() => setTyped((previous) => previous.slice(0, -1))} />
+              <OnScreenKeyboard onKey={(key) => setTyped((previous) => normalizeTypedAnswer(previous + key, currentItem.display.length))} onDelete={() => setTyped((previous) => previous.slice(0, -1))} />
             </GamePanel>
           </div>
         )}

@@ -115,6 +115,9 @@ jobs:
       - name: Typed answer boundary contract
         run: node scripts/check-typed-answer-boundary.mjs
 
+      - name: Speed input boundary contract
+        run: node scripts/check-speed-input-boundary.mjs
+
       - name: Journey engine contract
         run: node scripts/check-journey-engine.mjs
 
