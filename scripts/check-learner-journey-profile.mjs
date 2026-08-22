@@ -60,8 +60,10 @@ for (const required of [
   assert.ok(achievementsSource.includes(required), `achievement compatibility/delegation missing: ${required}`);
 }
 
-const [profile, profileStats] = await Promise.all([
+const [profile, profileContent, viewModel, profileStats] = await Promise.all([
   readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/hooks/useProfileViewModel.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/profile/ProfileStats.jsx', import.meta.url), 'utf8'),
 ]);
 
@@ -69,11 +71,16 @@ for (const required of [
   'buildParentJourneyInsights',
   'getJourneyWorldExperience',
   'getWorldRelicProgress',
+]) {
+  assert.ok(viewModel.includes(required), `learner journey view model missing: ${required}`);
+}
+
+for (const required of [
   'journeyInsights.totalMastered',
   'journeyInsights.totalTargets',
   "import ProfileStats from '@/components/profile/ProfileStats'",
 ]) {
-  assert.ok(profile.includes(required), `learner journey Profile surface missing: ${required}`);
+  assert.ok(profileContent.includes(required), `learner journey ProfileContent surface missing: ${required}`);
 }
 
 for (const required of [
