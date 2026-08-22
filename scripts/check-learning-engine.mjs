@@ -52,6 +52,8 @@ assert.equal(advancedState.activePhase.level, 2, 'mastering phase 1 should unloc
 
 const nextLetter = pickNextLearningLetter(masteredPhaseOne, null, ALPHABET);
 assert.ok(CURRICULUM_PHASES[1].letters.includes(nextLetter), 'next new letter should come from the newly unlocked phase');
+const nextDifferentLetter = pickNextLearningLetter(masteredPhaseOne, nextLetter, ALPHABET);
+assert.notEqual(nextDifferentLetter, nextLetter, 'next letter must not repeat the current letter when another canonical target is available');
 
 const challengeCandidates = getDailyChallengeCandidates(masteredPhaseOne, ALPHABET, 8);
 assert.ok(challengeCandidates.length >= 3, 'daily challenge needs at least three candidates');
