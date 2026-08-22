@@ -109,6 +109,9 @@ jobs:
       - name: Light mode and letter boundary contract
         run: node scripts/check-light-mode-and-letter-boundary.mjs
 
+      - name: Input isolation contract
+        run: node scripts/check-input-isolation.mjs
+
       - name: Journey engine contract
         run: node scripts/check-journey-engine.mjs
 
