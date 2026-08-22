@@ -18,7 +18,7 @@ import GameplayHud from '@/components/game/GameplayHud';
 import GameplayResultActions from '@/components/game/GameplayResultActions';
 import GameActionButton from '@/components/game/GameActionButton';
 
-import { ALPHABET, getLetterData } from '@/lib/alphabetData';
+import { ALPHABET, getLetterData, normalizeCanonicalLetter } from '@/lib/alphabetData';
 import { createNewCard, reviewCard, calculateMastery, pickNextLetter } from '@/lib/fsrs';
 import { getInitialLearningLetter } from '@/learning/engine';
 import { getJourneyState, JOURNEY_STAGES } from '@/game/journeyEngine';
@@ -34,23 +34,15 @@ import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 
-function isCanonicalLetter(letter) {
-  return ALPHABET.some((item) => item.letter === letter);
-}
-
 export default function PlayGame() {
   const urlParams = new URLSearchParams(window.location.search);
   const isPracticeMode = urlParams.get('mode') === 'practice';
   const isDailyMode = urlParams.get('daily') === '1';
   const isReviewMode = urlParams.get('review') === '1';
   const requestedDailyTargetKey = urlParams.get('dailyTarget');
-  const requestedDailyLetter = ALPHABET.some((item) => item.letter === requestedDailyTargetKey)
-    ? requestedDailyTargetKey
-    : null;
+  const requestedDailyLetter = normalizeCanonicalLetter(requestedDailyTargetKey);
   const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
-  const requestedReviewLetter = ALPHABET.some((item) => item.letter === requestedReviewTargetKey)
-    ? requestedReviewTargetKey
-    : null;
+  const requestedReviewLetter = normalizeCanonicalLetter(requestedReviewTargetKey);
   const [currentLetter, setCurrentLetter] = useState(() => requestedDailyLetter || requestedReviewLetter || getInitialLearningLetter(ALPHABET));
   const [phase, setPhase] = useState('draw');
   const [aiResult, setAiResult] = useState(null);
@@ -371,17 +363,19 @@ Look carefully at the image. Return JSON:
   }, []);
 
   const handleLetterSelect = useCallback((letter) => {
-    if (!isCanonicalLetter(letter)) return;
+    const normalizedLetter = normalizeCanonicalLetter(letter);
+    if (!normalizedLetter) return;
     activeEncounterRef.current = null;
-    setCurrentLetter(letter);
+    setCurrentLetter(normalizedLetter);
     setShowSelector(false);
   }, []);
 
   const handleStartChallenge = useCallback((letter) => {
     setShowDailyChallenge(false);
-    if (isCanonicalLetter(letter)) {
+    const normalizedLetter = normalizeCanonicalLetter(letter);
+    if (normalizedLetter) {
       activeEncounterRef.current = null;
-      setCurrentLetter(letter);
+      setCurrentLetter(normalizedLetter);
     }
   }, []);
 

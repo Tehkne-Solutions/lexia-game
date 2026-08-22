@@ -48,6 +48,11 @@ export function getLetterData(letter) {
   return ALPHABET.find((item) => item.letter === String(letter || '').toUpperCase());
 }
 
+export function normalizeCanonicalLetter(letter) {
+  const normalized = String(letter || '').trim().toUpperCase();
+  return ALPHABET.some((item) => item.letter === normalized) ? normalized : null;
+}
+
 export function getNextLetter(currentLetter) {
   const idx = ALPHABET.findIndex((item) => item.letter === currentLetter);
   if (idx === -1 || idx === ALPHABET.length - 1) return ALPHABET[0];
