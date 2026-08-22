@@ -84,6 +84,7 @@ for (const stage of stageCases) {
   assert.equal(definition.playPath, stage.path, `${stage.name}: route must preserve the real mechanic`);
   assert.equal(definition.targets.length, 3, `${stage.name}: exactly three targets`);
   assert.equal(definition.targetKeys.length, 3, `${stage.name}: exactly three target keys`);
+  assert.equal(new Set(definition.targetKeys).size, 3, `${stage.name}: target keys must be unique`);
   assert.ok(definition.targetKeys.every(stage.key), `${stage.name}: keys must belong to the current mechanic`);
   assert.equal(definition.starsMultiplier, 2, `${stage.name}: first completion bonus must remain x2`);
   assert.deepEqual(

@@ -70,8 +70,9 @@ function masteryPressure(record) {
 }
 
 function deterministicThree(items, seed) {
-  if (items.length <= 3) return items.slice(0, 3);
-  const pool = items.slice(0, Math.min(8, items.length));
+  const uniqueItems = [...new Map(items.map((item) => [item.key, item])).values()];
+  if (uniqueItems.length <= 3) return uniqueItems.slice(0, 3);
+  const pool = uniqueItems.slice(0, Math.min(8, uniqueItems.length));
   const offset = hashText(seed) % pool.length;
   return [0, 1, 2].map((step) => pool[(offset + step) % pool.length]);
 }
