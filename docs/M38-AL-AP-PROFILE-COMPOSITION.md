@@ -11,6 +11,8 @@ The Profile page now keeps data loading, domain calculations, local persistence 
 
 `ProfileContent` composes the hero, journey, stats, tabs, animated tab content and account actions. `DeleteAccountButton` remains responsible for the destructive account workflow.
 
+The view model is isolated in `src/hooks/useProfileViewModel.js`. It owns the progress query and derived journey, achievement, avatar and level data. Identity state, avatar persistence and user callbacks remain in `Profile.jsx`.
+
 ## Contracts
 
 The Premium Profile Browser workflow runs the fail-closed contracts for the extracted surfaces and their historical dependencies. The browser harness covers all five Profile tabs across mobile-short, mobile and desktop viewports and asserts no horizontal overflow.
@@ -19,7 +21,7 @@ The Premium Profile Browser workflow runs the fail-closed contracts for the extr
 
 Passed:
 
-- Profile surface contracts M38-AC through M38-AN;
+- Profile surface contracts M38-AC through M38-AS;
 - no-gradient learner chrome audit;
 - editor diagnostics for the touched JSX and contract files;
 - JavaScript parsing and `git diff --check`.

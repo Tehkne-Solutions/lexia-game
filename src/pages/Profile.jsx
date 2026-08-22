@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
-import { isChallengeCompleted } from '@/lib/dailyChallenge';
-import { lexiaPlatform } from '@/platform';
-import { useQuery } from '@tanstack/react-query';
-import { getAvatarById } from '@/lib/avatars';
-import { getEarnedAchievements, buildStats } from '@/lib/achievements';
-import { buildParentJourneyInsights } from '@/game/parentInsightsEngine';
-import { getJourneyWorldExperience, getWorldRelicProgress } from '@/game/worldExperienceEngine';
 import { playClickSound } from '@/lib/sounds';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileContent from '@/components/profile/ProfileContent';
+import useProfileViewModel from '@/hooks/useProfileViewModel';
 
 const PROFILE_KEY = 'lexia_profile';
 
@@ -23,24 +17,22 @@ export default function Profile() {
   const [profile, setProfile] = useState(loadProfile);
   const [tab, setTab] = useState('avatar');
 
-  const { data: allProgress = [] } = useQuery({
-    queryKey: ['childProgress'],
-    queryFn: () => lexiaPlatform.progress.list(),
-    initialData: [],
-  });
-
-  const progressMap = {};
-  allProgress.forEach(p => { progressMap[p.letter] = p; });
-
-  const stats = buildStats(allProgress);
-  const journeyInsights = buildParentJourneyInsights(allProgress);
-  const journey = journeyInsights.journey;
-  const activeExperience = getJourneyWorldExperience(journey, stats);
-  const relicProgress = getWorldRelicProgress(stats);
-  const missionPct = journey.total > 0 ? Math.round((journey.current / journey.total) * 100) : 0;
-  const totalStars = stats.totalStars;
-  const earnedBadges = getEarnedAchievements(stats);
-  const currentAvatar = getAvatarById(profile.avatarId || 'owl');
+  const {
+    allProgress,
+    progressMap,
+    stats,
+    journeyInsights,
+    journey,
+    activeExperience,
+    relicProgress,
+    missionPct,
+    totalStars,
+    earnedBadges,
+    currentAvatar,
+    level,
+    starsToNextLevel,
+    dailyDone,
+  } = useProfileViewModel(profile);
 
   function selectAvatar(avatar) {
     if (avatar.unlockStars > totalStars) return;
@@ -49,10 +41,6 @@ export default function Profile() {
     setProfile(updated);
     saveProfile(updated);
   }
-
-  const level = Math.floor(totalStars / 5) + 1;
-  const starsToNextLevel = 5 - (totalStars % 5);
-  const dailyDone = isChallengeCompleted();
 
   return (
     <div className="min-h-screen bg-background">

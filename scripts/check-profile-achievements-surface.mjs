@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
 const content = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
+const viewModel = await readFile(new URL('../src/hooks/useProfileViewModel.js', import.meta.url), 'utf8');
 const tabs = await readFile(new URL('../src/components/profile/ProfileTabContent.jsx', import.meta.url), 'utf8');
 const surface = await readFile(new URL('../src/components/profile/ProfileAchievements.jsx', import.meta.url), 'utf8');
 
@@ -11,7 +12,7 @@ for (const required of [
   'const earnedBadges = getEarnedAchievements(stats)',
   '<ProfileContent',
 ]) {
-  assert.ok(profile.includes(required), `Profile must delegate achievements surface via ${required}`);
+  assert.ok(profile.includes(required) || viewModel.includes(required), `Profile must retain achievements orchestration through ${required}`);
 }
 
 for (const required of ['<ProfileTabContent', 'earnedBadges={earnedBadges}']) {

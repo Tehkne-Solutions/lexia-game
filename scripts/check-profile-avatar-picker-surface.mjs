@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
 const content = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
 const tabs = await readFile(new URL('../src/components/profile/ProfileTabContent.jsx', import.meta.url), 'utf8');
+const viewModel = await readFile(new URL('../src/hooks/useProfileViewModel.js', import.meta.url), 'utf8');
 const surface = await readFile(new URL('../src/components/profile/ProfileAvatarPicker.jsx', import.meta.url), 'utf8');
 
 for (const required of [
@@ -18,7 +19,7 @@ for (const required of [
   "const PROFILE_KEY = 'lexia_profile'",
   'localStorage.setItem(PROFILE_KEY, JSON.stringify(data))',
 ]) {
-  assert.ok(profile.includes(required), `Profile must retain avatar behavior through ${required}`);
+  assert.ok(profile.includes(required) || viewModel.includes(required), `Profile must retain avatar orchestration through ${required}`);
 }
 
 for (const required of [

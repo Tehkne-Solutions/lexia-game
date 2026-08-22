@@ -18,6 +18,7 @@ on:
       - 'src/components/profile/ProfileStats.jsx'
       - 'src/components/profile/ProfileTabContent.jsx'
       - 'src/components/profile/ProfileTabs.jsx'
+      - 'src/hooks/useProfileViewModel.js'
       - 'src/components/game/GameActionButton.jsx'
       - 'src/lib/achievements.js'
       - 'src/styles/premium-game.css'
@@ -27,6 +28,7 @@ on:
       - 'scripts/check-profile-achievements-surface.mjs'
       - 'scripts/check-profile-account-actions-surface.mjs'
       - 'scripts/check-profile-content-surface.mjs'
+      - 'scripts/check-profile-view-model-surface.mjs'
       - 'scripts/check-achievement-tone-boundary.mjs'
       - 'scripts/check-profile-letter-history-surface.mjs'
       - 'scripts/check-profile-avatar-picker-surface.mjs'
@@ -77,6 +79,8 @@ jobs:
         run: node scripts/check-profile-account-actions-surface.mjs
       - name: Profile content surface contract
         run: node scripts/check-profile-content-surface.mjs
+      - name: Profile view model surface contract
+        run: node scripts/check-profile-view-model-surface.mjs
       - name: Achievement tone boundary contract
         run: node scripts/check-achievement-tone-boundary.mjs
       - name: Profile letter history surface contract
