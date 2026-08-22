@@ -92,7 +92,8 @@ export function pickNextLearningLetter(allProgress, currentLetter, alphabet) {
     .sort((a, b) => a.mastery - b.mastery || a.order - b.order);
 
   const reviewPick = pickFromTop(reviewPool);
-  return reviewPick?.letter || unlockedAlphabet[0]?.letter || currentLetter || alphabet[0]?.letter || 'A';
+  const fallback = reviewPick?.letter || unlockedAlphabet.find((item) => item.letter !== currentLetter)?.letter;
+  return fallback || currentLetter || alphabet[0]?.letter || 'A';
 }
 
 export function getDailyChallengeCandidates(allProgress, alphabet, limit = 8) {

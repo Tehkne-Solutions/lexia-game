@@ -106,6 +106,9 @@ jobs:
       - name: Learning engine contract
         run: node scripts/check-learning-engine.mjs
 
+      - name: Light mode and letter boundary contract
+        run: node scripts/check-light-mode-and-letter-boundary.mjs
+
       - name: Journey engine contract
         run: node scripts/check-journey-engine.mjs
 
