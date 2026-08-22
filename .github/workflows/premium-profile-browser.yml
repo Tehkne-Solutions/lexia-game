@@ -6,7 +6,9 @@ on:
     paths:
       - 'src/pages/Profile.jsx'
       - 'src/components/profile/ProfileAchievements.jsx'
+      - 'src/components/profile/ProfileAccountActions.jsx'
       - 'src/components/profile/ProfileAvatarPicker.jsx'
+      - 'src/components/profile/ProfileContent.jsx'
       - 'src/components/profile/ProfileHeader.jsx'
       - 'src/components/profile/ProfileHero.jsx'
       - 'src/components/profile/ProfileJourneyCard.jsx'
@@ -14,6 +16,7 @@ on:
       - 'src/components/profile/ProfileMascotCustomizer.jsx'
       - 'src/components/profile/ProfileStickerAlbum.jsx'
       - 'src/components/profile/ProfileStats.jsx'
+      - 'src/components/profile/ProfileTabContent.jsx'
       - 'src/components/profile/ProfileTabs.jsx'
       - 'src/components/game/GameActionButton.jsx'
       - 'src/lib/achievements.js'
@@ -22,6 +25,8 @@ on:
       - 'scripts/check-premium-profile-hero-avatar.mjs'
       - 'scripts/check-semantic-achievement-palette.mjs'
       - 'scripts/check-profile-achievements-surface.mjs'
+      - 'scripts/check-profile-account-actions-surface.mjs'
+      - 'scripts/check-profile-content-surface.mjs'
       - 'scripts/check-achievement-tone-boundary.mjs'
       - 'scripts/check-profile-letter-history-surface.mjs'
       - 'scripts/check-profile-avatar-picker-surface.mjs'
@@ -30,6 +35,7 @@ on:
       - 'scripts/check-profile-journey-surface.mjs'
       - 'scripts/check-profile-hero-surface.mjs'
       - 'scripts/check-profile-header-surface.mjs'
+      - 'scripts/check-profile-tab-content-surface.mjs'
       - 'scripts/check-premium-profile-browser.mjs'
       - '.github/workflows/premium-profile-browser.yml'
   workflow_dispatch:
@@ -67,6 +73,10 @@ jobs:
         run: node scripts/check-semantic-achievement-palette.mjs
       - name: Profile achievements surface contract
         run: node scripts/check-profile-achievements-surface.mjs
+      - name: Profile account actions surface contract
+        run: node scripts/check-profile-account-actions-surface.mjs
+      - name: Profile content surface contract
+        run: node scripts/check-profile-content-surface.mjs
       - name: Achievement tone boundary contract
         run: node scripts/check-achievement-tone-boundary.mjs
       - name: Profile letter history surface contract
@@ -83,6 +93,8 @@ jobs:
         run: node scripts/check-profile-hero-surface.mjs
       - name: Profile header surface contract
         run: node scripts/check-profile-header-surface.mjs
+      - name: Profile tab content surface contract
+        run: node scripts/check-profile-tab-content-surface.mjs
       - name: No-gradient learner chrome audit
         run: node scripts/check-no-gradient-learner-chrome.mjs
       - name: Premium action primitive audit

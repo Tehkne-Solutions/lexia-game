@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
+const content = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
 const surface = await readFile(new URL('../src/components/profile/ProfileJourneyCard.jsx', import.meta.url), 'utf8');
 
 for (const required of [
@@ -17,7 +18,7 @@ for (const required of [
   'journeyInsights={journeyInsights}',
   'relicProgress={relicProgress}',
 ]) {
-  assert.ok(profile.includes(required), `Profile must retain journey orchestration through ${required}`);
+  assert.ok(profile.includes(required) || content.includes(required), `Profile must retain journey orchestration through ${required}`);
 }
 
 for (const forbidden of [

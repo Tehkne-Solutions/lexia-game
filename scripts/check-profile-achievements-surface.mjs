@@ -2,14 +2,28 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
+const content = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
+const tabs = await readFile(new URL('../src/components/profile/ProfileTabContent.jsx', import.meta.url), 'utf8');
 const surface = await readFile(new URL('../src/components/profile/ProfileAchievements.jsx', import.meta.url), 'utf8');
 
 for (const required of [
-  "import ProfileAchievements from '@/components/profile/ProfileAchievements'",
+  "import ProfileContent from '@/components/profile/ProfileContent'",
   'const earnedBadges = getEarnedAchievements(stats)',
-  '<ProfileAchievements earnedBadges={earnedBadges} />',
+  '<ProfileContent',
 ]) {
   assert.ok(profile.includes(required), `Profile must delegate achievements surface via ${required}`);
+}
+
+for (const required of ['<ProfileTabContent', 'earnedBadges={earnedBadges}']) {
+  assert.ok(content.includes(required), `ProfileContent must delegate achievements surface through ${required}`);
+}
+
+for (const required of [
+  "import ProfileAchievements from '@/components/profile/ProfileAchievements'",
+  '<ProfileAchievements earnedBadges={earnedBadges} />',
+  "activeTab === 'badges'",
+]) {
+  assert.ok(tabs.includes(required), `ProfileTabContent must preserve achievements handoff through ${required}`);
 }
 
 for (const forbidden of [

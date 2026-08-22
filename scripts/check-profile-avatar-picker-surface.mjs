@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
+const content = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
+const tabs = await readFile(new URL('../src/components/profile/ProfileTabContent.jsx', import.meta.url), 'utf8');
 const surface = await readFile(new URL('../src/components/profile/ProfileAvatarPicker.jsx', import.meta.url), 'utf8');
 
 for (const required of [
-  "import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker'",
-  '<ProfileAvatarPicker profile={profile} totalStars={totalStars} onSelect={selectAvatar} />',
+  "import ProfileContent from '@/components/profile/ProfileContent'",
+  '<ProfileContent',
   'function selectAvatar(avatar)',
   'if (avatar.unlockStars > totalStars) return',
   'playClickSound()',
@@ -17,6 +19,23 @@ for (const required of [
   'localStorage.setItem(PROFILE_KEY, JSON.stringify(data))',
 ]) {
   assert.ok(profile.includes(required), `Profile must retain avatar behavior through ${required}`);
+}
+
+for (const required of [
+  '<ProfileTabContent',
+  'profile={profile}',
+  'totalStars={totalStars}',
+  'onSelectAvatar={onSelectAvatar}',
+]) {
+  assert.ok(content.includes(required), `ProfileContent must delegate avatar surface through ${required}`);
+}
+
+for (const required of [
+  "import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker'",
+  '<ProfileAvatarPicker profile={profile} totalStars={totalStars} onSelect={onSelectAvatar} />',
+  "activeTab === 'avatar'",
+]) {
+  assert.ok(tabs.includes(required), `ProfileTabContent must preserve avatar handoff through ${required}`);
 }
 
 for (const forbidden of [

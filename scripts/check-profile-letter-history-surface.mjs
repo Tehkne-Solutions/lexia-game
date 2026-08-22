@@ -1,15 +1,23 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
+const profile = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
+const tabs = await readFile(new URL('../src/components/profile/ProfileTabContent.jsx', import.meta.url), 'utf8');
 const surface = await readFile(new URL('../src/components/profile/ProfileLetterHistory.jsx', import.meta.url), 'utf8');
+
+for (const required of [
+  "import ProfileTabContent from '@/components/profile/ProfileTabContent'",
+  '<ProfileTabContent',
+]) {
+  assert.ok(profile.includes(required), `Profile must delegate letter history through ${required}`);
+}
 
 for (const required of [
   "import ProfileLetterHistory from '@/components/profile/ProfileLetterHistory'",
   '<ProfileLetterHistory progressMap={progressMap} stats={stats} />',
-  "tab === 'letters'",
+  "activeTab === 'letters'",
 ]) {
-  assert.ok(profile.includes(required), `Profile must delegate letter history through ${required}`);
+  assert.ok(tabs.includes(required), `ProfileTabContent must preserve letter history handoff through ${required}`);
 }
 
 for (const forbidden of [

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { isChallengeCompleted } from '@/lib/dailyChallenge';
-import { motion, AnimatePresence } from 'framer-motion';
 import { lexiaPlatform } from '@/platform';
 import { useQuery } from '@tanstack/react-query';
 import { getAvatarById } from '@/lib/avatars';
@@ -8,17 +7,8 @@ import { getEarnedAchievements, buildStats } from '@/lib/achievements';
 import { buildParentJourneyInsights } from '@/game/parentInsightsEngine';
 import { getJourneyWorldExperience, getWorldRelicProgress } from '@/game/worldExperienceEngine';
 import { playClickSound } from '@/lib/sounds';
-import DeleteAccountButton from '@/components/profile/DeleteAccountButton';
-import ProfileAchievements from '@/components/profile/ProfileAchievements';
-import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
 import ProfileHeader from '@/components/profile/ProfileHeader';
-import ProfileHero from '@/components/profile/ProfileHero';
-import ProfileJourneyCard from '@/components/profile/ProfileJourneyCard';
-import ProfileLetterHistory from '@/components/profile/ProfileLetterHistory';
-import ProfileMascotCustomizer from '@/components/profile/ProfileMascotCustomizer';
-import ProfileStats from '@/components/profile/ProfileStats';
-import ProfileStickerAlbum from '@/components/profile/ProfileStickerAlbum';
-import ProfileTabs from '@/components/profile/ProfileTabs';
+import ProfileContent from '@/components/profile/ProfileContent';
 
 const PROFILE_KEY = 'lexia_profile';
 
@@ -68,68 +58,28 @@ export default function Profile() {
     <div className="min-h-screen bg-background">
       <ProfileHeader onBackClick={playClickSound} />
 
-      <div className="max-w-lg mx-auto p-4 space-y-4">
-        <ProfileHero
-          currentAvatar={currentAvatar}
-          dailyDone={dailyDone}
-          level={level}
-          starsToNextLevel={starsToNextLevel}
-        />
-
-        <ProfileJourneyCard
-          activeExperience={activeExperience}
-          journey={journey}
-          missionPct={missionPct}
-          journeyInsights={journeyInsights}
-          relicProgress={relicProgress}
-        />
-
-        <ProfileStats
-          totalStars={totalStars}
-          journeyMastered={journeyInsights.totalMastered}
-          journeyTotal={journeyInsights.totalTargets}
-          maxStreak={stats.maxStreak}
-          accuracy={stats.accuracy}
-        />
-
-        <ProfileTabs activeTab={tab} onChange={setTab} />
-
-        <AnimatePresence mode="wait">
-          {tab === 'avatar' && (
-            <motion.div key="avatar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <ProfileAvatarPicker profile={profile} totalStars={totalStars} onSelect={selectAvatar} />
-            </motion.div>
-          )}
-
-          {tab === 'mascot' && (
-            <motion.div key="mascot" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <ProfileMascotCustomizer totalStars={totalStars} />
-            </motion.div>
-          )}
-
-          {tab === 'letters' && (
-            <motion.div key="letters" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <ProfileLetterHistory progressMap={progressMap} stats={stats} />
-            </motion.div>
-          )}
-
-          {tab === 'stickers' && (
-            <motion.div key="stickers" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <ProfileStickerAlbum allProgress={allProgress} stats={stats} />
-            </motion.div>
-          )}
-
-          {tab === 'badges' && (
-            <motion.div key="badges" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <ProfileAchievements earnedBadges={earnedBadges} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="pt-2">
-          <DeleteAccountButton />
-        </div>
-      </div>
+      <ProfileContent
+        currentAvatar={currentAvatar}
+        dailyDone={dailyDone}
+        level={level}
+        starsToNextLevel={starsToNextLevel}
+        activeExperience={activeExperience}
+        journey={journey}
+        missionPct={missionPct}
+        journeyInsights={journeyInsights}
+        relicProgress={relicProgress}
+        totalStars={totalStars}
+        maxStreak={stats.maxStreak}
+        accuracy={stats.accuracy}
+        activeTab={tab}
+        onTabChange={setTab}
+        profile={profile}
+        onSelectAvatar={selectAvatar}
+        progressMap={progressMap}
+        stats={stats}
+        allProgress={allProgress}
+        earnedBadges={earnedBadges}
+      />
     </div>
   );
 }

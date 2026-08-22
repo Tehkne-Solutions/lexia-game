@@ -186,8 +186,22 @@ try {
     const mascotTab = await snapshot(cdp);
     assert.ok(mascotTab.scrollWidth <= mascotTab.width + 1, `${viewport.name}: mascot tab must not overflow horizontally`);
 
+    const tabProofs = { mascot: mascotTab };
+    for (const tab of [
+      { label: 'Letras', text: 'Histórico de Letras' },
+      { label: 'Adesivos', text: 'Álbum de Adesivos' },
+      { label: 'Insígnias', text: 'Insígnias' },
+      { label: 'Avatar', text: 'Escolha seu Avatar' },
+    ]) {
+      await clickByText(cdp, tab.label);
+      await waitForText(cdp, tab.text);
+      const proof = await snapshot(cdp);
+      assert.ok(proof.scrollWidth <= proof.width + 1, `${viewport.name}: ${tab.label} tab must not overflow horizontally`);
+      tabProofs[tab.label.toLowerCase()] = proof;
+    }
+
     await capture(cdp, `${viewport.name}-profile`);
-    proofs.push({ viewport: viewport.name, initial, mascotTab });
+    proofs.push({ viewport: viewport.name, initial, ...tabProofs });
   }
 
   await writeFile(path.join(artifactsDir, 'profile-browser-proof.json'), `${JSON.stringify({ pass: true, proofs }, null, 2)}\n`);

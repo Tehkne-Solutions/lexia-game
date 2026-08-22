@@ -1,15 +1,23 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const profile = await readFile(new URL('../src/pages/Profile.jsx', import.meta.url), 'utf8');
+const profile = await readFile(new URL('../src/components/profile/ProfileContent.jsx', import.meta.url), 'utf8');
+const tabs = await readFile(new URL('../src/components/profile/ProfileTabContent.jsx', import.meta.url), 'utf8');
 const surface = await readFile(new URL('../src/components/profile/ProfileMascotCustomizer.jsx', import.meta.url), 'utf8');
+
+for (const required of [
+  "import ProfileTabContent from '@/components/profile/ProfileTabContent'",
+  '<ProfileTabContent',
+]) {
+  assert.ok(profile.includes(required), `Profile must delegate mascot surface through ${required}`);
+}
 
 for (const required of [
   "import ProfileMascotCustomizer from '@/components/profile/ProfileMascotCustomizer'",
   '<ProfileMascotCustomizer totalStars={totalStars} />',
-  "tab === 'mascot'",
+  "activeTab === 'mascot'",
 ]) {
-  assert.ok(profile.includes(required), `Profile must delegate mascot surface through ${required}`);
+  assert.ok(tabs.includes(required), `ProfileTabContent must preserve mascot handoff through ${required}`);
 }
 
 for (const forbidden of [
