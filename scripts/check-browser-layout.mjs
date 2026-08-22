@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const artifactsDir = path.join(root, 'artifacts', 'm14');
+const distDir = path.join(root, 'dist-m14-layout');
+const platformIndexPath = path.join(root, 'src', 'platform', 'index.js');
 const previewPort = 4173;
 const debugPort = 9222;
 const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -242,7 +244,19 @@ const viewports = [
 ];
 
 await rm(artifactsDir, { recursive: true, force: true });
+await rm(distDir, { recursive: true, force: true });
 await mkdir(artifactsDir, { recursive: true });
+
+const vite = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
+const originalPlatformIndex = await readFile(platformIndexPath, 'utf8');
+let build;
+try {
+  await writeFile(platformIndexPath, "export * from '../../scripts/fixtures/e2e-platform.js';\n");
+  build = spawnSync(process.execPath, [vite, 'build', '--outDir', distDir], { cwd: root, encoding: 'utf8', env: { ...process.env } });
+} finally {
+  await writeFile(platformIndexPath, originalPlatformIndex);
+}
+if (build.status !== 0) throw new Error(`Browser layout fixture build failed:\n${build.stdout}\n${build.stderr}`);
 
 const preview = spawn(process.execPath, [
   path.join(root, 'node_modules', 'vite', 'bin', 'vite.js'),
@@ -250,6 +264,7 @@ const preview = spawn(process.execPath, [
   '--host', '127.0.0.1',
   '--port', String(previewPort),
   '--strictPort',
+  '--outDir', distDir,
 ], {
   cwd: root,
   stdio: ['ignore', 'pipe', 'pipe'],
