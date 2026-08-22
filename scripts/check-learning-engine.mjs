@@ -54,6 +54,12 @@ const nextLetter = pickNextLearningLetter(masteredPhaseOne, null, ALPHABET);
 assert.ok(CURRICULUM_PHASES[1].letters.includes(nextLetter), 'next new letter should come from the newly unlocked phase');
 const nextDifferentLetter = pickNextLearningLetter(masteredPhaseOne, nextLetter, ALPHABET);
 assert.notEqual(nextDifferentLetter, nextLetter, 'next letter must not repeat the current letter when another canonical target is available');
+const singleLetterAlphabet = [{ letter: 'I', curriculumOrder: 1 }];
+assert.equal(
+  pickNextLearningLetter([], 'I', singleLetterAlphabet),
+  'I',
+  'single-letter curriculum must retain its only target instead of returning an invalid or mixed value'
+);
 
 const challengeCandidates = getDailyChallengeCandidates(masteredPhaseOne, ALPHABET, 8);
 assert.ok(challengeCandidates.length >= 3, 'daily challenge needs at least three candidates');
