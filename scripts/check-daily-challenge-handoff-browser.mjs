@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const artifactsDir = path.join(root, 'artifacts', 'm32');
 const harnessPath = path.join(root, 'm32-daily-handoff-harness.html');
+const platformIndexPath = path.join(root, 'src', 'platform', 'index.js');
 const previewPort = 4191;
 const debugPort = 9241;
 const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -127,6 +128,8 @@ await writeFile(harnessPath, `<!doctype html>
 </html>`);
 
 const vite = path.join(root, 'node_modules', 'vite', 'bin', 'vite.js');
+const originalPlatformIndex = await readFile(platformIndexPath, 'utf8');
+await writeFile(platformIndexPath, "export * from '../../scripts/fixtures/e2e-platform.js';\n");
 const preview = spawn(process.execPath, [vite, '--host', '127.0.0.1', '--port', String(previewPort), '--strictPort'], {
   cwd: root,
   stdio: ['ignore', 'pipe', 'pipe'],
@@ -181,4 +184,5 @@ try {
   chrome?.kill('SIGTERM');
   preview.kill('SIGTERM');
   await rm(harnessPath, { force: true });
+  await writeFile(platformIndexPath, originalPlatformIndex);
 }
