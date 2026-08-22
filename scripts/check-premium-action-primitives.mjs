@@ -40,7 +40,7 @@ const files = [
   ...learnerPages,
   ...(await Promise.all(sharedRoots.map(collectFiles))).flat(),
 ];
-const uniqueFiles = [...new Set(files)].sort();
+const uniqueFiles = [...new Set(files.map((file) => file.replaceAll(path.sep, '/')))].sort();
 const violations = [];
 
 const rawButtonImport = /from\s+['"]@\/components\/ui\/button['"]/g;
