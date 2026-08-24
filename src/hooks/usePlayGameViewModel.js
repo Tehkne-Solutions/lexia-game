@@ -1,22 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { lexiaPlatform } from '@/platform';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Volume2, Zap } from 'lucide-react';
-
-import DrawingCanvas from '@/components/game/DrawingCanvas';
-import LetterDisplay from '@/components/game/LetterDisplay';
-import MascotAvatar from '@/components/game/MascotAvatar';
-import CelebrationOverlay from '@/components/game/CelebrationOverlay';
-import LetterSelector from '@/components/game/LetterSelector';
-import AiResultBadge from '@/components/game/AiResultBadge';
-import AchievementToast from '@/components/game/AchievementToast';
-import DailyChallengeCard from '@/components/game/DailyChallengeCard';
-import SessionQuestBar from '@/components/game/SessionQuestBar';
-import SessionQuestComplete from '@/components/game/SessionQuestComplete';
-import GameplayHud from '@/components/game/GameplayHud';
-import GameplayResultActions from '@/components/game/GameplayResultActions';
-import GameActionButton from '@/components/game/GameActionButton';
 
 import { ALPHABET, getLetterData, normalizeCanonicalLetter } from '@/lib/alphabetData';
 import { createNewCard, reviewCard, calculateMastery, pickNextLetter } from '@/lib/fsrs';
@@ -34,7 +18,7 @@ import { getLetterFeedbackSpeech } from '@/lib/ttsHints';
 import { getSpokenFeedback, getStreakPhrase } from '@/lib/motivationalPhrases';
 import { speak, playCorrectSound, playWrongSound, playClickSound } from '@/lib/sounds';
 
-export default function PlayGame() {
+export function usePlayGameViewModel() {
   const urlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const isPracticeMode = urlParams.get('mode') === 'practice';
   const isDailyMode = urlParams.get('daily') === '1';
@@ -43,6 +27,7 @@ export default function PlayGame() {
   const requestedDailyLetter = normalizeCanonicalLetter(requestedDailyTargetKey);
   const requestedReviewTargetKey = isReviewMode ? urlParams.get('reviewTarget') : null;
   const requestedReviewLetter = normalizeCanonicalLetter(requestedReviewTargetKey);
+
   const [currentLetter, setCurrentLetter] = useState(() => requestedDailyLetter || requestedReviewLetter || getInitialLearningLetter(ALPHABET));
   const [phase, setPhase] = useState('draw');
   const [aiResult, setAiResult] = useState(null);
@@ -57,6 +42,7 @@ export default function PlayGame() {
   const [starMultiplier, setStarMultiplier] = useState(1);
   const [sessionQuest, setSessionQuest] = useState(null);
   const [showQuestComplete, setShowQuestComplete] = useState(false);
+
   const prevStatsRef = useRef(null);
   const journeySyncRef = useRef(Boolean((isDailyMode && requestedDailyLetter) || (isReviewMode && requestedReviewLetter)));
   const sessionQuestInitializedRef = useRef(false);
@@ -73,7 +59,9 @@ export default function PlayGame() {
   });
 
   const progressMap = {};
-  allProgress.forEach((p) => { progressMap[p.letter] = p; });
+  allProgress.forEach((p) => {
+    progressMap[p.letter] = p;
+  });
 
   const totalStars = allProgress.reduce((sum, p) => sum + (p.stars_earned || 0), 0);
   const totalStreak = allProgress.reduce((max, p) => Math.max(max, p.streak || 0), 0);
@@ -385,122 +373,41 @@ Look carefully at the image. Return JSON:
     goToNextLetter();
   }, [goToNextLetter]);
 
-  const isWorking = saveMutation.isPending;
-
-  return (
-    <div className="game-viewport flex flex-col bg-background">
-      <AchievementToast achievement={newAchievement} onDismiss={() => setNewAchievement(null)} />
-
-      <AnimatePresence>
-        {showDailyChallenge && dailyChallenge?.type === 'letters' && (
-          <DailyChallengeCard
-            challenge={dailyChallenge}
-            onStart={handleStartChallenge}
-            onClose={() => setShowDailyChallenge(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      <SessionQuestComplete
-        quest={showQuestComplete ? sessionQuest : null}
-        onContinue={handleContinueAfterQuest}
-      />
-
-      <GameplayHud
-        isPracticeMode={isPracticeMode}
-        isReviewMode={isReviewMode}
-        isDailyMode={isDailyMode}
-        dailyChallenge={dailyChallenge}
-        masteredCount={masteredCount}
-        totalStreak={totalStreak}
-        totalStars={totalStars}
-        isCurrentMissionTarget={isCurrentMissionTarget}
-        journeyTitle={journey.title}
-        onOpenDailyChallenge={() => { playClickSound(); setShowDailyChallenge(true); }}
-        onOpenSelector={() => { playClickSound(); setShowSelector(true); }}
-        onHome={playClickSound}
-      />
-
-      <SessionQuestBar quest={sessionQuest} />
-
-      <div className="game-scroll-y game-safe-bottom flex-1 flex flex-col items-center justify-center game-compact-gap gap-2 px-4 py-2 max-w-lg mx-auto w-full">
-        <MascotAvatar className="game-compact-mascot" expression={mascotExpression} size="sm" message={mascotMessage} />
-
-        <div className="flex items-center gap-3">
-          <LetterDisplay letter={currentLetter} showAnchor={true} />
-          <GameActionButton
-            gameVariant="neutral"
-            variant="ghost"
-            size="sm"
-            className="rounded-full gap-1 text-muted-foreground h-8 px-2"
-            onClick={() => { const d = getLetterData(currentLetter); speak(`${currentLetter} de ${d?.word}!`); }}
-          >
-            <Volume2 className="w-3.5 h-3.5" />
-            <span className="text-xs">Ouvir</span>
-          </GameActionButton>
-        </div>
-
-        {starMultiplier > 1 && (
-          <motion.div
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            className="lexia-game-panel lexia-game-panel-reward rounded-full px-3 py-0.5 flex items-center gap-1"
-          >
-            <Zap className="w-3 h-3 text-amber-600" />
-            <span className="text-xs font-body font-bold text-amber-700">Desafio: ×{starMultiplier} estrelas!</span>
-          </motion.div>
-        )}
-
-        <AnimatePresence mode="wait">
-          {phase === 'draw' && (
-            <motion.div
-              key="canvas"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="w-full flex flex-col items-center"
-            >
-              <DrawingCanvas
-                targetLetter={currentLetter}
-                onEvaluate={handleEvaluate}
-                disabled={isWorking}
-              />
-            </motion.div>
-          )}
-
-          {phase === 'result' && aiResult && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full flex flex-col items-center gap-2"
-            >
-              <AiResultBadge
-                grade={aiResult.grade}
-                score={aiResult.score}
-                feedback={aiResult.feedback}
-                recognizedAs={aiResult.recognized_as}
-                targetLetter={currentLetter}
-              />
-
-              <GameplayResultActions
-                isWorking={isWorking}
-                isPracticeMode={isPracticeMode}
-                isReviewMode={isReviewMode}
-                onManualOverride={handleManualOverride}
-                onRetry={retryLetter}
-                onContinue={goToNextLetter}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <CelebrationOverlay show={showCelebration} stars={celebrationData.stars}
-        message={celebrationData.message} onDone={goToNextLetter} />
-
-      <LetterSelector open={showSelector} onSelect={handleLetterSelect}
-        onClose={() => setShowSelector(false)} progressMap={progressMap} />
-    </div>
-  );
+  return {
+    currentLetter,
+    phase,
+    aiResult,
+    showCelebration,
+    celebrationData,
+    showSelector,
+    mascotExpression,
+    mascotMessage,
+    newAchievement,
+    showDailyChallenge,
+    dailyChallenge,
+    starMultiplier,
+    sessionQuest,
+    showQuestComplete,
+    isWorking: saveMutation.isPending,
+    isPracticeMode,
+    isReviewMode,
+    isDailyMode,
+    masteredCount,
+    totalStreak,
+    totalStars,
+    isCurrentMissionTarget,
+    journey,
+    progressMap,
+    handleEvaluate,
+    handleManualOverride,
+    goToNextLetter,
+    retryLetter,
+    handleLetterSelect,
+    handleStartChallenge,
+    handleContinueAfterQuest,
+    setShowDailyChallenge,
+    setShowSelector,
+    setNewAchievement,
+  };
 }
+

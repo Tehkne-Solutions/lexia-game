@@ -62,6 +62,25 @@ export async function unlockAudio() {
   return ctx.state === 'running';
 }
 
+let unlockAttached = false;
+export function initAudioUnlockListeners() {
+  if (typeof window === 'undefined' || unlockAttached) return;
+  unlockAttached = true;
+  const events = ['pointerdown', 'touchstart', 'keydown', 'click'];
+  const handleInteraction = () => {
+    unlockAudio().then((unlocked) => {
+      if (unlocked) {
+        events.forEach((evt) => window.removeEventListener(evt, handleInteraction, true));
+      }
+    }).catch(() => {});
+  };
+  events.forEach((evt) => window.addEventListener(evt, handleInteraction, { capture: true, passive: true }));
+}
+
+if (typeof window !== 'undefined') {
+  initAudioUnlockListeners();
+}
+
 export function playTone(frequency, duration, type = 'sine', level = 0.3) {
   const settings = loadAudioSettings();
   const effectiveVolume = Math.max(0.0001, level * settings.masterVolume * settings.sfxVolume);

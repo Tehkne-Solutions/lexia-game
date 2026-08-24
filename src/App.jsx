@@ -7,6 +7,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { activePlatformProvider } from '@/platform';
+import { initAudioUnlockListeners } from '@/audio/audioRuntime';
+import React, { useEffect } from 'react';
 
 import Welcome from './pages/Welcome';
 import Login from './pages/Login';
@@ -70,6 +72,10 @@ const AuthenticatedApp = () => {
 };
 
 function App() {
+  useEffect(() => {
+    initAudioUnlockListeners();
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
       <AuthProvider>

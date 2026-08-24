@@ -1,0 +1,18 @@
+{
+  "name": "Lexia Game — Alfabetização e Aventura",
+  "short_name": "Lexia",
+  "description": "Jogo educativo para aprendizagem de letras, sílabas e frases com repetição inteligente.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
+
