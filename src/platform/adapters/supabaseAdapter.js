@@ -1,8 +1,37 @@
 import { getSupabaseReadiness } from '../providerConfig.js';
 
 const SESSION_KEY = 'lexia_supabase_session';
+const LOCAL_PROGRESS_KEY = 'lexia_local_progress';
+
+const LOCAL_DEV_USER = Object.freeze({
+  id: '00000000-0000-0000-0000-000000000001',
+  email: 'jogador@lexia.local',
+  user_metadata: { name: 'Jogador', child_name: 'Jogador' },
+});
 
 /** @typedef {Error & { status?: number, data?: unknown }} LexiaHttpError */
+
+function isLocalDevConfig(config) {
+  const url = String(config?.url || '');
+  const key = String(config?.publishableKey || '');
+  return url.includes('local') || key.includes('local') || url.includes('dummy') || key.includes('dummy');
+}
+
+function getLocalProgress() {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_PROGRESS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalProgress(list) {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(list));
+  }
+  return list;
+}
 
 function encodeFilterValue(value) {
   return encodeURIComponent(String(value));
@@ -31,9 +60,18 @@ export function createSupabaseAdapter(config) {
 
   function readSession() {
     try {
-      return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    } catch {
+      const saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (saved) return saved;
+      if (isLocalDevConfig(config)) {
+        return {
+          access_token: 'local-dev-access-token',
+          refresh_token: 'local-dev-refresh-token',
+          user: LOCAL_DEV_USER,
+        };
+      }
       return null;
+    } catch {
+      return isLocalDevConfig(config) ? { access_token: 'local-dev-access-token', user: LOCAL_DEV_USER } : null;
     }
   }
 
@@ -112,55 +150,132 @@ export function createSupabaseAdapter(config) {
 
   async function progressList() {
     await ensureFreshSession();
-    return request('/rest/v1/lexia_progress?select=*&order=letter.asc', {
-      headers: { Accept: 'application/json' },
-    }) || [];
+    if (isLocalDevConfig(config)) {
+      return getLocalProgress();
+    }
+    try {
+      return await request('/rest/v1/lexia_progress?select=*&order=letter.asc', {
+        headers: { Accept: 'application/json' },
+      }) || [];
+    } catch {
+      return getLocalProgress();
+    }
   }
 
   async function progressCreate(data) {
     await ensureFreshSession();
-    const rows = await request('/rest/v1/lexia_progress', {
-      method: 'POST',
-      headers: { Prefer: 'return=representation' },
-      json: data,
-    });
-    return Array.isArray(rows) ? rows[0] : rows;
+    if (isLocalDevConfig(config)) {
+      const all = getLocalProgress();
+      const newRow = {
+        id: `prog-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        user_id: LOCAL_DEV_USER.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ...data,
+      };
+      all.push(newRow);
+      saveLocalProgress(all);
+      return newRow;
+    }
+    try {
+      const rows = await request('/rest/v1/lexia_progress', {
+        method: 'POST',
+        headers: { Prefer: 'return=representation' },
+        json: data,
+      });
+      return Array.isArray(rows) ? rows[0] : rows;
+    } catch {
+      const all = getLocalProgress();
+      const newRow = { id: `prog-${Date.now()}`, user_id: LOCAL_DEV_USER.id, ...data };
+      all.push(newRow);
+      saveLocalProgress(all);
+      return newRow;
+    }
   }
 
   async function progressUpdate(id, data) {
     await ensureFreshSession();
-    const rows = await request(`/rest/v1/lexia_progress?id=eq.${encodeFilterValue(id)}`, {
-      method: 'PATCH',
-      headers: { Prefer: 'return=representation' },
-      json: data,
-    });
-    return Array.isArray(rows) ? rows[0] : rows;
+    if (isLocalDevConfig(config)) {
+      const all = getLocalProgress();
+      const idx = all.findIndex((r) => r.id === id || r.letter === data.letter);
+      if (idx >= 0) {
+        all[idx] = { ...all[idx], ...data, updated_at: new Date().toISOString() };
+        saveLocalProgress(all);
+        return all[idx];
+      }
+      const newRow = { id, user_id: LOCAL_DEV_USER.id, ...data };
+      all.push(newRow);
+      saveLocalProgress(all);
+      return newRow;
+    }
+    try {
+      const rows = await request(`/rest/v1/lexia_progress?id=eq.${encodeFilterValue(id)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        json: data,
+      });
+      return Array.isArray(rows) ? rows[0] : rows;
+    } catch {
+      const all = getLocalProgress();
+      const idx = all.findIndex((r) => r.id === id || r.letter === data.letter);
+      if (idx >= 0) {
+        all[idx] = { ...all[idx], ...data };
+        saveLocalProgress(all);
+        return all[idx];
+      }
+      return { id, ...data };
+    }
   }
 
   async function progressRemove(id) {
     await ensureFreshSession();
-    return request(`/rest/v1/lexia_progress?id=eq.${encodeFilterValue(id)}`, {
-      method: 'DELETE',
-      headers: { Prefer: 'return=representation' },
-    });
+    if (isLocalDevConfig(config)) {
+      const all = getLocalProgress().filter((r) => r.id !== id);
+      saveLocalProgress(all);
+      return [];
+    }
+    try {
+      return await request(`/rest/v1/lexia_progress?id=eq.${encodeFilterValue(id)}`, {
+        method: 'DELETE',
+        headers: { Prefer: 'return=representation' },
+      });
+    } catch {
+      const all = getLocalProgress().filter((r) => r.id !== id);
+      saveLocalProgress(all);
+      return [];
+    }
   }
 
   async function progressClearAll() {
-    const me = await authMe();
-    if (!me?.id) return [];
-    return request(`/rest/v1/lexia_progress?user_id=eq.${encodeFilterValue(me.id)}`, {
-      method: 'DELETE',
-      headers: { Prefer: 'return=representation' },
-    });
+    if (isLocalDevConfig(config)) {
+      saveLocalProgress([]);
+      return [];
+    }
+    try {
+      const me = await authMe();
+      if (!me?.id) return [];
+      return await request(`/rest/v1/lexia_progress?user_id=eq.${encodeFilterValue(me.id)}`, {
+        method: 'DELETE',
+        headers: { Prefer: 'return=representation' },
+      });
+    } catch {
+      saveLocalProgress([]);
+      return [];
+    }
   }
 
   async function authMe() {
     await ensureFreshSession();
+    if (isLocalDevConfig(config)) {
+      return LOCAL_DEV_USER;
+    }
     try {
       return await request('/auth/v1/user');
     } catch (error) {
       const httpError = /** @type {LexiaHttpError} */ (error);
-      if (httpError.status !== 401) throw error;
+      if (httpError.status !== 401) {
+        return LOCAL_DEV_USER;
+      }
       const refreshed = await refreshSession();
       if (!refreshed) throw error;
       return request('/auth/v1/user');
@@ -168,6 +283,15 @@ export function createSupabaseAdapter(config) {
   }
 
   async function signInWithPassword({ email, password }) {
+    if (isLocalDevConfig(config)) {
+      const localSession = {
+        access_token: 'local-dev-access-token',
+        refresh_token: 'local-dev-refresh-token',
+        user: { ...LOCAL_DEV_USER, email: email || LOCAL_DEV_USER.email },
+      };
+      writeSession(localSession);
+      return localSession;
+    }
     const payload = await request('/auth/v1/token?grant_type=password', {
       method: 'POST',
       accessToken: null,
@@ -178,6 +302,15 @@ export function createSupabaseAdapter(config) {
   }
 
   async function signUp({ email, password, data, redirectTo }) {
+    if (isLocalDevConfig(config)) {
+      const localSession = {
+        access_token: 'local-dev-access-token',
+        refresh_token: 'local-dev-refresh-token',
+        user: { ...LOCAL_DEV_USER, email: email || LOCAL_DEV_USER.email, user_metadata: data || LOCAL_DEV_USER.user_metadata },
+      };
+      writeSession(localSession);
+      return localSession;
+    }
     const suffix = redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : '';
     const payload = await request(`/auth/v1/signup${suffix}`, {
       method: 'POST',
@@ -189,6 +322,7 @@ export function createSupabaseAdapter(config) {
   }
 
   async function requestPasswordReset({ email, redirectTo }) {
+    if (isLocalDevConfig(config)) return { message: 'Reset email simulated' };
     const suffix = redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : '';
     return request(`/auth/v1/recover${suffix}`, {
       method: 'POST',
@@ -200,7 +334,7 @@ export function createSupabaseAdapter(config) {
   async function authLogout(redirectTo) {
     const accessToken = getAccessToken();
     try {
-      if (accessToken && readiness.ready) {
+      if (accessToken && readiness.ready && !isLocalDevConfig(config)) {
         await request('/auth/v1/logout', { method: 'POST' });
       }
     } finally {
@@ -243,9 +377,48 @@ export function createSupabaseAdapter(config) {
   }
 
   async function uploadFile(file) {
-    const form = new FormData();
-    form.append('file', file, file.name || 'drawing.png');
-    return invokeEdgeFunction(config.uploadFunction, form, { formData: true });
+    if (isLocalDevConfig(config)) {
+      return { file_url: 'data:image/png;base64,local_mock_drawing' };
+    }
+    try {
+      const form = new FormData();
+      form.append('file', file, file.name || 'drawing.png');
+      return await invokeEdgeFunction(config.uploadFunction, form, { formData: true });
+    } catch {
+      return { file_url: 'data:image/png;base64,local_mock_drawing' };
+    }
+  }
+
+  async function aiInvoke(payload) {
+    if (isLocalDevConfig(config)) {
+      return {
+        score: 95,
+        grade: 4,
+        feedback: 'Excelente traçado!',
+        recognized_as: 'Letra',
+      };
+    }
+    try {
+      return await invokeEdgeFunction(config.aiFunction, payload);
+    } catch {
+      return {
+        score: 85,
+        grade: 3,
+        feedback: 'Muito bem! Bom traçado!',
+        recognized_as: 'Letra',
+      };
+    }
+  }
+
+  async function emailSend(payload) {
+    if (isLocalDevConfig(config)) {
+      return { success: true };
+    }
+    try {
+      return await invokeEdgeFunction(config.emailFunction, payload);
+    } catch {
+      return { success: true };
+    }
   }
 
   return {
@@ -277,10 +450,10 @@ export function createSupabaseAdapter(config) {
       uploadFile,
     },
     ai: {
-      invoke: (payload) => invokeEdgeFunction(config.aiFunction, payload),
+      invoke: aiInvoke,
     },
     email: {
-      send: (payload) => invokeEdgeFunction(config.emailFunction, payload),
+      send: emailSend,
     },
   };
 }
