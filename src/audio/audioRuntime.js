@@ -31,6 +31,29 @@ export function stopSpeech() {
   }
 }
 
+export function playTone(freq = 440, type = 'sine', duration = 0.2, volume = 0.3) {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) {
+    console.warn('Erro ao sintetizar tom de áudio:', e);
+  }
+}
+
 export function speakNatural(text, options = {}) {
   const settings = loadAudioSettings();
   if (!settings.ttsEnabled) return;
