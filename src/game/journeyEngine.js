@@ -1,4 +1,22 @@
-﻿export function updateMasteryAndGetProgress(completedLetter, currentProgress = {}) {
+﻿export const JOURNEY_STAGES = Object.freeze({
+  LETTERS: 'LETTERS',
+  SYLLABLES_BASIC: 'SYLLABLES_BASIC',
+  WORDS_BASIC: 'WORDS_BASIC',
+  SENTENCES_BASIC: 'SENTENCES_BASIC'
+});
+
+export function getJourneyState(progress = {}) {
+  const stats = getMapWorldStats();
+  return {
+    stage: JOURNEY_STAGES.LETTERS,
+    masteredLetters: stats.masteredLetters,
+    masteredCount: stats.masteredCount,
+    percentage: stats.percentage,
+    ...progress
+  };
+}
+
+export function updateMasteryAndGetProgress(completedLetter, currentProgress = {}) {
   const masteredSet = new Set(currentProgress.masteredLetters || []);
   
   if (completedLetter) {
