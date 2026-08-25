@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { CurriculumGameplayHud } from '../components/game/CurriculumGameplayHud';
+import CurriculumGameplayHud from '../components/game/CurriculumGameplayHud';
 import { DrawingCanvas } from '../components/game/DrawingCanvas';
 import { GameplayResultActions } from '../components/game/GameplayResultActions';
 import { CelebrationOverlay } from '../components/game/CelebrationOverlay';
