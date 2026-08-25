@@ -44,3 +44,5 @@ export function CelebrationOverlay({ isVisible, accuracy = 100, onContinue }) {
     </div>
   );
 }
+
+export default CelebrationOverlay;
