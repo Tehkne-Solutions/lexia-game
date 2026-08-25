@@ -5,6 +5,13 @@
   SENTENCES_BASIC: 'SENTENCES_BASIC'
 });
 
+export const JOURNEY_TARGET_TOTALS = Object.freeze({
+  LETTERS: 26,
+  SYLLABLES_BASIC: 70,
+  WORDS_BASIC: 100,
+  SENTENCES_BASIC: 50
+});
+
 export function getJourneyState(progress = {}) {
   const stats = getMapWorldStats();
   return {
@@ -24,7 +31,7 @@ export function updateMasteryAndGetProgress(completedLetter, currentProgress = {
   }
 
   const masteredCount = masteredSet.size;
-  const totalLetters = 26;
+  const totalLetters = JOURNEY_TARGET_TOTALS.LETTERS;
   const percentage = Math.min(100, Math.round((masteredCount / totalLetters) * 100));
 
   const updatedProgress = {
