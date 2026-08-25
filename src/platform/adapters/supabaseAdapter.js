@@ -1,4 +1,4 @@
-import { getSupabaseReadiness } from '../providerConfig.js';
+﻿import { getSupabaseReadiness } from '../providerConfig.js';
 
 const SESSION_KEY = 'lexia_supabase_session';
 const LOCAL_PROGRESS_KEY = 'lexia_local_progress';
@@ -394,7 +394,7 @@ export function createSupabaseAdapter(config) {
       return {
         score: 95,
         grade: 4,
-        feedback: 'Excelente traçado!',
+        feedback: 'Excelente traÃ§ado!',
         recognized_as: 'Letra',
       };
     }
@@ -404,7 +404,7 @@ export function createSupabaseAdapter(config) {
       return {
         score: 85,
         grade: 3,
-        feedback: 'Muito bem! Bom traçado!',
+        feedback: 'Muito bem! Bom traÃ§ado!',
         recognized_as: 'Letra',
       };
     }
@@ -457,3 +457,4 @@ export function createSupabaseAdapter(config) {
     },
   };
 }
+
