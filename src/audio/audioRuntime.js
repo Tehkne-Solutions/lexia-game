@@ -25,6 +25,13 @@ export function saveAudioSettings(settings) {
   }
 }
 
+export function updateAudioSettings(partialSettings) {
+  const current = loadAudioSettings();
+  const updated = { ...current, ...partialSettings };
+  saveAudioSettings(updated);
+  return updated;
+}
+
 export function stopSpeech() {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
@@ -64,6 +71,10 @@ export function speakNatural(text, options = {}) {
     volume: options.volume ?? settings.volume,
     lang: options.lang || 'pt-BR'
   });
+}
+
+export function previewVoice(text = 'Aprender a ler é mágico!', options = {}) {
+  speakText(text, options);
 }
 
 export function speakText(text, options = {}) {
