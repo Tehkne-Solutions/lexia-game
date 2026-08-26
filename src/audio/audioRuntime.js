@@ -137,8 +137,8 @@ export function speakText(text, options = {}) {
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = options.lang || 'pt-BR';
-  utterance.pitch = options.pitch ?? 1;
-  utterance.rate = options.rate ?? 0.92;
+  utterance.pitch = 1;
+  utterance.rate = 0.92;
   utterance.volume = options.volume ?? 1.0;
 
   const voices = window.speechSynthesis.getVoices();
