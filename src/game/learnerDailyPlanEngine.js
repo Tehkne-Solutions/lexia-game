@@ -37,7 +37,7 @@ function withFocusState(steps) {
 
 export function buildLearnerDailyPlan({ journey, reviewQuest, dailyChallenge, dailyCompletedCount = 0 }) {
   if (!journey?.path || !journey?.cta || !journey?.title) {
-    throw new Error('Learner daily plan requires a valid journey');
+    return { quests: [], completedCount: 0, totalCount: 0 };
   }
 
   const rawSteps = [];
