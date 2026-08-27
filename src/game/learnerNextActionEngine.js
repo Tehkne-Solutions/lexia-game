@@ -1,4 +1,4 @@
-﻿export const LEARNER_NEXT_ACTION_KIND = Object.freeze({
+export const LEARNER_NEXT_ACTION_KIND = Object.freeze({
   CURRICULUM: 'curriculum',
   REVIEW: 'review',
 });
@@ -38,7 +38,7 @@ function buildCurriculumAction(journey, options = {}) {
   return {
     kind: LEARNER_NEXT_ACTION_KIND.CURRICULUM,
     path: journey.path,
-    cta: hasCompletionHandoff ? 'Continuar missÃ£o' : journey.cta,
+    cta: hasCompletionHandoff ? 'Continuar missão' : journey.cta,
     title,
     description,
     reviewCompleted: completion.reviewCompleted,
