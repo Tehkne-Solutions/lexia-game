@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import LoadingState from './LoadingState';
-import { getLearnerNextAction } from '../engines/learnerNextActionEngine';
-import type { UserProfile, JourneyProgress } from '../types';
+import { useMemo } from "react";
+import LoadingState from "./LoadingState";
+import { getLearnerNextAction } from "../engines/learnerNextActionEngine";
+import type { UserProfile, JourneyProgress } from "../types";
 
 interface Props {
   userProfile?: UserProfile;
@@ -10,20 +10,21 @@ interface Props {
 
 export default function LearnerNextAction({ userProfile, journeyProgress }: Props) {
   const nextAction = useMemo(() => {
-    return getLearnerNextAction(userProfile, journeyProgress);
+    try {
+      return getLearnerNextAction(userProfile, journeyProgress);
+    } catch {
+      return null;
+    }
   }, [userProfile, journeyProgress]);
 
-  if (!nextAction?.journeyPath || !nextAction?.cta) {
+  if (!nextAction || !nextAction.journeyPath || !nextAction.cta) {
     return <LoadingState />;
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-lg font-semibold">PrÃ³xima aÃ§Ã£o</h3>
-      <a 
-        href={nextAction.cta.target}
-        className="btn-primary"
-      >
+      <h3 className="text-lg font-semibold">Próxima ação</h3>
+      <a href={nextAction.cta.target} className="btn-primary">
         {nextAction.cta.label}
       </a>
     </div>

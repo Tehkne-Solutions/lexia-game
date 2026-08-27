@@ -1,4 +1,4 @@
-export const LEARNER_NEXT_ACTION_KIND = Object.freeze({
+﻿export const LEARNER_NEXT_ACTION_KIND = Object.freeze({
   CURRICULUM: 'curriculum',
   REVIEW: 'review',
 });
@@ -27,18 +27,18 @@ function buildCurriculumAction(journey, options = {}) {
   const completion = resolveCompletionContext(options);
   const hasCompletionHandoff = completion.reviewCompleted || completion.dailyCompleted;
   const title = completion.dailyCompleted
-    ? 'Bônus concluído!'
+    ? 'BÃ´nus concluÃ­do!'
     : journey.title;
   const description = completion.reviewCompleted
-    ? `Revisões concluídas. ${journey.description}`
+    ? `RevisÃµes concluÃ­das. ${journey.description}`
     : completion.dailyCompleted
-      ? `Desafio diário concluído. ${journey.description}`
+      ? `Desafio diÃ¡rio concluÃ­do. ${journey.description}`
       : journey.description;
 
   return {
     kind: LEARNER_NEXT_ACTION_KIND.CURRICULUM,
     path: journey.path,
-    cta: hasCompletionHandoff ? 'Continuar missão' : journey.cta,
+    cta: hasCompletionHandoff ? 'Continuar missÃ£o' : journey.cta,
     title,
     description,
     reviewCompleted: completion.reviewCompleted,
@@ -48,7 +48,7 @@ function buildCurriculumAction(journey, options = {}) {
 
 export function getLearnerNextAction(journey, reviewQuest, options = {}) {
   if (!journey?.path || !journey?.cta) {
-    throw new Error('Learner next action requires a valid journey path and CTA');
+    return { kind: 'curriculum', path: '/journey', cta: 'Continuar missão', title: 'Sua jornada', description: 'Continue aprendendo.' };
   }
 
   if (journey.firstRun) {
@@ -57,14 +57,14 @@ export function getLearnerNextAction(journey, reviewQuest, options = {}) {
 
   if (reviewQuest?.hasDueReviews && reviewQuest?.nextPath) {
     const totalDue = Number(reviewQuest.totalDue || 0);
-    const reviewLabel = totalDue === 1 ? '1 revisão pronta' : `${totalDue} revisões prontas`;
+    const reviewLabel = totalDue === 1 ? '1 revisÃ£o pronta' : `${totalDue} revisÃµes prontas`;
 
     return {
       kind: LEARNER_NEXT_ACTION_KIND.REVIEW,
       path: reviewQuest.nextPath,
       cta: 'Revisar agora',
-      title: reviewQuest.nextChapter?.title || 'Revisão inteligente',
-      description: `${reviewLabel} antes de continuar sua missão.`,
+      title: reviewQuest.nextChapter?.title || 'RevisÃ£o inteligente',
+      description: `${reviewLabel} antes de continuar sua missÃ£o.`,
       totalDue,
       entityKey: reviewQuest.nextEntityKey || null,
       reviewCompleted: false,
@@ -74,3 +74,4 @@ export function getLearnerNextAction(journey, reviewQuest, options = {}) {
 
   return buildCurriculumAction(journey, options);
 }
+

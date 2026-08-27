@@ -1,19 +1,27 @@
-export function getLearnerNextAction(userProfile, journeyProgress) {
-  // Fallback para estado não inicializado
+export function calculateNextAction(userProfile, journeyProgress) {
   if (!userProfile || !journeyProgress) {
     return {
       journeyPath: "world_1",
-      cta: { 
-        label: "Continuar", 
-        target: "/journey" 
-      }
+      cta: { label: "Continuar", target: "/journey" }
+    };
+  }
+
+  const journeyPath = journeyProgress?.currentPath || "world_1";
+  const cta = journeyProgress?.nextCta || { label: "Continuar", target: "/journey" };
+
+  return { journeyPath, cta };
+}
+
+export function getLearnerNextAction(userProfile, journeyProgress) {
+  if (!userProfile || !journeyProgress) {
+    return {
+      journeyPath: "world_1",
+      cta: { label: "Continuar", target: "/journey" }
     };
   }
 
   try {
     const action = calculateNextAction(userProfile, journeyProgress);
-    
-    // Verificação estrutural do resultado
     return {
       journeyPath: action?.journeyPath || "world_1",
       cta: {
@@ -21,14 +29,10 @@ export function getLearnerNextAction(userProfile, journeyProgress) {
         target: action?.cta?.target || "/journey"
       }
     };
-  } catch (error) {
-    console.error('Erro ao calcular próxima ação:', error);
+  } catch {
     return {
       journeyPath: "world_1",
-      cta: { 
-        label: "Continuar", 
-        target: "/journey" 
-      }
+      cta: { label: "Continuar", target: "/journey" }
     };
   }
 }
