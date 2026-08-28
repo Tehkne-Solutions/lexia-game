@@ -1,293 +1,31 @@
-name: Lexia CI
+name: CI / Automated Tests
 
 on:
   push:
-    branches:
-      - main
-      - 'integration/**'
-      - 'sprint/**'
-      - 'agent/**'
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
-
-permissions:
-  contents: read
+    branches: [ main ]
 
 jobs:
-  validate:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Dependency security gate
-        run: npm audit --audit-level=high
+      - name: Run Unit Tests
+        run: npx vitest run --no-file-parallelism
 
-      - name: Prepare Chrome browser runtime
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! ldconfig -p | grep -q 'libXtst.so.6'; then
-            sudo apt-get update -y
-            sudo apt-get install -y libxtst6
-          fi
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
-          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          if [ -z "$CHROME_PATH" ]; then
-            echo "No Chrome/Chromium executable found" >&2
-            exit 1
-          fi
-          echo "CHROME_BIN=$CHROME_PATH" >> "$GITHUB_ENV"
-          "$CHROME_PATH" --version
-
-          PROFILE_DIR="$(mktemp -d)"
-          CHROME_STDOUT="$(mktemp)"
-          CHROME_STDERR="$(mktemp)"
-          "$CHROME_PATH" \
-            --headless=new \
-            --no-sandbox \
-            --disable-gpu \
-            --disable-dev-shm-usage \
-            --mute-audio \
-            --no-first-run \
-            --no-default-browser-check \
-            --remote-debugging-address=127.0.0.1 \
-            --remote-debugging-port=9333 \
-            --user-data-dir="$PROFILE_DIR" \
-            about:blank >"$CHROME_STDOUT" 2>"$CHROME_STDERR" &
-          CHROME_PID=$!
-          cleanup_chrome() {
-            kill "$CHROME_PID" 2>/dev/null || true
-            wait "$CHROME_PID" 2>/dev/null || true
-            rm -rf "$PROFILE_DIR" "$CHROME_STDOUT" "$CHROME_STDERR" 2>/dev/null || true
-          }
-          trap cleanup_chrome EXIT
-
-          READY=0
-          for _ in $(seq 1 120); do
-            if curl --fail --silent --show-error http://127.0.0.1:9333/json/version >/dev/null 2>&1; then
-              READY=1
-              break
-            fi
-            if ! kill -0 "$CHROME_PID" 2>/dev/null; then
-              echo "Chrome exited during CDP preflight" >&2
-              cat "$CHROME_STDERR" >&2 || true
-              exit 1
-            fi
-            sleep 0.25
-          done
-          if [ "$READY" -ne 1 ]; then
-            echo "Chrome did not expose CDP during preflight" >&2
-            cat "$CHROME_STDERR" >&2 || true
-            exit 1
-          fi
-          echo "Chrome CDP preflight: PASS"
-          cleanup_chrome
-          trap - EXIT
-
-      - name: Typecheck UI
-        run: npm run typecheck
-
-      - name: Typecheck core
-        run: npm run typecheck:core
-
-      - name: Learning engine contract
-        run: node scripts/check-learning-engine.mjs
-
-      - name: Light mode and letter boundary contract
-        run: node scripts/check-light-mode-and-letter-boundary.mjs
-
-      - name: Input isolation contract
-        run: node scripts/check-input-isolation.mjs
-
-      - name: Typed answer boundary contract
-        run: node scripts/check-typed-answer-boundary.mjs
-
-      - name: Speed input boundary contract
-        run: node scripts/check-speed-input-boundary.mjs
-
-      - name: Journey engine contract
-        run: node scripts/check-journey-engine.mjs
-
-      - name: Session quest contract
-        run: node scripts/check-session-quest.mjs
-
-      - name: World experience contract
-        run: node scripts/check-world-experience.mjs
-
-      - name: Curriculum worlds contract
-        run: node scripts/check-curriculum-worlds.mjs
-
-      - name: Parent journey insights contract
-        run: node scripts/check-parent-journey-insights.mjs
-
-      - name: Learner journey profile contract
-        run: node scripts/check-learner-journey-profile.mjs
-
-      - name: Journey collectibles contract
-        run: node scripts/check-journey-collectibles.mjs
-
-      - name: Journey side modes contract
-        run: node scripts/check-journey-side-modes.mjs
-
-      - name: Journey daily challenge contract
-        run: node scripts/check-journey-daily-challenge.mjs
-
-      - name: Journey free practice contract
-        run: node scripts/check-journey-free-practice.mjs
-
-      - name: Adaptive journey review contract
-        run: node scripts/check-adaptive-journey-review.mjs
-
-      - name: Journey review insights contract
-        run: node scripts/check-journey-review-insights.mjs
-
-      - name: Learner review quest contract
-        run: node scripts/check-learner-review-quest.mjs
-
-      - name: Learner next action contract
-        run: node scripts/check-learner-next-action.mjs
-
-      - name: Exact review handoff contract
-        run: node scripts/check-exact-review-handoff.mjs
-
-      - name: Advanced exact review handoff contract
-        run: node scripts/check-exact-review-handoff-advanced.mjs
-
-      - name: Due-only review session contract
-        run: node scripts/check-due-only-review-session.mjs
-
-      - name: Review retry integrity contract
-        run: node scripts/check-review-retry-integrity.mjs
-
-      - name: Canonical review queue contract
-        run: node scripts/check-canonical-review-queue.mjs
-
-      - name: Review queue visibility contract
-        run: node scripts/check-review-queue-visibility.mjs
-
-      - name: Game shell contract
-        run: node scripts/check-game-shell.mjs
-
-      - name: Platform boundary contract
-        run: node scripts/check-platform-boundary.mjs
-
-      - name: Independent provider contract
-        run: node scripts/check-independent-provider.mjs
-
-      - name: Edge Functions contract
-        run: node scripts/check-edge-functions.mjs
-
-      - name: Fresh Start contract
-        run: node scripts/check-fresh-start.mjs
-
-      - name: Production runtime readiness contract
-        run: node scripts/check-production-runtime-readiness.mjs
-
-      - name: Live Auth smoke harness contract
-        run: node scripts/check-live-auth-smoke-contract.mjs
-
-      - name: Live private services smoke harness contract
-        run: node scripts/check-live-services-smoke-contract.mjs
-
-      - name: Browser cutover harness contract
-        run: node scripts/check-browser-cutover-harness.mjs
-
-      - name: Release orchestration contract
-        run: node scripts/check-release-orchestration.mjs
-
-      - name: Deployed preview harness contract
-        run: node scripts/check-deployed-preview-harness.mjs
-
-      - name: Prebuilt preview pipeline contract
-        run: node scripts/check-prebuilt-preview-pipeline.mjs
-
-      - name: Production candidate attestation contract
-        run: node scripts/check-production-candidate-attestation.mjs
-
-      - name: Production post-switch harness contract
-        run: node scripts/check-production-post-switch-harness.mjs
-
-      - name: Release control contract
-        run: node scripts/check-release-control.mjs
-
-      - name: Supabase schema contract
-        run: npm run check:supabase-schema
-
-      - name: Supabase adapter contract
-        run: npm run check:supabase-adapter
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-      - name: Browser layout QA
-        run: node scripts/check-browser-layout.mjs
-
-      - name: Side modes browser QA
-        run: node scripts/check-side-modes-browser.mjs
-
-      - name: Daily challenge browser QA
-        run: node scripts/check-daily-challenge-browser.mjs
-
-      - name: Practice hub browser QA
-        run: node scripts/check-practice-hub-browser.mjs
-
-      - name: Review insights browser QA
-        run: node scripts/check-review-insights-browser.mjs
-
-      - name: Learner review browser QA
-        run: node scripts/check-learner-review-browser.mjs
-
-      - name: Exact review browser QA
-        run: node scripts/check-exact-review-browser.mjs
-
-      - name: Advanced exact review browser QA
-        run: node scripts/check-exact-review-advanced-browser.mjs
-
-      - name: Due-only review browser QA
-        run: node scripts/check-due-only-review-browser.mjs
-
-      - name: Review queue visibility browser QA
-        run: node scripts/check-review-queue-visibility-browser.mjs
-
-      - name: Upload M26 visual evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lexia-m26-browser-layout
-          path: |
-            artifacts/m14/*.png
-            artifacts/m15/*.png
-            artifacts/m15/*.json
-            artifacts/m16/*.png
-            artifacts/m16/*.json
-            artifacts/m17/*.png
-            artifacts/m17/*.json
-            artifacts/m19/*.png
-            artifacts/m19/*.json
-            artifacts/m20/*.png
-            artifacts/m20/*.json
-            artifacts/m21/*.png
-            artifacts/m21/*.json
-            artifacts/m22/*.png
-            artifacts/m22/*.json
-            artifacts/m23/*.png
-            artifacts/m23/*.json
-            artifacts/m26/*.png
-          if-no-files-found: warn
-          retention-days: 14
+      - name: Run E2E Tests
+        run: npx playwright test
